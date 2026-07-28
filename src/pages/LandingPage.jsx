@@ -1,4 +1,3 @@
-import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Sparkles, Landmark, HeartHandshake, Users, Route as RouteIcon,
@@ -11,7 +10,6 @@ import {
  * Route: `/welcome` (public, no auth required).
  */
 export default function LandingPage() {
-  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-white text-slate-900" data-testid="landing-page">
       {/* Top Nav */}
@@ -33,13 +31,13 @@ export default function LandingPage() {
             <a href="#contact" className="hover:text-[#FFC107] transition-colors" data-testid="nav-contact">Contact</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link
-              to="/login"
+            <a
+              href="/admin/login"
               className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#FFC107] text-[#00004d] font-semibold text-sm hover:brightness-95 transition"
               data-testid="landing-cta-signin"
             >
               Admin Sign In <ArrowRight className="h-4 w-4" />
-            </Link>
+            </a>
           </div>
         </div>
       </header>
@@ -70,7 +68,7 @@ export default function LandingPage() {
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Button
                 size="lg"
-                onClick={() => navigate("/login")}
+                onClick={() => window.location.assign("/admin/login")}
                 className="bg-[#FFC107] hover:bg-[#FFB300] text-[#00004d] font-semibold h-12 px-6 rounded-full"
                 data-testid="landing-hero-primary"
               >
@@ -190,13 +188,13 @@ export default function LandingPage() {
                 Every module respects role-based permissions. Super Admins get everything;
                 temple / dharamshala / jain-center admins see only their scope.
               </p>
-              <Link
-                to="/login"
+              <a
+                href="/admin/login"
                 className="inline-flex items-center gap-1.5 mt-6 text-[#00004d] font-semibold hover:text-[#FFC107] transition"
                 data-testid="landing-modules-cta"
               >
                 Sign in to explore <ChevronRight className="h-4 w-4" />
-              </Link>
+              </a>
             </div>
             <div className="lg:col-span-8">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -298,7 +296,7 @@ export default function LandingPage() {
           <div className="mt-8">
             <Button
               size="lg"
-              onClick={() => navigate("/login")}
+              onClick={() => window.location.assign("/admin/login")}
               className="bg-[#FFC107] hover:bg-[#FFB300] text-[#00004d] font-semibold h-12 px-8 rounded-full"
               data-testid="landing-footer-cta"
             >
@@ -334,7 +332,7 @@ export default function LandingPage() {
           <div>
             <div className="text-xs uppercase tracking-widest text-[#FFC107] mb-3">Access</div>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/login" className="hover:text-[#FFC107]">Admin Sign In</Link></li>
+              <li><a href="/admin/login" className="hover:text-[#FFC107]">Admin Sign In</a></li>
               <li><a href="mailto:support@jinanam.example" className="hover:text-[#FFC107]">Request Access</a></li>
             </ul>
           </div>

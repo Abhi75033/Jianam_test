@@ -65,13 +65,36 @@ import AppUsagePage from "@/pages/AppUsagePage";
 import BookingCalendarPage from "@/pages/BookingCalendarPage";
 import SADashboardPage from "@/pages/SADashboardPage";
 import ComingSoonPage from "@/pages/ComingSoonPage";
+import SiteComingSoonPage from "@/pages/SiteComingSoonPage";
 
-function App() {
+/* The public site and the admin panel are two separate router trees.
+   The admin tree is mounted with basename="/admin", so every absolute
+   path inside it — nav.config.js, navigate("/members"), ROUTE_TONES
+   keyed on location.pathname — keeps working unchanged while the
+   browser URL carries the /admin prefix. Moving between the two trees
+   is a full page load (<a href>), not a client-side <Link>. */
+const isAdminPath =
+  typeof window !== "undefined" &&
+  (window.location.pathname === "/admin" ||
+    window.location.pathname.startsWith("/admin/"));
+
+function PublicApp() {
   return (
     <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<SiteComingSoonPage />} />
+        <Route path="/welcome" element={<LandingPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function AdminApp() {
+  return (
+    <BrowserRouter basename="/admin">
       <AuthProvider>
         <Routes>
-          <Route path="/welcome" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
 
           <Route
@@ -272,6 +295,10 @@ function App() {
       </AuthProvider>
     </BrowserRouter>
   );
+}
+
+function App() {
+  return isAdminPath ? <AdminApp /> : <PublicApp />;
 }
 
 export default App;
