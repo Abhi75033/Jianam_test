@@ -149,7 +149,7 @@ export const NESTED_NAV = [
           { id: "m-family", label: "Family Management", route: "/family" },
           { id: "m-requests", label: "Member Requests", route: "/coming-soon?module=Member Requests", featureFlag: true },
           { id: "m-verify", label: "Member Verification", route: "/coming-soon?module=Member Verification", featureFlag: true },
-          { id: "m-groups", label: "Family Groups", route: "/family" },
+          { id: "m-groups", label: "Family Groups", route: "/coming-soon?module=Family Groups", featureFlag: true },
           { id: "m-import", label: "Import Members", route: "/members/bulk-import" },
           { id: "m-export", label: "Export Members", route: "/members?export=true", featureFlag: true }
         ]
@@ -335,7 +335,7 @@ export const NESTED_NAV = [
           { id: "ev-vol", label: "Volunteers", route: "/volunteers" },
           { id: "ev-seat", label: "Seating Layout", route: "/seating" },
           { id: "ev-tcat", label: "Ticket Categories", route: "/tickets" },
-          { id: "ev-pr", label: "Pricing", route: "/tickets" },
+          { id: "ev-pr", label: "Pricing", route: "/coming-soon?module=Event Ticket Pricing", featureFlag: true },
           { id: "ev-coup", label: "Coupons", route: "/coming-soon?module=Event Coupons", featureFlag: true },
           { id: "ev-qr", label: "QR Check-in", route: "/coming-soon?module=Event QR Check-in", featureFlag: true },
           { id: "ev-qrep", label: "Check-in Reports", route: "/coming-soon?module=Check-in Reports", featureFlag: true },
@@ -618,8 +618,8 @@ export const NESTED_NAV = [
         icon: ScanLine,
         children: [
           { id: "vi-in", label: "Visitor Entry", route: "/visitors" },
-          { id: "vi-out", label: "Visitor Exit", route: "/visitors" },
-          { id: "vi-hist", label: "Visitor History", route: "/visitors" },
+          { id: "vi-out", label: "Visitor Exit", route: "/coming-soon?module=Visitor Exit", featureFlag: true },
+          { id: "vi-hist", label: "Visitor History", route: "/coming-soon?module=Visitor History", featureFlag: true },
           { id: "vi-exp", label: "Expected Visitors", route: "/coming-soon?module=Expected Visitors", featureFlag: true },
           { id: "vi-veh", label: "Vehicle Entry", route: "/coming-soon?module=Vehicle Entry", featureFlag: true },
           { id: "vi-qr", label: "QR Check-In", route: "/coming-soon?module=Visitor QR Check-In", featureFlag: true },

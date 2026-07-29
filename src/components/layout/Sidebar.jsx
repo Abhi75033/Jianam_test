@@ -81,9 +81,11 @@ function NavLeaf({ item, collapsed, onNavigate, indent }) {
       );
     }
 
-    // Route has no query string → require path match
+    // Route has no query string:
+    // If the browser URL currently has a search/query parameter,
+    // this plain route is NOT active (since a query-specific sub-item is active instead)
     if (location.search && location.search.length > 1) {
-      return location.pathname === routeBase;
+      return false;
     }
     return location.pathname === routeBase || location.pathname.startsWith(routeBase + "/");
   })();
