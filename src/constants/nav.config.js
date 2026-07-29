@@ -223,7 +223,7 @@ export const NESTED_NAV = [
         icon: Landmark,
         children: [
           { id: "t-mgt", label: "Temple Management", route: "/temples" },
-          { id: "t-info", label: "Temple Information", route: "/temples" },
+          { id: "t-info", label: "Temple Information", route: "/coming-soon?module=Temple Information", featureFlag: true },
           { id: "t-fac", label: "Facilities", route: "/coming-soon?module=Temple Facilities", featureFlag: true },
           { id: "t-gal", label: "Gallery", route: "/gallery" },
           { id: "t-com", label: "Committee", route: "/coming-soon?module=Temple Committee", featureFlag: true },
@@ -232,7 +232,7 @@ export const NESTED_NAV = [
           { id: "t-rev", label: "Reviews", route: "/coming-soon?module=Temple Reviews", featureFlag: true },
           { id: "t-dhaja", label: "Dhaja", route: "/coming-soon?module=Temple Dhaja", featureFlag: true },
           { id: "t-chat", label: "Chaturmas", route: "/chaturmas" },
-          { id: "t-social", label: "Social Links", route: "/settings?tab=social", featureFlag: true }
+          { id: "t-social", label: "Social Links", route: "/coming-soon?module=Temple Social Links", featureFlag: true }
         ]
       },
       {
@@ -241,14 +241,14 @@ export const NESTED_NAV = [
         icon: Building2,
         children: [
           { id: "jc-mgt", label: "Jain Centre Management", route: "/jain-centers" },
-          { id: "jc-info", label: "Centre Information", route: "/jain-centers" },
+          { id: "jc-info", label: "Centre Information", route: "/coming-soon?module=Centre Information", featureFlag: true },
           { id: "jc-fac", label: "Facilities", route: "/coming-soon?module=Jain Centre Facilities", featureFlag: true },
           { id: "jc-gal", label: "Gallery", route: "/gallery" },
           { id: "jc-com", label: "Committee", route: "/coming-soon?module=Jain Centre Committee", featureFlag: true },
           { id: "jc-vol", label: "Volunteers", route: "/volunteers" },
           { id: "jc-not", label: "Notices", route: "/coming-soon?module=Jain Centre Notices", featureFlag: true },
           { id: "jc-rev", label: "Reviews", route: "/coming-soon?module=Jain Centre Reviews", featureFlag: true },
-          { id: "jc-social", label: "Social Links", route: "/settings?tab=social", featureFlag: true }
+          { id: "jc-social", label: "Social Links", route: "/coming-soon?module=Jain Centre Social Links", featureFlag: true }
         ]
       },
       {
@@ -293,7 +293,7 @@ export const NESTED_NAV = [
         icon: Globe,
         children: [
           { id: "cp-my", label: "My Page", route: "/community-pages" },
-          { id: "cp-info", label: "Page Information", route: "/community-pages" },
+          { id: "cp-info", label: "Page Information", route: "/coming-soon?module=Community Page Information", featureFlag: true },
           { id: "cp-gal", label: "Gallery", route: "/gallery" },
           { id: "cp-fol", label: "Followers", route: "/coming-soon?module=Community Page Followers", featureFlag: true },
           { id: "cp-rev", label: "Reviews", route: "/coming-soon?module=Community Page Reviews", featureFlag: true },

@@ -66,6 +66,8 @@ import BookingCalendarPage from "@/pages/BookingCalendarPage";
 import SADashboardPage from "@/pages/SADashboardPage";
 import ComingSoonPage from "@/pages/ComingSoonPage";
 import SiteComingSoonPage from "@/pages/SiteComingSoonPage";
+import SeatingPage from "@/pages/SeatingPage";
+import TicketsPage from "@/pages/TicketsPage";
 
 /* The public site and the admin panel are two separate router trees.
    The admin tree is mounted with basename="/admin", so every absolute
@@ -232,6 +234,9 @@ function AdminApp() {
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="notifications/preferences" element={<NotificationPreferencesPage />} />
+            <Route path="seating" element={<SeatingPage />} />
+            <Route path="tickets" element={<TicketsPage />} />
+            <Route path="pricing" element={<TicketsPage />} />
             <Route path="varshitap" element={<ComingSoonPage moduleName="Varshitap Management" />} />
 
             {/* ─── Bookings ───────────────────────────────────────── */}

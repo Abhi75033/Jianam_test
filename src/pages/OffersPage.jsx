@@ -38,7 +38,7 @@ import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { OFFER_CATEGORY_OPTIONS } from "@/constants/dropdownOptions";
+import { OFFER_CATEGORIES, OFFER_CATEGORY_OPTIONS } from "@/constants/dropdownOptions";
 
 // OFFER_CATEGORIES imported from @/constants/dropdownOptions
 

@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api, extractErrorMessage, STATIC_URL } from "@/lib/api";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -104,8 +106,13 @@ export default function DonationsPage() {
     return a;
   }, { count: 0, total: 0, verified: 0, pending: 0 });
 
+  const [searchParams] = useSearchParams();
+  const donationType = searchParams.get("type"); // "online" | "offline"
+
   const filtered = rows.filter((r) => {
     if (status !== "ALL" && r.status !== status) return false;
+    if (donationType === "online" && (r.flowType === "OFFLINE" || r.flowType === "ORG_MANUAL")) return false;
+    if (donationType === "offline" && r.flowType === "ONLINE") return false;
     if (q && !JSON.stringify(r).toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   });

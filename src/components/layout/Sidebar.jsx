@@ -81,10 +81,11 @@ function NavLeaf({ item, collapsed, onNavigate, indent }) {
       );
     }
 
-    // Route has no query string → use prefix match as before
-    // e.g. "/staff" is active for /staff (with or without query)
-    // but ONLY if there are no query-string siblings competing
-    return location.pathname.startsWith(routeBase);
+    // Route has no query string → require path match
+    if (location.search && location.search.length > 1) {
+      return location.pathname === routeBase;
+    }
+    return location.pathname === routeBase || location.pathname.startsWith(routeBase + "/");
   })();
 
   if (!item.route) return null;
