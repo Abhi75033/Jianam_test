@@ -65,7 +65,7 @@ export const TONE_HEX = {
 
 // --- FLAT STRUCTURE (Option 1) ---
 export const FLAT_NAV = [
-  { id: "sa-dashboard", label: "SA Dashboard", icon: LayoutDashboard, route: "/", roles: ["SUPER_ADMIN"] },
+  { id: "sa-dashboard", label: "SA Dashboard", icon: LayoutDashboard, route: "/sa-dashboard", roles: ["SUPER_ADMIN"] },
   { id: "a-dashboard", label: "A Dashboard", icon: LayoutDashboard, route: "/", roles: ["TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JAIN_CENTER_ADMIN", "MONK_ADMIN"] },
   
   { id: "sep-orgs", isSeparator: true, label: "Organizations" },
@@ -131,7 +131,7 @@ export const FLAT_NAV = [
 
 // --- NESTED STRUCTURE (Option 2) ---
 export const NESTED_NAV = [
-  { id: "sa-dashboard", label: "SA Dashboard", icon: LayoutDashboard, route: "/", roles: ["SUPER_ADMIN"] },
+  { id: "sa-dashboard", label: "SA Dashboard", icon: LayoutDashboard, route: "/sa-dashboard", roles: ["SUPER_ADMIN"] },
   { id: "a-dashboard", label: "A Dashboard", icon: LayoutDashboard, route: "/", roles: ["TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JAIN_CENTER_ADMIN", "MONK_ADMIN"] },
 
   {
