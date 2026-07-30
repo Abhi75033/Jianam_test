@@ -152,7 +152,7 @@ function NavLeaf({ item, collapsed, onNavigate, indent }) {
           <span className="truncate text-xs font-semibold flex-1">{item.label}</span>
         )}
 
-        {!collapsed && item.featureFlag && (
+        {!collapsed && ((item.route && item.route.includes("/coming-soon")) || (item.featureFlag && (!item.route || item.route.includes("/coming-soon")))) && (
           <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
             Soon
           </span>

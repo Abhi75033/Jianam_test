@@ -669,15 +669,37 @@ export default function NonJainMembersPage() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [cardOpen, setCardOpen] = useState(false);
 
+  const orgId = user?.organizationIds?.[0];
+
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    api.get("/members", { params: { page: 1, pageSize: 100, q, category: "NON_JAIN" } })
-      .then((res) => { if (mounted) setMembers(res.data?.data?.items || res.data?.data || []); })
+    const params = { page: 1, pageSize: 100, q, category: "NON_JAIN" };
+    if (!isSuperAdmin) {
+      if (user?.id) params.createdByUserId = user.id;
+      if (orgId) params.createdByOrgId = orgId;
+    }
+
+    api.get("/members", { params })
+      .then((res) => {
+        if (!mounted) return;
+        const fetched = res.data?.data?.items || res.data?.data || [];
+        const scoped = isSuperAdmin
+          ? fetched
+          : fetched.filter(
+              (m) =>
+                m.createdByUserId === user?.id ||
+                m.createdById === user?.id ||
+                m.organizationId === orgId ||
+                m.createdByOrgId === orgId ||
+                m.isCreatedByCurrentOrg
+            );
+        setMembers(scoped);
+      })
       .catch(() => mounted && setMembers([]))
       .finally(() => mounted && setLoading(false));
     return () => { mounted = false; };
-  }, [q, reloadKey]);
+  }, [q, reloadKey, isSuperAdmin, user, orgId]);
 
   const openCard = async (row) => {
     setSelectedMember(row);

@@ -153,7 +153,7 @@ export const NESTED_NAV = [
           { id: "m-verify", label: "Member Verification", route: "/coming-soon?module=Member Verification", featureFlag: true },
           { id: "m-groups", label: "Family Groups", route: "/coming-soon?module=Family Groups", featureFlag: true },
           { id: "m-import", label: "Import Members", route: "/members/bulk-import" },
-          { id: "m-export", label: "Export Members", route: "/members?export=true", featureFlag: true }
+          { id: "m-export", label: "Export Members", route: "/members?export=true" }
         ]
       },
       {
@@ -165,7 +165,7 @@ export const NESTED_NAV = [
           { id: "v-reg", label: "Volunteer Registration", route: "/coming-soon?module=Volunteer Registration", featureFlag: true },
           { id: "v-assign", label: "Volunteer Assignment", route: "/coming-soon?module=Volunteer Assignment", featureFlag: true },
           { id: "v-att", label: "Volunteer Attendance", route: "/coming-soon?module=Volunteer Attendance", featureFlag: true },
-          { id: "v-rep", label: "Volunteer Reports", route: "/reports?tab=volunteers", featureFlag: true }
+          { id: "v-rep", label: "Volunteer Reports", route: "/reports?tab=volunteers" }
         ]
       },
       {
@@ -192,12 +192,12 @@ export const NESTED_NAV = [
         icon: Briefcase,
         children: [
           { id: "st-mgt", label: "Staff Management", route: "/staff" },
-          { id: "st-reg", label: "Staff Registration", route: "/staff?action=register", featureFlag: true },
+          { id: "st-reg", label: "Staff Registration", route: "/staff?action=register" },
           { id: "st-qr", label: "Staff QR Cards", route: "/coming-soon?module=Staff QR Cards", featureFlag: true },
-          { id: "st-att", label: "Attendance", route: "/staff?tab=attendance", featureFlag: true },
-          { id: "st-leave", label: "Leave Management", route: "/staff?tab=leaves", featureFlag: true },
-          { id: "st-docs", label: "Documents", route: "/staff?tab=documents", featureFlag: true },
-          { id: "st-hours", label: "Working Hours", route: "/staff?tab=hours", featureFlag: true }
+          { id: "st-att", label: "Attendance", route: "/staff?tab=attendance" },
+          { id: "st-leave", label: "Leave Management", route: "/staff?tab=leaves" },
+          { id: "st-docs", label: "Documents", route: "/staff?tab=documents" },
+          { id: "st-hours", label: "Working Hours", route: "/staff?tab=hours" }
         ]
       },
       {
