@@ -59,10 +59,11 @@ export default function PollsPage() {
       await api.post("/polls", {
         question: form.question,
         options: form.options.filter(Boolean),
+        endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : undefined,
       });
       toast.success("Poll created.");
       setOpen(false);
-      setForm({ question: "", options: ["", ""] });
+      setForm({ question: "", options: ["", ""], endsAt: "" });
       setReloadKey((k) => k + 1);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -81,6 +82,26 @@ export default function PollsPage() {
       toast.error(extractErrorMessage(err));
     } finally {
       setVoting(null);
+    }
+  };
+
+  const closePoll = async (pollId) => {
+    try {
+      await api.post(`/polls/${pollId}/close`);
+      toast.success("Poll closed successfully.");
+      setReloadKey((k) => k + 1);
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    }
+  };
+
+  const deletePoll = async (pollId) => {
+    try {
+      await api.delete(`/polls/${pollId}`);
+      toast.success("Poll deleted.");
+      setReloadKey((k) => k + 1);
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
     }
   };
 
@@ -122,9 +143,17 @@ export default function PollsPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <Badge variant="outline">{p.totalVotes || 0} votes</Badge>
-                <span className="flex items-center gap-1"><Vote className="h-3 w-3" /> Tap an option to vote</span>
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t mt-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{p.totalVotes || 0} votes</Badge>
+                  {p.endsAt && new Date(p.endsAt) < new Date() && (
+                    <Badge variant="secondary" className="bg-red-50 text-red-700 font-bold border-red-200">Closed</Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => closePoll(p.id)}>Close</Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-[11px] text-red-600 hover:text-red-700" onClick={() => deletePoll(p.id)}>Delete</Button>
+                </div>
               </div>
             </Card>
           ))}
@@ -136,13 +165,22 @@ export default function PollsPage() {
           <DialogHeader><DialogTitle>Create poll</DialogTitle></DialogHeader>
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <Label className="text-xs">Question</Label>
+              <Label className="text-xs">Question *</Label>
               <Input
                 value={form.question}
                 onChange={(e) => setForm({ ...form, question: e.target.value })}
                 required
                 placeholder="e.g. What time works best for evening pravachan?"
                 data-testid="poll-question"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Expiry Date (Optional)</Label>
+              <Input
+                type="date"
+                value={form.endsAt}
+                onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
+                className="mt-1"
               />
             </div>
             <div>

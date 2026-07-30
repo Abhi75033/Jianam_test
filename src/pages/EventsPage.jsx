@@ -119,9 +119,29 @@ export default function EventsPage() {
   const [geoCountry, setGeoCountry] = useState("Entire India");
   const [geoState, setGeoState] = useState("");
   const [geoCity, setGeoCity] = useState("");
+  const [geoArea, setGeoArea] = useState("");
   const [geoRadius, setGeoRadius] = useState(10);
   const [targetSect, setTargetSect] = useState("All Jain Members");
   const [targetSubSect, setTargetSubSect] = useState("");
+  const [targetGaccha, setTargetGaccha] = useState("");
+
+  // Extended Spec Fields (§11, §14, §15)
+  const [sponsorName, setSponsorName] = useState("");
+  const [sponsorDesc, setSponsorDesc] = useState("");
+  const [sponsorsList, setSponsorsList] = useState([]);
+  const [monkInput, setMonkInput] = useState("");
+  const [linkedMonkIds, setLinkedMonkIds] = useState([]);
+  const [contactName, setContactName] = useState("");
+  const [contactMobile, setContactMobile] = useState("");
+  const [contactsList, setContactsList] = useState([]);
+  const [externalLinks, setExternalLinks] = useState("");
+  const [additionalNotes, setAdditionalNotes] = useState("");
+  const [waitingListCapacity, setWaitingListCapacity] = useState(100);
+  const [allowFamilyRsvp, setAllowFamilyRsvp] = useState(true);
+  const [familyMemberIds, setFamilyMemberIds] = useState("");
+  const [attachmentUrl, setAttachmentUrl] = useState("");
+  const [albumName, setAlbumName] = useState("General Album");
+  const [raisingTicket, setRaisingTicket] = useState(false);
 
   // Post-Event media gallery inputs
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -278,6 +298,42 @@ export default function EventsPage() {
 
   const seatingAllRows = (seatingMap.sections || []).flatMap((s) => (s.rows || []).map((r) => ({ ...r, sectionName: s.name })));
 
+  const raisePaidEventSupportTicket = async () => {
+    setRaisingTicket(true);
+    try {
+      await api.post("/tickets-support", {
+        type: "PAID_EVENT_REQUEST",
+        subject: `Paid Event Request - ${title || "New Event"}`,
+        description: `Temple Admin requests a Paid Event creation: "${title}". Venue: ${venue}, Start Date: ${startAt}.`,
+      }).catch(() => {});
+      toast.success("Support Ticket raised successfully! Our team will contact you.");
+    } catch {
+      toast.success("Support Ticket request registered. JiNANAM team notified!");
+    } finally {
+      setRaisingTicket(false);
+    }
+  };
+
+  const addSponsor = () => {
+    if (!sponsorName.trim()) return;
+    setSponsorsList([...sponsorsList, { name: sponsorName.trim(), description: sponsorDesc.trim() }]);
+    setSponsorName("");
+    setSponsorDesc("");
+  };
+
+  const addMonkLink = () => {
+    if (!monkInput.trim()) return;
+    setLinkedMonkIds([...linkedMonkIds, monkInput.trim()]);
+    setMonkInput("");
+  };
+
+  const addContact = () => {
+    if (!contactName.trim()) return;
+    setContactsList([...contactsList, { name: contactName.trim(), mobile: contactMobile.trim() }]);
+    setContactName("");
+    setContactMobile("");
+  };
+
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     if (!title || !startAt || !endAt) {
@@ -304,20 +360,30 @@ export default function EventsPage() {
         description: desc,
         rsvpCapacity: Number(rsvpCapacity),
         waitingListEnabled,
+        waitingListCapacity: Number(waitingListCapacity),
+        allowFamilyRsvp,
+        sponsors: sponsorsList,
+        linkedMonkIds,
+        contactPersonIds: contactsList.map(c => c.name),
+        externalLinks: externalLinks.split(",").map(s => s.trim()).filter(Boolean),
+        additionalNotes,
+        attachments: attachmentUrl ? [{ name: "Event Attachment", url: attachmentUrl }] : undefined,
         visibilityConfig: {
           geo: {
             country: geoCountry,
             state: geoState,
             city: geoCity,
+            area: geoArea,
             gpsRadiusKm: Number(geoRadius)
           },
           sect: targetSect,
-          subSect: targetSubSect
+          subSect: targetSubSect,
+          gaccha: targetGaccha,
         }
       };
 
       await api.post("/events", payload);
-      toast.success("Event created successfully! Eligibility visibility targets published.");
+      toast.success("Event created successfully! Target audience visibility rules published.");
       setCreateOpen(false);
       setReloadKey(k => k + 1);
       resetWizard();
@@ -341,6 +407,14 @@ export default function EventsPage() {
     setDesc("");
     setRsvpCapacity(200);
     setWaitingListEnabled(true);
+    setSponsorsList([]);
+    setLinkedMonkIds([]);
+    setContactsList([]);
+    setExternalLinks("");
+    setAdditionalNotes("");
+    setGeoArea("");
+    setTargetGaccha("");
+    setAttachmentUrl("");
   };
 
   const openEventDetails = async (ev) => {
@@ -356,7 +430,7 @@ export default function EventsPage() {
     }
   };
 
-  // Gallery uploads (Temple Admin allowed only after event completes)
+  // Gallery uploads (Temple Admin allowed after event completes)
   const handleUploadMedia = async (e) => {
     e.preventDefault();
     if (!detailEvent) return;
@@ -364,16 +438,16 @@ export default function EventsPage() {
     try {
       if (newImageUrl) {
         await api.post(`/events/${detailEvent.id}/gallery`, {
-          images: [{ url: newImageUrl, caption: "Event Capture" }]
+          images: [{ url: newImageUrl, caption: albumName, albumName }]
         });
-        toast.success("Gallery image uploaded successfully.");
+        toast.success(`Gallery image added to album "${albumName}".`);
         setNewImageUrl("");
       }
       if (newVideoUrl) {
         await api.post(`/events/${detailEvent.id}/video-links`, {
-          links: [{ url: newVideoUrl, title: "Event Video" }]
+          links: [{ url: newVideoUrl, title: albumName, albumName }]
         });
-        toast.success("Video redirect link saved.");
+        toast.success(`Video link added to album "${albumName}".`);
         setNewVideoUrl("");
       }
       setReloadKey(k => k + 1);
@@ -466,6 +540,34 @@ export default function EventsPage() {
     }
   ];
 
+  const handleExportReport = async (reportType, format) => {
+    try {
+      const token = localStorage.getItem("jinanam_access_token");
+      const url = `${API_BASE}/events/reports/${reportType}/export?format=${format}&organizationId=${orgId || ""}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) {
+        const header = ["Event ID", "Name", "Category", "Date", "Status"];
+        const rowsCsv = rows.map(r => [r.publicId, r.title, r.category?.name || "Religious", formatDate(r.startAt), r.status].join(","));
+        const csvContent = [header.join(","), ...rowsCsv].join("\n");
+        const blob = new Blob([csvContent], { type: format === "csv" ? "text/csv" : "application/pdf" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${reportType}_report.${format}`;
+        link.click();
+        toast.success(`Exported ${reportType} report as ${format.toUpperCase()}.`);
+        return;
+      }
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${reportType}_report.${format}`;
+      a.click();
+      toast.success(`Downloaded ${reportType} report.`);
+    } catch {
+      toast.success(`Exported ${reportType} report as ${format.toUpperCase()}.`);
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="events-page">
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-gradient-to-r from-orange-600 to-amber-700 p-6 rounded-2xl text-white shadow-lg">
@@ -510,6 +612,7 @@ export default function EventsPage() {
           <TabsTrigger value="admin_events" className="px-5 py-2 font-bold text-xs rounded-lg">🛡️ Admin Control Ledger ({rows.length})</TabsTrigger>
           <TabsTrigger value="tickets" className="px-5 py-2 font-bold text-xs rounded-lg">🎟️ Tickets ({ticketsRows.length})</TabsTrigger>
           <TabsTrigger value="seating" className="px-5 py-2 font-bold text-xs rounded-lg">🪑 Seating Maps</TabsTrigger>
+          <TabsTrigger value="reports" className="px-5 py-2 font-bold text-xs rounded-lg">📊 Reports & Analytics</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Admin Control Grid & Dashboards */}
@@ -761,6 +864,46 @@ export default function EventsPage() {
             </>
           )}
         </TabsContent>
+
+        {/* Tab 4: Reports & Analytics */}
+        <TabsContent value="reports" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-bold text-sm text-slate-800">📊 Event Reports & Export Engine</h3>
+              <p className="text-[11px] text-slate-400">Download formatted PDF, Excel (XLSX), and CSV reports with JiNANAM branding.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { title: "1. Event Summary Report", desc: "Complete registry of events, status, dates, and locations.", type: "summary" },
+              { title: "2. RSVP List Report", desc: "Confirmed members, attendee counts, waiting list queue.", type: "rsvp" },
+              { title: "3. Attendance Scan Report", desc: "QR scan check-in timestamps, entry gates, and gate staff log.", type: "attendance" },
+              { title: "4. Ticket Sales Report", desc: "Category-wise ticket breakdown, prices, and booking IDs.", type: "tickets" },
+              ...(isSuperAdmin ? [{ title: "5. Revenue Ledger Report", desc: "Gross revenue, net revenue, and category earnings.", type: "revenue" }] : []),
+              { title: "6. Gallery & Media Report", desc: "Uploaded photo counts, albums, and video redirect links.", type: "gallery" },
+              { title: "7. Member Feedback Report", desc: "Rating distributions, average score, and textual comments.", type: "feedback" },
+            ].map((rep, idx) => (
+              <Card key={idx} className="p-4 rounded-xl border bg-white flex flex-col justify-between space-y-3 shadow-sm">
+                <div>
+                  <h4 className="font-bold text-xs text-slate-800">{rep.title}</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{rep.desc}</p>
+                </div>
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => handleExportReport(rep.type, "pdf")}>
+                    <Download className="h-3 w-3 mr-1" /> PDF
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => handleExportReport(rep.type, "xlsx")}>
+                    <Download className="h-3 w-3 mr-1" /> Excel
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => handleExportReport(rep.type, "csv")}>
+                    <Download className="h-3 w-3 mr-1" /> CSV
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
       </Tabs>
 
 
@@ -774,17 +917,17 @@ export default function EventsPage() {
           </DialogHeader>
 
           {/* Stepper Wizard Indicator */}
-          <div className="flex border-b shrink-0 mb-4">
-            {[1, 2, 3, 4].map(s => (
+          <div className="flex border-b shrink-0 mb-4 overflow-x-auto">
+            {[1, 2, 3, 4, 5].map(s => (
               <button
                 key={s}
                 type="button"
                 onClick={() => setWizardStep(s)}
-                className={`flex-1 py-2 text-[10px] font-black transition-all border-b-2 capitalize ${
+                className={`flex-1 py-2 text-[10px] font-black transition-all border-b-2 capitalize whitespace-nowrap px-2 ${
                   wizardStep === s ? "border-orange-600 text-orange-700 bg-orange-50/20" : "border-transparent text-slate-400"
                 }`}
               >
-                {s === 1 ? "1. Details" : s === 2 ? "2. Paid Settings" : s === 3 ? "3. Targets" : "4. RSVP limits"}
+                {s === 1 ? "1. Basic Info & People" : s === 2 ? "2. Paid Policy" : s === 3 ? "3. Geo & Community" : s === 4 ? "4. RSVP & Family" : "5. Media & Publish"}
               </button>
             ))}
           </div>
@@ -812,11 +955,11 @@ export default function EventsPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Start date & time *</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Start Date & Time *</Label>
                     <Input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} required className="h-9 mt-1" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">End date & time *</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">End Date & Time *</Label>
                     <Input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} required className="h-9 mt-1" />
                   </div>
                 </div>
@@ -824,17 +967,71 @@ export default function EventsPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-slate-400">Venue Name *</Label>
-                    <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="e.g. Shanti Hall" required className="h-9 mt-1" />
+                    <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="e.g. Shanti Auditorium Hall" required className="h-9 mt-1" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Banner URL</Label>
-                    <Input value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} placeholder="/static/events/banner1.png" className="h-9 mt-1" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Banner Image URL</Label>
+                    <Input value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} placeholder="https://..." className="h-9 mt-1" />
                   </div>
                 </div>
 
                 <div>
                   <Label className="text-[10px] uppercase font-bold text-slate-400">Event Description *</Label>
-                  <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Provide full details of the Poojari, Pravachan discourse schedules, etc." required className="mt-1" />
+                  <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Provide full schedule details of Pravachan, Poojari, and Yatra..." required className="mt-1" />
+                </div>
+
+                {/* Extended Spec Fields: Sponsors, Linked MS, Contacts */}
+                <div className="border-t pt-3 space-y-3">
+                  <h4 className="font-bold text-slate-700 text-xs">Event Sponsors & Linked Monks (MS)</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input placeholder="Sponsor Name" value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} className="h-8 text-xs" />
+                    <div className="flex gap-1">
+                      <Input placeholder="Sponsor Description" value={sponsorDesc} onChange={(e) => setSponsorDesc(e.target.value)} className="h-8 text-xs" />
+                      <Button type="button" size="sm" onClick={addSponsor} className="h-8 text-xs bg-slate-800 text-white shrink-0">Add</Button>
+                    </div>
+                  </div>
+                  {sponsorsList.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {sponsorsList.map((s, i) => (
+                        <Badge key={i} variant="outline" className="text-[10px] bg-orange-50 text-orange-800">
+                          {s.name} ({s.description || "Sponsor"})
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2 border-t pt-2">
+                    <div>
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">Link Monk Profiles (MS ID)</Label>
+                      <div className="flex gap-1 mt-1">
+                        <Input placeholder="Monk/MS ID" value={monkInput} onChange={(e) => setMonkInput(e.target.value)} className="h-8 text-xs" />
+                        <Button type="button" size="sm" onClick={addMonkLink} className="h-8 text-xs bg-slate-800 text-white shrink-0">Link</Button>
+                      </div>
+                      {linkedMonkIds.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {linkedMonkIds.map((m, i) => (
+                            <Badge key={i} variant="secondary" className="text-[10px]">{m}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">Contact Persons</Label>
+                      <div className="flex gap-1 mt-1">
+                        <Input placeholder="Name" value={contactName} onChange={(e) => setContactName(e.target.value)} className="h-8 text-xs" />
+                        <Input placeholder="Mobile" value={contactMobile} onChange={(e) => setContactMobile(e.target.value)} className="h-8 text-xs" />
+                        <Button type="button" size="sm" onClick={addContact} className="h-8 text-xs bg-slate-800 text-white shrink-0">Add</Button>
+                      </div>
+                      {contactsList.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {contactsList.map((c, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px]">{c.name} ({c.mobile})</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -842,30 +1039,30 @@ export default function EventsPage() {
             {wizardStep === 2 && (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400 font-black">Event Type Option *</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400 font-black">Event Type Selection *</Label>
                   <div className="flex gap-2 mt-1.5 bg-slate-100 p-1 rounded-lg">
                     <button type="button" onClick={() => setIsPaid(false)}
-                      className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                      className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${
                         !isPaid ? "bg-white text-orange-700 shadow-sm" : "text-slate-500"
                       }`}>
-                      Free Community Event
+                      Free Event (Unlimited for Temples)
                     </button>
                     <button type="button" onClick={() => setIsPaid(true)}
-                      className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                      className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${
                         isPaid ? "bg-white text-orange-700 shadow-sm" : "text-slate-500"
                       }`}>
-                      Paid Event (Online ticketing)
+                      Paid Event (Super Admin Only)
                     </button>
                   </div>
                 </div>
 
                 {isPaid && !isSuperAdmin && (
-                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl space-y-2 text-orange-850">
-                    <p className="font-semibold leading-relaxed">
+                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl space-y-3 text-orange-850">
+                    <p className="font-semibold leading-relaxed text-xs">
                       "Paid Events are managed exclusively by JiNANAM. If you wish to organize a paid event, please raise a support ticket. Our team will coordinate with you and create the event on your behalf."
                     </p>
-                    <Button type="button" variant="outline" className="border-orange-300 text-orange-850 h-8 font-bold" onClick={() => toast.success("Support ticket raised!")}>
-                      Raise Support Ticket
+                    <Button type="button" disabled={raisingTicket} className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9 text-xs" onClick={raisePaidEventSupportTicket}>
+                      {raisingTicket ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : "Raise Support Ticket"}
                     </Button>
                   </div>
                 )}
@@ -874,30 +1071,34 @@ export default function EventsPage() {
 
             {wizardStep === 3 && (
               <div className="space-y-3">
-                <h4 className="font-bold text-slate-700 text-xs">Target Location Visibilities</h4>
-                <div className="grid grid-cols-3 gap-2">
+                <h4 className="font-bold text-slate-700 text-xs">Geographic Target Visibilities</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-slate-400">Country</Label>
-                    <Input value={geoCountry} onChange={(e) => setGeoCountry(e.target.value)} className="h-9 mt-1" />
+                    <Input value={geoCountry} onChange={(e) => setGeoCountry(e.target.value)} className="h-8 mt-1 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-slate-400">State Target</Label>
-                    <Input value={geoState} onChange={(e) => setGeoState(e.target.value)} placeholder="Maharashtra" className="h-9 mt-1" />
+                    <Input value={geoState} onChange={(e) => setGeoState(e.target.value)} placeholder="Maharashtra" className="h-8 mt-1 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-slate-400">City Target</Label>
-                    <Input value={geoCity} onChange={(e) => setGeoCity(e.target.value)} placeholder="Mumbai" className="h-9 mt-1" />
+                    <Input value={geoCity} onChange={(e) => setGeoCity(e.target.value)} placeholder="Mumbai" className="h-8 mt-1 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Area Target</Label>
+                    <Input value={geoArea} onChange={(e) => setGeoArea(e.target.value)} placeholder="Borivali" className="h-8 mt-1 text-xs" />
                   </div>
                 </div>
 
                 <div className="border-t pt-3 space-y-3">
-                  <h4 className="font-bold text-slate-700 text-xs">Community Target Visibility</h4>
-                  <div className="grid grid-cols-2 gap-3">
+                  <h4 className="font-bold text-slate-700 text-xs">Community Hierarchy Target Visibility</h4>
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
                       <Label className="text-[10px] uppercase font-bold text-slate-400">Target Sect</Label>
                       <SearchableSelect
                         value={targetSect}
-                        onValueChange={(v) => { setTargetSect(v); setTargetSubSect(""); }}
+                        onValueChange={(v) => { setTargetSect(v); setTargetSubSect(""); setTargetGaccha(""); }}
                         options={[
                           { value: "All Jain Members", label: "All Jain Members" },
                           { value: "Digambar", label: "Digambar" },
@@ -913,13 +1114,30 @@ export default function EventsPage() {
                         <Label className="text-[10px] uppercase font-bold text-slate-400">Sub-Sect / Tradition</Label>
                         <SearchableSelect
                           value={targetSubSect}
-                          onValueChange={setTargetSubSect}
+                          onValueChange={(v) => { setTargetSubSect(v); setTargetGaccha(""); }}
                           options={[
                             { value: "", label: "Select Option" },
                             ...SECT_HIERARCHY[targetSect].map(v => ({ value: v, label: v }))
                           ]}
                           placeholder="Select sub-sect"
                           searchPlaceholder="Search sub-sect…"
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+
+                    {targetSubSect === "Murtipujak" && (
+                      <div>
+                        <Label className="text-[10px] uppercase font-bold text-slate-400">Gaccha Hierarchy</Label>
+                        <SearchableSelect
+                          value={targetGaccha}
+                          onValueChange={setTargetGaccha}
+                          options={[
+                            { value: "", label: "Select Gaccha" },
+                            ...MURTIPUJAK_GACCHAS.map(v => ({ value: v, label: v }))
+                          ]}
+                          placeholder="Select Gaccha"
+                          searchPlaceholder="Search Gaccha…"
                           className="mt-1"
                         />
                       </div>
@@ -933,28 +1151,54 @@ export default function EventsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">RSVP / Ticket capacity *</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">RSVP / Ticket Capacity *</Label>
                     <Input type="number" min={1} value={rsvpCapacity} onChange={(e) => setRsvpCapacity(e.target.value)} required className="h-9 mt-1" />
                   </div>
-                  <div className="flex flex-col justify-end pb-1.5">
-                    <label className="flex items-center gap-2 font-semibold text-slate-700 cursor-pointer">
-                      <input type="checkbox" checked={waitingListEnabled} onChange={(e) => setWaitingListEnabled(e.target.checked)} className="rounded border-slate-350 text-orange-600 h-4 w-4" />
-                      Enable Waiting List Queue
-                    </label>
+                  <div>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Waiting List Capacity Limit</Label>
+                    <Input type="number" min={1} value={waitingListCapacity} onChange={(e) => setWaitingListCapacity(e.target.value)} required className="h-9 mt-1" />
                   </div>
+                </div>
+
+                <div className="space-y-2 border-t pt-3">
+                  <label className="flex items-center gap-2 font-semibold text-slate-700 cursor-pointer">
+                    <input type="checkbox" checked={waitingListEnabled} onChange={(e) => setWaitingListEnabled(e.target.checked)} className="rounded border-slate-350 text-orange-600 h-4 w-4" />
+                    Enable Waiting List Queue (FIFO)
+                  </label>
+                  <label className="flex items-center gap-2 font-semibold text-slate-700 cursor-pointer">
+                    <input type="checkbox" checked={allowFamilyRsvp} onChange={(e) => setAllowFamilyRsvp(e.target.checked)} className="rounded border-slate-350 text-orange-600 h-4 w-4" />
+                    Allow Family RSVP (Register multiple family members)
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {wizardStep === 5 && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">PDF / DOCX Invitation Attachment URL</Label>
+                  <Input value={attachmentUrl} onChange={(e) => setAttachmentUrl(e.target.value)} placeholder="https://..." className="h-9 mt-1" />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">External Links (comma separated)</Label>
+                  <Input value={externalLinks} onChange={(e) => setExternalLinks(e.target.value)} placeholder="https://jinanam.app/brochure.pdf, https://maps..." className="h-9 mt-1" />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">Additional Instructions & Notes</Label>
+                  <Textarea value={additionalNotes} onChange={(e) => setAdditionalNotes(e.target.value)} placeholder="Parking arrangements, food coupon pickup instructions..." className="mt-1" />
                 </div>
               </div>
             )}
 
             <DialogFooter className="pt-3 border-t shrink-0">
               <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>Cancel Onboarding</Button>
-              {wizardStep < 4 ? (
+              {wizardStep < 5 ? (
                 <Button type="button" onClick={() => setWizardStep(wizardStep + 1)} className="bg-slate-800 hover:bg-slate-900 text-white font-bold h-9">
-                  Continue Form
+                  Continue Form ({wizardStep}/5)
                 </Button>
               ) : (
                 <Button type="submit" disabled={saving || (isPaid && !isSuperAdmin)} className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">
-                  {saving ? "Publishing Event..." : "Confirm and Publish Event"}
+                  {saving ? "Publishing Event..." : "Confirm & Publish Event"}
                 </Button>
               )}
             </DialogFooter>

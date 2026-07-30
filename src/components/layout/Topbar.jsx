@@ -67,27 +67,27 @@ export default function Topbar({ onToggleSidebar }) {
 
   return (
     <header className="sticky top-0 z-30 h-16 md:h-20 bg-white border-b border-border flex items-center px-3 md:px-6 gap-2 md:gap-3">
-      {/* Hamburger — mobile only triggers sheet, desktop is decorative brand */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="shrink-0"
+      {/* Hamburger + Admin Name — Attendo-style left group */}
+      <button
+        className="flex items-center gap-2.5 shrink-0 group hover:opacity-80 transition-opacity"
         onClick={onToggleSidebar}
         data-testid="topbar-menu-button"
+        aria-label="Toggle sidebar"
       >
-        <Menu className="h-5 w-5" />
-      </Button>
+        <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center bg-white group-hover:bg-slate-50 transition-colors">
+          <Menu className="h-4.5 w-4.5 text-slate-700" style={{ width: 18, height: 18 }} />
+        </div>
+        <span className="hidden sm:block text-sm font-bold text-slate-800 tracking-tight">{name}</span>
+      </button>
 
-      {/* Prominent Admin Greeting */}
-      <div className="hidden sm:flex flex-col ml-2 leading-none shrink-0">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">System Control</span>
-        <span className="text-sm font-black text-slate-800 mt-0.5">Welcome, {name}</span>
-      </div>
+      {/* Divider */}
+      <div className="hidden sm:block h-7 w-px bg-slate-200 mx-1 shrink-0" />
 
-      {/* Global search bar for active temples */}
-      <div className="relative hidden md:block max-w-xs w-full ml-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+      {/* Global search bar for active temples — with area/city/state filters */}
+      <div className="relative flex-1 max-w-2xl hidden md:flex items-center gap-2">
+        {/* Search input */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           <Input
             value={templeSearch}
             onChange={(e) => {
@@ -96,30 +96,40 @@ export default function Topbar({ onToggleSidebar }) {
             }}
             onFocus={() => setShowResults(true)}
             onBlur={() => setTimeout(() => setShowResults(false), 200)}
-            placeholder="Search active temples..."
-            className="pl-9 text-xs h-9 bg-slate-50 border-slate-200 rounded-lg w-full focus:bg-white transition-all"
+            placeholder="Search temples by name…"
+            className="pl-8 pr-3 text-xs h-9 bg-slate-50 border-slate-200 rounded-lg w-full focus:bg-white transition-all focus:border-primary/40 focus:ring-0"
           />
+
+          {showResults && searchResults.length > 0 && (
+            <div className="absolute top-10 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto p-1 space-y-0.5">
+              {searchResults.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    navigate(`/temples/${t.id}`);
+                    setTempleSearch("");
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-md font-medium text-slate-700 flex items-start gap-2.5 group"
+                >
+                  <span className="w-5 h-5 rounded bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 mt-0.5 text-[9px] font-bold">T</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="font-bold block truncate">{t.name}</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      {[t.area, t.city, t.state].filter(Boolean).join(", ") || "India"}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {showResults && searchResults.length > 0 && (
-          <div className="absolute top-10 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto p-1 space-y-0.5">
-            {searchResults.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  navigate(`/temples/${t.id}`);
-                  setTempleSearch("");
-                }}
-                className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-md font-medium text-slate-700 flex flex-col"
-              >
-                <span className="font-bold">{t.name}</span>
-                <span className="text-[10px] text-slate-400 mt-0.5">{t.city || 'India'}{t.state ? `, ${t.state}` : ""}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Filter pills */}
+        <TempleFilterBar onFilter={(filters) => {
+          const params = new URLSearchParams(filters).toString();
+          navigate(`/temples?${params}`);
+        }} />
       </div>
-
 
       <div className="flex items-center gap-2 md:gap-3 ml-auto shrink-0">
         {/* Active users chip - hidden on mobile */}
@@ -192,5 +202,72 @@ export default function Topbar({ onToggleSidebar }) {
         </DropdownMenu>
       </div>
     </header>
+  );
+}
+
+// ─── Temple filter bar ──────────────────────────────────────────────────────
+const FILTER_AREAS  = ["All Areas", "Palitana", "Girnar", "Shatrunjaya", "Pawapuri", "Rajgir"];
+const FILTER_CITIES = ["All Cities", "Ahmedabad", "Mumbai", "Surat", "Rajkot", "Vadodara", "Pune", "Delhi"];
+const FILTER_STATES = ["All States", "Gujarat", "Maharashtra", "Rajasthan", "Karnataka", "Tamil Nadu", "Uttar Pradesh"];
+
+function TempleFilterBar({ onFilter }) {
+  const [area,  setArea]  = useState("");
+  const [city,  setCity]  = useState("");
+  const [state, setState] = useState("");
+
+  const handleChange = (key, value) => {
+    const next = { area, city, state, [key]: value };
+    if (key === "area")  setArea(value);
+    if (key === "city")  setCity(value);
+    if (key === "state") setState(value);
+
+    const params = {};
+    if (next.area  && next.area  !== "All Areas")   params.area  = next.area;
+    if (next.city  && next.city  !== "All Cities")  params.city  = next.city;
+    if (next.state && next.state !== "All States")  params.state = next.state;
+    onFilter(params);
+  };
+
+  const selectCls =
+    "h-9 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-600 px-2 pr-7 appearance-none cursor-pointer hover:bg-white focus:outline-none focus:border-primary/40 transition-colors font-medium";
+
+  return (
+    <div className="flex items-center gap-1.5 shrink-0">
+      <div className="relative">
+        <select
+          id="topbar-filter-area"
+          value={area}
+          onChange={(e) => handleChange("area", e.target.value)}
+          className={selectCls}
+        >
+          {FILTER_AREAS.map((a) => <option key={a} value={a === "All Areas" ? "" : a}>{a}</option>)}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+      </div>
+
+      <div className="relative">
+        <select
+          id="topbar-filter-city"
+          value={city}
+          onChange={(e) => handleChange("city", e.target.value)}
+          className={selectCls}
+        >
+          {FILTER_CITIES.map((c) => <option key={c} value={c === "All Cities" ? "" : c}>{c}</option>)}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+      </div>
+
+      <div className="relative">
+        <select
+          id="topbar-filter-state"
+          value={state}
+          onChange={(e) => handleChange("state", e.target.value)}
+          className={selectCls}
+        >
+          {FILTER_STATES.map((s) => <option key={s} value={s === "All States" ? "" : s}>{s}</option>)}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+      </div>
+    </div>
   );
 }

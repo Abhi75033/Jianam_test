@@ -45,6 +45,21 @@ export const NATIONALITIES = [
 ];
 export const NATIONALITY_OPTIONS = toOptions(NATIONALITIES);
 
+export const ALL_COUNTRIES = [
+  "India", "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", "Australia",
+  "Austria", "Azerbaijan", "Bahrain", "Bangladesh", "Belgium", "Bhutan", "Botswana", "Brazil", "Brunei",
+  "Bulgaria", "Cambodia", "Canada", "Chile", "China", "Colombia", "Croatia", "Cyprus", "Czech Republic",
+  "Denmark", "Egypt", "Ethiopia", "Fiji", "Finland", "France", "Georgia", "Germany", "Ghana", "Greece",
+  "Hong Kong", "Hungary", "Iceland", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Japan",
+  "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Laos", "Lebanon", "Luxembourg", "Malaysia", "Maldives",
+  "Mauritius", "Mexico", "Mongolia", "Morocco", "Myanmar", "Namibia", "Nepal", "Netherlands", "New Zealand",
+  "Nigeria", "Norway", "Oman", "Pakistan", "Panama", "Peru", "Philippines", "Poland", "Portugal", "Qatar",
+  "Romania", "Russia", "Saudi Arabia", "Singapore", "South Africa", "South Korea", "Spain", "Sri Lanka",
+  "Sudan", "Sweden", "Switzerland", "Taiwan", "Tanzania", "Thailand", "Turkey", "Uganda", "Ukraine",
+  "United Arab Emirates", "United Kingdom", "United States", "Uzbekistan", "Vietnam", "Zambia", "Zimbabwe", "Other"
+];
+export const COUNTRY_OPTIONS = toOptions(ALL_COUNTRIES);
+
 export const LANGUAGES = ["English", "Hindi", "Gujarati", "Marathi", "Rajasthani", "Kutchi", "Punjabi", "Tamil", "Telugu", "Kannada", "Bengali", "Other"];
 export const LANGUAGE_OPTIONS = toOptions(LANGUAGES);
 
@@ -98,7 +113,7 @@ export const DOC_TYPE_OPTIONS = toOptions(DOC_TYPES);
 
 export const WORK_CATEGORIES = [
   "Temple Staff", "Dharamshala Staff", "Bhojanshala Staff", "Security Guard",
-  "Housekeeping", "Poojari", "Manager", "Office Staff", "Maintenance",
+  "Housekeeping", "Pujari", "Manager", "Office Staff", "Maintenance",
   "Driver", "Gardener", "Electrician", "Plumber", "Volunteer Staff", "Other"
 ];
 export const WORK_CATEGORY_OPTIONS = toOptions(WORK_CATEGORIES);

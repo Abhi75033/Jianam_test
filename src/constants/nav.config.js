@@ -7,10 +7,10 @@ import {
   UserX, Home as HomeIcon, HelpCircle, LayoutTemplate, MessageSquareWarning,
   CreditCard, CalendarDays, PieChart, Activity, GitBranch, Map as MapIcon,
   Footprints, BookOpen, BadgeIndianRupee, Receipt, Flame, AlertTriangle,
-  BarChart2, Globe, ShieldAlert, CheckSquare, PhoneCall, Wallet
+  BarChart2, Globe, ShieldAlert, CheckSquare, PhoneCall, Wallet, FileText
 } from "lucide-react";
 
-export const NAV_LAYOUT = "nested"; // "flat" | "nested"
+export const NAV_LAYOUT = "flat"; // "flat" | "nested"
 
 export const ROUTE_TONES = {
   "/": "yellow",
@@ -65,9 +65,10 @@ export const TONE_HEX = {
 
 // --- FLAT STRUCTURE (Option 1) ---
 export const FLAT_NAV = [
+  { id: "sep-overview", isSeparator: true, label: "Overview" },
   { id: "sa-dashboard", label: "SA Dashboard", icon: LayoutDashboard, route: "/sa-dashboard", roles: ["SUPER_ADMIN"] },
   { id: "a-dashboard", label: "A Dashboard", icon: LayoutDashboard, route: "/", roles: ["TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JAIN_CENTER_ADMIN", "MONK_ADMIN"] },
-  
+
   { id: "sep-orgs", isSeparator: true, label: "Organizations" },
   { id: "flat-temples", label: "Temple", icon: Landmark, route: "/temples" },
   { id: "flat-jain-centers", label: "Jain Centre", icon: Building2, route: "/jain-centers" },
@@ -77,12 +78,12 @@ export const FLAT_NAV = [
   { id: "flat-community-pages", label: "Community Pages", icon: Globe, route: "/community-pages" },
 
   { id: "sep-people", isSeparator: true, label: "People" },
-  { id: "flat-jain-members", label: "Jain-Members", icon: Users, route: "/members" },
+  { id: "flat-jain-members", label: "Jain Members", icon: Users, route: "/members" },
   { id: "flat-non-jain-members", label: "Non-Jain Members", icon: UserX, route: "/non-jain-members" },
+  { id: "flat-ms", label: "MS Management", icon: HandHeart, route: "/monks" },
   { id: "flat-family", label: "Family", icon: UsersRound, route: "/family" },
+  { id: "flat-staff", label: "Staff Management", icon: Briefcase, route: "/staff" },
   { id: "flat-volunteers", label: "Volunteers", icon: HandshakeIcon, route: "/volunteers" },
-  { id: "flat-ms", label: "MS", icon: HandHeart, route: "/monks" },
-  { id: "flat-staff", label: "Staff", icon: Briefcase, route: "/staff" },
 
   { id: "sep-comm", isSeparator: true, label: "Communication" },
   { id: "flat-feed", label: "Feed", icon: Newspaper, route: "/feed" },
@@ -99,8 +100,8 @@ export const FLAT_NAV = [
   { id: "flat-booking-setup", label: "Booking Setup", icon: CalendarCheck, route: "/coming-soon?module=Booking Setup", featureFlag: true },
   { id: "flat-booking-categories", label: "Categories", icon: ClipboardList, route: "/coming-soon?module=Booking Categories", featureFlag: true },
   { id: "flat-booking-requests", label: "Requests", icon: CalendarCheck, route: "/bookings?tab=admin_bookings" },
-  { id: "flat-booking-reservations", label: "Reservations", icon: CalendarCheck, route: "/bookings?tab=my_bookings" },
-  { id: "flat-booking-calendar", label: "Calendar", icon: Calendar, route: "/bookings?tab=availability_calendar" },
+  { id: "flat-booking-reservations", label: "Reservations", icon: CalendarCheck, route: "/bookings?tab=reservations" },
+  { id: "flat-booking-calendar", label: "Calendar", icon: Calendar, route: "/booking-calendar" },
 
   { id: "sep-operations", isSeparator: true, label: "Operations" },
   { id: "flat-visitors", label: "Visitors", icon: ScanLine, route: "/visitors" },
@@ -119,9 +120,10 @@ export const FLAT_NAV = [
 
   { id: "sep-admin-mgt", isSeparator: true, label: "Admin Management" },
   { id: "flat-admin-users", label: "Admin Users", icon: UsersRound, route: "/admins", roles: ["SUPER_ADMIN"] },
-  { id: "flat-roles-permissions", label: "Roles & Permission Assignment", icon: Settings, route: "/settings?tab=roles", roles: ["SUPER_ADMIN"], featureFlag: true },
-  { id: "flat-login-history", label: "Login History", icon: ClipboardList, route: "/settings?tab=security", roles: ["SUPER_ADMIN"], featureFlag: true },
-  { id: "flat-account-status", label: "Account Status", icon: ShieldAlert, route: "/settings?tab=status", roles: ["SUPER_ADMIN"], featureFlag: true },
+  { id: "flat-subscription-plans", label: "Subscription Plans", icon: CreditCard, route: "/subscription-plans", roles: ["SUPER_ADMIN"] },
+  { id: "flat-roles-permissions", label: "Roles & Permission Assignment", icon: Settings, route: "/roles-permissions", roles: ["SUPER_ADMIN"] },
+  { id: "flat-login-history", label: "Login History", icon: ClipboardList, route: "/login-history", roles: ["SUPER_ADMIN"] },
+  { id: "flat-account-status", label: "Account Status", icon: ShieldAlert, route: "/account-status", roles: ["SUPER_ADMIN"] },
 
   { id: "flat-reports", label: "Reports", icon: TrendingUp, route: "/reports" },
   { id: "flat-support", label: "Support", icon: LifeBuoy, route: "/support-tickets" },
@@ -467,7 +469,7 @@ export const NESTED_NAV = [
         icon: CalendarCheck,
         children: [
           { id: "bm-req", label: "Booking Requests", route: "/bookings?tab=admin_bookings" },
-          { id: "bm-res", label: "Reservations", route: "/bookings?tab=my_bookings" },
+          { id: "bm-res", label: "Reservations", route: "/bookings?tab=reservations" },
           { id: "bm-walkin", label: "Walk-in Bookings", route: "/coming-soon?module=Walk-in Bookings", featureFlag: true },
           { id: "bm-group", label: "Group Bookings", route: "/coming-soon?module=Group Bookings", featureFlag: true },
           { id: "bm-wait", label: "Waiting List", route: "/coming-soon?module=Booking Waiting List", featureFlag: true },
@@ -492,7 +494,7 @@ export const NESTED_NAV = [
         label: "Calendar",
         icon: Calendar,
         children: [
-          { id: "bl-grid", label: "Daily, Weekly, Monthly", route: "/bookings?tab=availability_calendar" },
+          { id: "bl-grid", label: "Daily, Weekly, Monthly", route: "/booking-calendar" },
           { id: "bl-res", label: "Resource Availability", route: "/bookings?tab=availability_calendar" }
         ]
       },

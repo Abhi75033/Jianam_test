@@ -68,12 +68,34 @@ api.interceptors.response.use(
 );
 
 export function extractErrorMessage(err) {
-  const e = err?.response?.data?.error;
-  if (!e) return err?.message || "Something went wrong";
-  if (Array.isArray(e.errors) && e.errors.length) {
-    return e.errors.map((x) => `${x.field}: ${x.message}`).join(", ");
+  if (!err) return "An error occurred";
+  if (typeof err === "string") return err;
+
+  const resData = err?.response?.data;
+  if (typeof resData === "string") return resData;
+
+  const e = resData?.error || resData;
+  if (typeof e === "string") return e;
+
+  if (e?.fieldErrors && typeof e.fieldErrors === "object") {
+    const details = Object.entries(e.fieldErrors)
+      .map(([field, msg]) => `${field}: ${Array.isArray(msg) ? msg.join(", ") : typeof msg === "string" ? msg : JSON.stringify(msg)}`)
+      .join("; ");
+    if (details) return details;
   }
-  return e.message || "Request failed";
+
+  if (Array.isArray(e?.errors) && e.errors.length) {
+    const details = e.errors
+      .map((x) => (typeof x === "string" ? x : `${x.field || "error"}: ${x.message || "invalid"}`))
+      .join(", ");
+    if (details) return details;
+  }
+
+  if (typeof e?.message === "string") return e.message;
+  if (typeof resData?.message === "string") return resData.message;
+
+  if (typeof err?.message === "string") return err.message;
+  return "Request failed";
 }
 
 export const API_BASE = API_BASE_URL;

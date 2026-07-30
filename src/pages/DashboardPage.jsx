@@ -188,7 +188,9 @@ const ORG_TYPES = [
   { key: "TEMPLE", label: "Temples" },
   { key: "DHARAMSHALA", label: "Dharamshalas" },
   { key: "JAIN_CENTER", label: "Jain Centers" },
-  { key: "ADMIN", label: "Admins" },
+  { key: "STHANAK", label: "Sthanaks" },
+  { key: "COMMUNITY_PAGE", label: "Community Pages" },
+  { key: "ADMIN", label: "Admins (System & Org)" },
 ];
 
 export default function DashboardPage() {
@@ -213,7 +215,7 @@ export default function DashboardPage() {
       setLoadingPlatform(true);
       api.get("/dashboard/platform")
         .then((res) => setPlatformData(res.data?.data || null))
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => setLoadingPlatform(false));
     }
   }, [isSuperAdmin, activeDashboardTab, reloadKey]);
@@ -301,7 +303,7 @@ export default function DashboardPage() {
               const org = res.data?.data;
               if (org) setOrgName(org.name);
             })
-            .catch(() => {});
+            .catch(() => { });
         });
     }
     // eslint-disable-next-line
@@ -311,37 +313,37 @@ export default function DashboardPage() {
     if (!orgId) return;
     api.get(`/dashboard/admin/${orgId}`)
       .then((res) => setData(res.data?.data || null))
-      .catch(() => {});
+      .catch(() => { });
 
     // Fetch dynamic monks
     api.get("/monks").then((res) => {
       setMonksList(res.data?.data || []);
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Fetch dynamic tours
     api.get("/tours").then((res) => {
       setToursList(res.data?.data || []);
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Fetch dynamic events
     api.get("/events").then((res) => {
       setEventsList(res.data?.data || []);
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Fetch dynamic volunteers
     api.get("/volunteers").then((res) => {
       setVolunteersList(res.data?.data || []);
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Fetch dynamic announcements
     api.get("/announcements").then((res) => {
       setAnnouncementsList(res.data?.data || []);
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Fetch dynamic donations
     api.get("/donations").then((res) => {
       setDonationsList(res.data?.data || []);
-    }).catch(() => {});
+    }).catch(() => { });
 
   }, [orgId, reloadKey]);
 
@@ -377,65 +379,65 @@ export default function DashboardPage() {
   // Mappers and fallbacks
   const activeMonks = monksList.length > 0
     ? monksList.slice(0, 5).map(m => ({
-        id: m.id,
-        name: m.dikshaName || "Maharaj Saheb",
-        currently: m.currentLocationName || m.currentTemple?.name || "En Route",
-        eta: "ETA: On time",
-        status: m.trackingStatus || "Moving",
-        tone: m.trackingStatus === "RESTING" ? "orange" : "blue"
-      }))
+      id: m.id,
+      name: m.dikshaName || "Maharaj Saheb",
+      currently: m.currentLocationName || m.currentTemple?.name || "En Route",
+      eta: "ETA: On time",
+      status: m.trackingStatus || "Moving",
+      tone: m.trackingStatus === "RESTING" ? "orange" : "blue"
+    }))
     : [];
 
   const activeYatras = toursList.length > 0
     ? toursList.slice(0, 5).map(t => {
-        const total = t.jatraTarget || 99;
-        return {
-          name: t.name,
-          participants: t.participantsCount || 0,
-          completed: `${t.completedCount || 0} / ${total}`,
-          progress: Math.min(Math.round(((t.completedCount || 0) / total) * 100), 100)
-        };
-      })
+      const total = t.jatraTarget || 99;
+      return {
+        name: t.name,
+        participants: t.participantsCount || 0,
+        completed: `${t.completedCount || 0} / ${total}`,
+        progress: Math.min(Math.round(((t.completedCount || 0) / total) * 100), 100)
+      };
+    })
     : [];
 
   const activeEvents = eventsList.length > 0
     ? eventsList.slice(0, 3).map(ev => {
-        const date = new Date(ev.startAt);
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        return {
-          day: date.getDate() || 1,
-          month: months[date.getMonth()] || "May",
-          title: ev.title,
-          time: ev.timeDetails || "09:00 AM - 12:00 PM",
-          tone: ev.isPaid ? "purple" : "green"
-        };
-      })
+      const date = new Date(ev.startAt);
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return {
+        day: date.getDate() || 1,
+        month: months[date.getMonth()] || "May",
+        title: ev.title,
+        time: ev.timeDetails || "09:00 AM - 12:00 PM",
+        tone: ev.isPaid ? "purple" : "green"
+      };
+    })
     : [];
 
   const activeVolunteers = volunteersList.length > 0
     ? volunteersList.slice(0, 5).map(v => ({
-        name: v.member?.fullName || v.name || "Jain Volunteer",
-        duty: v.assignedDuty || "Seva Duty",
-        time: v.shiftHours || "08:00 AM - 04:00 PM"
-      }))
+      name: v.member?.fullName || v.name || "Jain Volunteer",
+      duty: v.assignedDuty || "Seva Duty",
+      time: v.shiftHours || "08:00 AM - 04:00 PM"
+    }))
     : [];
 
   const recentDonorsList = donationsList.length > 0
     ? donationsList.slice(0, 4).map(d => ({
-        name: d.donorName || "Anonymous",
-        amount: d.totalAmount,
-        time: d.createdAt ? new Date(d.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just Now"
-      }))
+      name: d.donorName || "Anonymous",
+      amount: d.totalAmount,
+      time: d.createdAt ? new Date(d.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just Now"
+    }))
     : [];
 
   const activeAnnouncements = announcementsList.length > 0
     ? announcementsList.slice(0, 3).map(a => ({
-        icon: Megaphone,
-        tone: a.isHighPriority ? "red" : "blue",
-        title: a.title,
-        desc: a.body,
-        when: a.createdAt ? formatDate(a.createdAt) : "Today"
-      }))
+      icon: Megaphone,
+      tone: a.isHighPriority ? "red" : "blue",
+      title: a.title,
+      desc: a.body,
+      when: a.createdAt ? formatDate(a.createdAt) : "Today"
+    }))
     : [];
 
   const getDonationsTrend = () => {
@@ -452,21 +454,19 @@ export default function DashboardPage() {
         <div className="flex border-b border-slate-200 mb-6 gap-2 bg-slate-50 p-1.5 rounded-lg border">
           <button
             onClick={() => setActiveDashboardTab("ADMIN")}
-            className={`py-2 px-4 text-xs font-bold rounded-md transition-all ${
-              activeDashboardTab === "ADMIN"
+            className={`py-2 px-4 text-xs font-bold rounded-md transition-all ${activeDashboardTab === "ADMIN"
                 ? "bg-white text-orange-500 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
-            }`}
+              }`}
           >
             A Dashboard
           </button>
           <button
             onClick={() => setActiveDashboardTab("SA_DASHBOARD")}
-            className={`py-2 px-4 text-xs font-bold rounded-md transition-all ${
-              activeDashboardTab === "SA_DASHBOARD"
+            className={`py-2 px-4 text-xs font-bold rounded-md transition-all ${activeDashboardTab === "SA_DASHBOARD"
                 ? "bg-white text-orange-500 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
-            }`}
+              }`}
           >
             SA Dashboard
           </button>

@@ -58,6 +58,11 @@ import IncorrectReportsPage from "@/pages/IncorrectReportsPage";
 import SubscriptionPlansPage from "@/pages/SubscriptionPlansPage";
 import AdminsPage from "@/pages/AdminsPage";
 import MemberReportsPage from "@/pages/MemberReportsPage";
+import AdminReportsPage from "@/pages/AdminReportsPage";
+import RolesPermissionsPage from "@/pages/RolesPermissionsPage";
+import LoginHistoryPage from "@/pages/LoginHistoryPage";
+import AccountStatusPage from "@/pages/AccountStatusPage";
+import LiveReportPage from "@/pages/LiveReportPage";
 import DonationReportsPage from "@/pages/DonationReportsPage";
 import EventsReportsPage from "@/pages/EventsReportsPage";
 import FeedAnalyticsPage from "@/pages/FeedAnalyticsPage";
@@ -217,6 +222,16 @@ function AdminApp() {
               }
             />
             <Route path="stanaks" element={<StanaksPage />} />
+            <Route
+              path="stanaks/:id"
+              element={
+                <OrgDetailPage
+                  basePath="/stanaks"
+                  entityLabel="Stanak"
+                  apiPrefix="/temples"
+                />
+              }
+            />
             <Route path="bhojanshala" element={<ComingSoonPage moduleName="Bhojanshala Management" />} />
             <Route path="community-pages" element={<CommunityPagesPage />} />
 
@@ -268,7 +283,9 @@ function AdminApp() {
 
             {/* ─── Reports & Analytics ────────────────────────────── */}
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="live-report" element={<LiveReportPage />} />
             <Route path="reports/members" element={<MemberReportsPage />} />
+            <Route path="reports/admins" element={<AdminReportsPage />} />
             <Route path="reports/donations" element={<DonationReportsPage />} />
             <Route path="reports/events" element={<EventsReportsPage />} />
             <Route path="reports/feed-analytics" element={<FeedAnalyticsPage />} />
@@ -281,8 +298,11 @@ function AdminApp() {
             <Route path="support/callback-requests" element={<ComingSoonPage moduleName="Callback Requests" />} />
             <Route path="faq" element={<FaqPage />} />
 
-            {/* ─── Settings ───────────────────────────────────────── */}
+            {/* ─── Settings & Admin Management ────────────────────── */}
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="roles-permissions" element={<RolesPermissionsPage />} />
+            <Route path="login-history" element={<LoginHistoryPage />} />
+            <Route path="account-status" element={<AccountStatusPage />} />
             <Route path="settings/payment-settings" element={<ComingSoonPage moduleName="Payment Settings" />} />
             <Route path="admins" element={<AdminsPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />

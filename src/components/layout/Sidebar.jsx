@@ -102,16 +102,18 @@ function NavLeaf({ item, collapsed, onNavigate, indent }) {
         className={cn(
           "flex items-center rounded-lg text-sm transition-all duration-150 group relative",
           collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5",
-          active ? "bg-white/15 text-white" : "text-blue-100/70 hover:text-white hover:bg-white/8"
+          active
+            ? "bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-500/20"
+            : "text-blue-100/80 hover:text-white hover:bg-white/10"
         )}
       >
         {Icon ? (
           <span
-            className="h-7 w-7 rounded-md flex items-center justify-center shrink-0"
+            className="h-7 w-7 rounded-md flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
             style={
               active
-                ? { backgroundColor: "rgba(255,255,255,0.2)", color: "#fff" }
-                : { backgroundColor: `${hex}22`, color: hex }
+                ? { backgroundColor: "#F59E0B", color: "#0F172A" }
+                : { backgroundColor: `${hex}33`, color: hex }
             }
           >
             <Icon className="h-4 w-4" />
@@ -239,18 +241,26 @@ function FlatNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggle 
     const isExpanded = expandedState[key] !== false;
 
     return (
-      <div key={key} className="mb-2">
+      <div key={key} className={si > 0 ? "mb-2 mt-1" : "mb-2"}>
         {section.label && !collapsed && (
-          <div
-            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-200/60 flex items-center justify-between select-none cursor-pointer hover:text-white/90"
-            onClick={() => onToggle(key)}
-          >
-            <span>{section.label}</span>
-            <ChevronRight className={cn("h-3.5 w-3.5 transition-transform duration-200", isExpanded ? "rotate-90" : "")} />
-          </div>
+          <>
+            {si > 0 && <div className="h-px bg-white/8 mx-2 mb-2" />}
+            <div
+              className="px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-blue-200/50 flex items-center justify-between select-none cursor-pointer hover:text-blue-100/80 transition-colors group"
+              onClick={() => onToggle(key)}
+            >
+              <span>{section.label}</span>
+              <ChevronRight
+                className={cn(
+                  "h-3 w-3 text-blue-200/40 group-hover:text-blue-100/70 transition-all duration-200",
+                  isExpanded ? "rotate-90" : ""
+                )}
+              />
+            </div>
+          </>
         )}
         {(!section.label || isExpanded) && (
-          <ul className="mt-1 space-y-0.5">
+          <ul className="mt-0.5 space-y-0.5">
             {section.items.map((item) => (
               <NavLeaf key={item.id} item={item} collapsed={collapsed} onNavigate={onNavigate} />
             ))}
@@ -386,7 +396,7 @@ export default function Sidebar({ onNavigate, collapsed = false }) {
     <div
       className="h-full flex flex-col overflow-hidden transition-all duration-300"
       style={{
-        background: "linear-gradient(180deg, #192857 0%, #111d45 100%)",
+        background: "linear-gradient(180deg, #0d1527 0%, #080d19 100%)",
         color: "#EFF6FF",
         width: collapsed ? 64 : 256,
         minWidth: collapsed ? 64 : 256,
@@ -400,7 +410,7 @@ export default function Sidebar({ onNavigate, collapsed = false }) {
           collapsed ? "justify-center px-0" : "gap-3 px-5"
         )}
       >
-        <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm overflow-hidden p-1 shrink-0">
+        <div className="w-11 h-11 rounded-xl bg-white p-1 shadow-sm shrink-0 flex items-center justify-center">
           <img src="/logo.png" alt="JiNANAM" className="w-full h-full object-contain" />
         </div>
         <div
@@ -413,7 +423,7 @@ export default function Sidebar({ onNavigate, collapsed = false }) {
         >
           <div className="font-brand text-xl text-white tracking-wide">JiNANAM</div>
           <div className="text-[10px] tracking-[0.15em] uppercase text-white/60 mt-0.5">
-            Connecting Devotion
+            Connecting Jain Life
           </div>
         </div>
       </div>
@@ -441,15 +451,15 @@ export default function Sidebar({ onNavigate, collapsed = false }) {
         </nav>
       </div>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-white/10 shrink-0">
+      {/* Footer — version label only. NO mobile-app promo banner. */}
+      <div className="px-3 py-2.5 border-t border-white/10 shrink-0">
         {collapsed ? (
           <div className="flex justify-center">
             <span className="text-white/30 text-[9px]">v1</span>
           </div>
         ) : (
-          <div className="text-[10px] text-white/40 text-center">
-            v1.0 · Together in Seva
+          <div className="text-[10px] text-white/30 text-center tracking-wide">
+            v1.0 · JiNANAM Admin
           </div>
         )}
       </div>

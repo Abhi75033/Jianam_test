@@ -59,24 +59,49 @@ const EMPTY_OPP = {
   contactPersonId: "",
 };
 
+const VOLUNTEER_AREAS_PRESETS = [
+  "Cleanliness", "Event Support", "Bhojanshala", "Medical Help", "Security",
+  "Crowd Management", "Water & Food Service", "Parking", "Admin / Management", "Other"
+];
+
 function RoleRow({ role, idx, onChange, onRemove, canRemove }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1">
-        <Input
-          value={role.title}
-          onChange={(e) => onChange(idx, "title", e.target.value)}
-          placeholder="e.g. Cleanliness Coordinator"
-          className="h-8 text-sm"
-        />
+    <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div>
+          <select
+            value={role.preset || (VOLUNTEER_AREAS_PRESETS.includes(role.title) ? role.title : "Other")}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val !== "Other") {
+                onChange(idx, "title", val);
+              }
+              onChange(idx, "preset", val);
+            }}
+            className="w-full h-8 text-xs font-medium rounded border border-slate-200 bg-white px-2 focus:outline-none"
+          >
+            <option value="">Select Volunteer Area...</option>
+            {VOLUNTEER_AREAS_PRESETS.map((area) => (
+              <option key={area} value={area}>{area}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <Input
+            value={role.title}
+            onChange={(e) => onChange(idx, "title", e.target.value)}
+            placeholder="Area / Role Title (e.g. Cleanliness)"
+            className="h-8 text-xs bg-white"
+          />
+        </div>
       </div>
-      <div className="w-24">
+      <div className="w-32">
         <Input
           type="number"
           value={role.count}
           onChange={(e) => onChange(idx, "count", e.target.value)}
-          placeholder="Count"
-          className="h-8 text-sm"
+          placeholder="Count Needed"
+          className="h-8 text-xs font-bold bg-white"
           min={1}
         />
       </div>
@@ -84,9 +109,9 @@ function RoleRow({ role, idx, onChange, onRemove, canRemove }) {
         <button
           type="button"
           onClick={() => onRemove(idx)}
-          className="text-red-400 hover:text-red-600 p-1"
+          className="text-slate-400 hover:text-red-500 p-1"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="w-4 h-4" />
         </button>
       )}
     </div>
@@ -221,8 +246,8 @@ export default function VolunteersPage() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3 md:gap-4 mb-6">
-        <StatCard label="Opportunity Count" value={opportunities.length} delta="Active drives" icon={Briefcase} tone="purple" />
-        <StatCard label="Total Participants" value={apps.length} delta="Total registrations" icon={Users} tone="teal" />
+        <StatCard label="Opportunity Count" value={opportunities.length} delta="Total active drives" icon={Briefcase} tone="purple" />
+        <StatCard label="Total Volunteers Participated" value={apps.length} delta="Volunteers registered" icon={Users} tone="teal" />
         <StatCard label="Active Volunteers" value={active} delta="Approved profiles" icon={CheckCircle2} tone="green" />
         <StatCard label="On Duty" value={onDuty} delta="Currently assigned" icon={UserCircle2} tone="orange" />
         <StatCard label="Available" value={available} delta="Awaiting assignment" icon={UserCheck} tone="blue" />
@@ -272,18 +297,23 @@ export default function VolunteersPage() {
                         <td className="text-xs">{v.role || v.area?.name || "Volunteer"}</td>
                         <td className="text-center"><span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${STATUS_TONE[status] || STATUS_TONE.ACTIVE}`}>{status.replace("_", " ")}</span></td>
                         <td className="text-right">
-                          <div className="inline-flex gap-1">
-                            {(v.status === "PENDING" || !v.status) && canDo("VOLUNTEERS", "APPROVE") ? (
-                              <>
-                                <button onClick={() => decide(v.id, true)} className="p-1.5 rounded hover:bg-emerald-50" data-testid={`vol-approve-${v.id}`}><Check className="h-3.5 w-3.5 text-emerald-600" /></button>
-                                <button onClick={() => decide(v.id, false)} className="p-1.5 rounded hover:bg-red-50" data-testid={`vol-reject-${v.id}`}><X className="h-3.5 w-3.5 text-red-600" /></button>
-                              </>
-                            ) : (
-                              <>
-                                <button className="p-1.5 rounded hover:bg-secondary"><Eye className="h-3.5 w-3.5 text-muted-foreground" /></button>
-                                <button className="p-1.5 rounded hover:bg-secondary"><Edit className="h-3.5 w-3.5 text-muted-foreground" /></button>
-                              </>
-                            )}
+                          <div className="inline-flex gap-1.5">
+                            <button
+                              onClick={() => decide(v.id, true)}
+                              className="p-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 transition-all shadow-xs"
+                              title="Approve Volunteer & Assign On-Duty Seva"
+                              data-testid={`vol-approve-${v.id}`}
+                            >
+                              <Check className="h-3.5 w-3.5 font-bold text-emerald-600" />
+                            </button>
+                            <button
+                              onClick={() => decide(v.id, false)}
+                              className="p-1.5 rounded-md bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 transition-all shadow-xs"
+                              title="Decline / Release Duty"
+                              data-testid={`vol-reject-${v.id}`}
+                            >
+                              <X className="h-3.5 w-3.5 font-bold text-rose-600" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -324,15 +354,15 @@ export default function VolunteersPage() {
             <DialogTitle>Create Volunteer Opportunity</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-5 py-2">
-            {/* Organisation + Event Name */}
+          <div className="space-y-4 py-2">
+            {/* Organisation Name & Event Name */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-semibold">Organisation Name</Label>
                 <Input
                   value={form.organisationName}
                   onChange={(e) => setForm({ ...form, organisationName: e.target.value })}
-                  placeholder="e.g. Shree Palitana Derasar"
+                  placeholder="e.g. Shree Shantinath Jain Derasar"
                   className="mt-1"
                 />
               </div>
@@ -343,13 +373,14 @@ export default function VolunteersPage() {
                   onChange={(e) => setForm({ ...form, eventName: e.target.value })}
                   placeholder="e.g. Paryushan Seva 2025"
                   className="mt-1"
+                  required
                 />
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description of Event */}
             <div>
-              <Label className="text-xs font-semibold">Description</Label>
+              <Label className="text-xs font-semibold">Description of Event</Label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -359,12 +390,12 @@ export default function VolunteersPage() {
               />
             </div>
 
-            {/* Roles Section — repeatable rows */}
+            {/* Role Title and Number of Volunteers Required */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-xs font-semibold">Roles (Title + Count)</Label>
+                <Label className="text-xs font-semibold">Role Title & Number of Volunteers Required</Label>
                 <Button type="button" size="sm" variant="outline" onClick={addRole} className="h-7 text-xs gap-1">
-                  <Plus className="w-3 h-3" /> Add Role
+                  <Plus className="w-3 h-3" /> Add Role Title
                 </Button>
               </div>
               <div className="space-y-2">
@@ -380,7 +411,7 @@ export default function VolunteersPage() {
                 ))}
               </div>
               <p className="text-[11px] text-slate-400 mt-1">
-                e.g. Cleanliness — 20 volunteers, Food Service — 10 volunteers
+                e.g. Cleanliness — 20 volunteers, Event Support — 10 volunteers
               </p>
             </div>
 
@@ -418,7 +449,7 @@ export default function VolunteersPage() {
 
             {/* Location */}
             <div>
-              <Label className="text-xs font-semibold">Location Type</Label>
+              <Label className="text-xs font-semibold">Location (Type like inside temple, ground and address)</Label>
               <div className="flex gap-3 mt-2">
                 {[
                   { value: "inside_temple", label: "Inside Temple" },
@@ -451,9 +482,9 @@ export default function VolunteersPage() {
               )}
             </div>
 
-            {/* Instructions */}
+            {/* Instructions if any */}
             <div>
-              <Label className="text-xs font-semibold">Instructions</Label>
+              <Label className="text-xs font-semibold">Instructions if any</Label>
               <textarea
                 value={form.instructions}
                 onChange={(e) => setForm({ ...form, instructions: e.target.value })}
@@ -463,9 +494,12 @@ export default function VolunteersPage() {
               />
             </div>
 
-            {/* Contact Person */}
+            {/* Contact Person (link member) */}
             <div>
-              <Label className="text-xs font-semibold">Contact Person</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">Contact Person (link member)</Label>
+                <span className="text-[10px] text-emerald-600 font-medium">Phone number will be visible to all members</span>
+              </div>
               <MemberLinkSelect
                 value={form.contactPersonId}
                 onChange={(v) => setForm({ ...form, contactPersonId: v })}

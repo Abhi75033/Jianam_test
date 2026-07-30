@@ -271,6 +271,18 @@ export default function OffersPage() {
     api.post(`/offers/${offer.id}/track/view`).catch(() => {});
   };
 
+  const handleExportReport = () => {
+    const format = prompt("Choose export format: csv, xlsx, or pdf", "csv");
+    if (!format) return;
+    const link = document.createElement("a");
+    link.href = `${API_BASE}/offers/export?format=${format.toLowerCase()}`;
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Exporting Offers report as ${format.toUpperCase()}...`);
+  };
+
   const handleDeleteOffer = async (offerId) => {
     if (!confirm("Are you sure you want to archive/delete this offer?")) return;
     try {
@@ -348,6 +360,13 @@ export default function OffersPage() {
         </div>
         {isAuthorizedAdmin && (
           <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <Button
+              onClick={handleExportReport}
+              variant="outline"
+              className="bg-rose-800/40 hover:bg-rose-800/60 text-white font-bold h-10 px-4 border border-rose-400/40"
+            >
+              <Download className="h-4 w-4 mr-2" /> Export Reports
+            </Button>
             <Button
               onClick={() => { resetForm(); setCreateOpen(true); }}
               className="bg-white hover:bg-rose-50 text-rose-700 font-bold h-10 px-5 shadow-md border border-white"

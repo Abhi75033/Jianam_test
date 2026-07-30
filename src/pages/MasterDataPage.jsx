@@ -39,6 +39,12 @@ function ListEditor({ listKey }) {
   const [newCategory, setNewCategory] = useState("24 Tirthankars");
   const [saving, setSaving] = useState(false);
 
+  // Edit State
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editCategory, setEditCategory] = useState("24 Tirthankars");
+
   const load = () => {
     setLoading(true);
     api.get(`/master-data/${listKey}`).then((res) => {
@@ -62,6 +68,31 @@ function ListEditor({ listKey }) {
       load();
     } catch (e) { toast.error(extractErrorMessage(e)); }
     finally { setSaving(false); }
+  };
+
+  const startEdit = (item) => {
+    setEditingItem(item);
+    setEditName(item.name || "");
+    setEditCategory(item.category || "24 Tirthankars");
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editName.trim() || !editingItem) return;
+    setSaving(true);
+    try {
+      const payload = { name: editName.trim() };
+      if (listKey === "bhagwans") payload.category = editCategory;
+      await api.patch(`/master-data/${listKey}/${editingItem.id}`, payload);
+      toast.success("Master data item updated successfully!");
+      setEditModalOpen(false);
+      load();
+    } catch (e) {
+      toast.error(extractErrorMessage(e));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const remove = async (id) => {
@@ -94,7 +125,7 @@ function ListEditor({ listKey }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {items.map((it) => (
-            <div key={it.id} className="flex items-center justify-between px-3 py-2 border border-border rounded-md bg-white">
+            <div key={it.id} className="flex items-center justify-between px-3 py-2 border border-border rounded-md bg-white hover:border-purple-300 transition-colors">
               <div className="space-y-0.5">
                 <div className="text-sm font-medium">{it.name}</div>
                 {listKey === "bhagwans" && (
@@ -104,13 +135,58 @@ function ListEditor({ listKey }) {
                 )}
                 {it.code && <Badge variant="outline" className="text-[10px] mt-0.5">{it.code}</Badge>}
               </div>
-              <Button size="sm" variant="ghost" onClick={() => remove(it.id)} data-testid={`master-data-delete-${it.id}`}>
-                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button size="sm" variant="ghost" onClick={() => startEdit(it)} title="Edit Item Post Submission" data-testid={`master-data-edit-${it.id}`}>
+                  <span className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">Edit</span>
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => remove(it.id)} data-testid={`master-data-delete-${it.id}`}>
+                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-rose-600" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Edit Item Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="sm:max-w-md text-xs">
+          <DialogHeader>
+            <DialogTitle className="font-bold text-slate-850">Correction & Post-Submission Edit</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveEdit} className="space-y-4 pt-2">
+            <div>
+              <Label className="text-[10px] uppercase font-bold text-slate-500">Item Name *</Label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+                className="mt-1"
+                placeholder="Item name"
+              />
+            </div>
+            {listKey === "bhagwans" && (
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-500">Category</Label>
+                <select
+                  className="w-full h-9 mt-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                >
+                  <option value="24 Tirthankars">24 Tirthankars</option>
+                  <option value="Others">Others</option>
+                </select>
+              </div>
+            )}
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="ghost" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                Save Corrections
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

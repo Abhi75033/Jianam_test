@@ -52,7 +52,14 @@ const SPONSOR_CATEGORIES = [
 ];
 
 const TOUR_TYPES = [
-  "99 Yatra", "Palitana Yatra", "Girnar Yatra", "Sammed Shikharji Yatra", "Other"
+  "Palitana 99 Yatra",
+  "Palitana Taleti 99 Yatra",
+  "Palitana Babulnath 99 Yatra",
+  "Girnar 99 Yatra",
+  "Girnar Taleti 99 Yatra",
+  "Sammed Shikharji 99 Yatra",
+  "Sammed Shikharji Taleti 99 Yatra",
+  "Other"
 ];
 
 export default function ToursPage() {
@@ -85,14 +92,18 @@ export default function ToursPage() {
 
   // Form Fields - Create 99 Tour
   const [tourName, setTourName] = useState("");
-  const [tourType, setTourType] = useState("99 Yatra");
+  const [tourType, setTourType] = useState("Palitana 99 Yatra");
+  const [tourTypeOther, setTourTypeOther] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [jatraTarget, setJatraTarget] = useState(99);
   const [primaryMonkId, setPrimaryMonkId] = useState("");
-  const [monkGroupId, setMonkGroupId] = useState("");
+  const [monkGroupName, setMonkGroupName] = useState("");
+  const [monkGroupLeader, setMonkGroupLeader] = useState("");
+  const [supportingMonks, setSupportingMonks] = useState("");
+  const [dharamshalaId, setDharamshalaId] = useState("");
   const [savingTour, setSavingTour] = useState(false);
 
   // Form Fields - Sponsor Onboarding
@@ -194,17 +205,22 @@ export default function ToursPage() {
     e.preventDefault();
     setSavingTour(true);
     try {
+      const selectedType = tourType === "Other" ? tourTypeOther || "Other 99 Yatra" : tourType;
       const payload = {
         name: tourName,
         categoryId: "tour_cat_default",
-        category: { name: tourType },
+        category: { name: selectedType },
+        tourType: selectedType,
         startDate: new Date(startDate).toISOString(),
         endDate: new Date(endDate).toISOString(),
         location,
         description,
         jatraTarget: Number(jatraTarget),
-        primaryMonkId: primaryMonkId || "monk_default",
-        monkGroupId: monkGroupId || undefined
+        primaryMonkId: primaryMonkId || undefined,
+        monkGroupName: monkGroupName || undefined,
+        monkGroupLeader: monkGroupLeader || undefined,
+        supportingMonks: supportingMonks ? supportingMonks.split(",").map(s => s.trim()) : undefined,
+        dharamshalaId: dharamshalaId || undefined
       };
 
       await api.post("/tours", payload);
@@ -221,7 +237,9 @@ export default function ToursPage() {
 
   const resetTourForm = () => {
     setTourName(""); setStartDate(""); setEndDate(""); setLocation("");
-    setDescription(""); setJatraTarget(99); setPrimaryMonkId(""); setMonkGroupId("");
+    setDescription(""); setJatraTarget(99); setPrimaryMonkId("");
+    setMonkGroupName(""); setMonkGroupLeader(""); setSupportingMonks("");
+    setDharamshalaId(""); setTourTypeOther("");
   };
 
   // Add Sponsor details
@@ -461,17 +479,28 @@ export default function ToursPage() {
           <Button size="sm" variant="outline" onClick={() => setScheduleOpen(true)} className="h-8 text-[11px] font-bold">
             <Calendar className="h-3.5 w-3.5 mr-1" /> Daily Schedule
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setMessageOpen(true)} className="h-8 text-[11px] font-bold">
-            <MessageSquare className="h-3.5 w-3.5 mr-1" /> Broadcast Announcement
-          </Button>
         </div>
       </div>
 
+      {/* Monk Guidance Banner (§2) */}
+      {selectedTour && (
+        <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl text-amber-900 font-bold text-xs flex items-center gap-2.5 shadow-sm">
+          <span className="text-base">🪔</span>
+          <div>
+            <span>This 99 Yatra is being organized under the guidance of: </span>
+            <span className="text-orange-850 font-black">{selectedTour.primaryMonk?.dikshaName || selectedTour.monkGroupName || "Pujya Gurudev"}</span>
+            {selectedTour.monkGroupName && <span className="text-slate-600 font-semibold"> ({selectedTour.monkGroupName})</span>}
+          </div>
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4 bg-slate-100 p-1 rounded-xl">
-          <TabsTrigger value="admin_tours" className="px-5 py-2 font-bold text-xs rounded-lg">🛡️ Tour Dashboard & Ledger</TabsTrigger>
-          <TabsTrigger value="accommodation_control" className="px-5 py-2 font-bold text-xs rounded-lg">🏢 Room allocations</TabsTrigger>
-          <TabsTrigger value="announcements_timeline" className="px-5 py-2 font-bold text-xs rounded-lg">📢 Yatra communications</TabsTrigger>
+        <TabsList className="mb-4 bg-slate-100 p-1 rounded-xl flex-wrap">
+          <TabsTrigger value="admin_tours" className="px-4 py-2 font-bold text-xs rounded-lg">🛡️ Tour Control Ledger</TabsTrigger>
+          <TabsTrigger value="accommodation_control" className="px-4 py-2 font-bold text-xs rounded-lg">🏨 Accommodation & Rooms</TabsTrigger>
+          <TabsTrigger value="bulk_jatra" className="px-4 py-2 font-bold text-xs rounded-lg">✍️ Bulk Daily Jatra Entry</TabsTrigger>
+          <TabsTrigger value="announcements_timeline" className="px-4 py-2 font-bold text-xs rounded-lg">📢 Communications & Schedule</TabsTrigger>
+          <TabsTrigger value="reports" className="px-4 py-2 font-bold text-xs rounded-lg">📊 Reports & Exports</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Tour Dashboard */}
@@ -687,6 +716,136 @@ export default function ToursPage() {
             </div>
           </Card>
         </TabsContent>
+
+        {/* Tab 3: Bulk Daily Jatra Entry (§23) */}
+        <TabsContent value="bulk_jatra" className="space-y-4">
+          <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h3 className="font-bold text-sm text-slate-800">✍️ Single-Screen Bulk Daily Jatra Entry</h3>
+                <p className="text-[11px] text-slate-400">Enter today's count for each participant. Cumulative totals recalculate automatically.</p>
+              </div>
+              <Button onClick={handleBulkDailyProgress} className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9 text-xs">
+                Save All Daily Entries
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {participants.length === 0 ? (
+                <div className="text-slate-400 text-center py-8 text-xs">No participants enrolled in this tour.</div>
+              ) : (
+                participants.map((p) => {
+                  const currentCount = bulkJatraCounts[p.id] ?? 0;
+                  const currentTotal = p.cumulativeCount ?? 0;
+                  const newTotal = currentTotal + currentCount;
+                  const target = selectedTour?.jatraTarget ?? 99;
+                  const progressPct = Math.min(Math.round((newTotal / target) * 100), 100);
+
+                  return (
+                    <div key={p.id} className="p-3 border rounded-xl bg-slate-50/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                      <div className="space-y-1 flex-1">
+                        <div className="font-bold text-slate-800 text-xs flex items-center gap-2">
+                          <span>{p.member?.fullName}</span>
+                          <Badge variant="outline" className="text-[9px]">{p.member?.publicId}</Badge>
+                          <Badge variant="secondary" className="text-[9px]">{p.room?.name || "Unallocated Room"}</Badge>
+                        </div>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-2">
+                          <span>Previous Total: <b>{currentTotal}</b></span>
+                          <span>→</span>
+                          <span>Today: <b>+{currentCount}</b></span>
+                          <span>→</span>
+                          <span className="text-emerald-700 font-black">New Total: {newTotal} / {target} ({progressPct}%)</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 bg-white border rounded-lg p-1">
+                          <button
+                            type="button"
+                            onClick={() => setBulkJatraCounts(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] ?? 0) - 1) }))}
+                            className="h-7 w-7 rounded bg-slate-100 hover:bg-slate-200 font-black text-slate-700 flex items-center justify-center text-sm"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={currentCount}
+                            onChange={(e) => {
+                              const val = Math.max(0, Number(e.target.value));
+                              setBulkJatraCounts(prev => ({ ...prev, [p.id]: val }));
+                              setBulkAttendance(prev => ({ ...prev, [p.id]: val > 0 ? "PRESENT" : "ABSENT" }));
+                            }}
+                            className="w-14 text-center font-bold text-xs h-7 border-0 focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const val = (bulkJatraCounts[p.id] ?? 0) + 1;
+                              setBulkJatraCounts(prev => ({ ...prev, [p.id]: val }));
+                              setBulkAttendance(prev => ({ ...prev, [p.id]: "PRESENT" }));
+                            }}
+                            className="h-7 w-7 rounded bg-orange-600 hover:bg-orange-700 text-white font-black flex items-center justify-center text-sm"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <SearchableSelect
+                          value={bulkAttendance[p.id] ?? "PRESENT"}
+                          onValueChange={(val) => setBulkAttendance(prev => ({ ...prev, [p.id]: val }))}
+                          options={[
+                            { value: "PRESENT", label: "Present" },
+                            { value: "ABSENT", label: "Absent" },
+                            { value: "NOT_WELL", label: "Not Well" },
+                          ]}
+                          placeholder="Status"
+                          className="w-28 text-xs"
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* Tab 5: 9 Downloadable Reports (§32) */}
+        <TabsContent value="reports" className="space-y-4">
+          <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+            <div>
+              <h3 className="font-bold text-sm text-slate-800">📊 99 Yatra Tour Reports & Export Engine</h3>
+              <p className="text-[11px] text-slate-400">Download formatted PDF, Excel (XLSX), and CSV reports with JiNANAM branding. Reports remain available permanently.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { title: "1. Tour Summary Report", desc: "Overview of dates, monk guidance, duration, and target counts.", type: "summary" },
+                { title: "2. Member Participant Report", desc: "Enrolled devotees, age, gender, emergency contacts, parent links.", type: "member" },
+                { title: "3. Parent Contact Report", desc: "Linked parents, mobile numbers, relationship, read-only status.", type: "parent" },
+                { title: "4. Accommodation Report", desc: "Buildings, rooms, capacity, occupancy, room change audit log.", type: "accommodation" },
+                { title: "5. Daily Jatra Report", desc: "Day-wise daily counts, cumulative totals, attendance status.", type: "jatra" },
+                { title: "6. Communication Report", desc: "Chronological log of all broadcasted yatra announcements.", type: "communication" },
+                { title: "7. Sponsor Ledger Report", desc: "Sponsors list, categories (Meals, Water, Medical, etc.), amounts.", type: "sponsor" },
+                { title: "8. Medical Intake Report", desc: "Blood group, allergies, medications (Admin Restricted).", type: "medical" },
+                { title: "9. Certificate Audit Report", desc: "100% target achievers, completion dates, QR verification tokens.", type: "certificate" },
+              ].map((rep, idx) => (
+                <Card key={idx} className="p-3.5 rounded-xl border bg-slate-50/50 flex flex-col justify-between space-y-3">
+                  <div>
+                    <h4 className="font-bold text-xs text-slate-800">{rep.title}</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5 leading-normal">{rep.desc}</p>
+                  </div>
+                  <div className="flex gap-1.5 pt-2 border-t">
+                    <Button size="sm" variant="outline" className="h-6 text-[10px] flex-1" onClick={() => handleExportTourReport(rep.type, "pdf")}>PDF</Button>
+                    <Button size="sm" variant="outline" className="h-6 text-[10px] flex-1" onClick={() => handleExportTourReport(rep.type, "xlsx")}>Excel</Button>
+                    <Button size="sm" variant="outline" className="h-6 text-[10px] flex-1" onClick={() => handleExportTourReport(rep.type, "csv")}>CSV</Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* dialog 1: Create 99 Tour */}
@@ -708,12 +867,19 @@ export default function ToursPage() {
                 <SearchableSelect
                   value={tourType}
                   onValueChange={setTourType}
-                  options={TOUR_TYPE_OPTIONS}
+                  options={TOUR_TYPES.map(t => ({ value: t, label: t }))}
                   placeholder="Select Tour Type"
-                  className="mt-1.5"
+                  className="mt-1"
                 />
               </div>
             </div>
+
+            {tourType === "Other" && (
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">Specify Other Tour Type *</Label>
+                <Input value={tourTypeOther} onChange={(e) => setTourTypeOther(e.target.value)} placeholder="e.g. Custom 99 Yatra" required className="h-9 mt-1" />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -733,11 +899,22 @@ export default function ToursPage() {
               </div>
               <div>
                 <Label className="text-[10px] uppercase font-bold text-slate-400">Primary Monk ID *</Label>
-                <Input value={primaryMonkId} onChange={(e) => setPrimaryMonkId(e.target.value)} placeholder="Search ID" required className="h-9 mt-1" />
+                <Input value={primaryMonkId} onChange={(e) => setPrimaryMonkId(e.target.value)} placeholder="Search MS ID" required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Monk Group ID</Label>
-                <Input value={monkGroupId} onChange={(e) => setMonkGroupId(e.target.value)} className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">Monk Group Name</Label>
+                <Input value={monkGroupName} onChange={(e) => setMonkGroupName(e.target.value)} placeholder="e.g. Acharya Shri Group" className="h-9 mt-1" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">Group Leader</Label>
+                <Input value={monkGroupLeader} onChange={(e) => setMonkGroupLeader(e.target.value)} placeholder="Leader Name" className="h-9 mt-1" />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">Supporting Monks (comma separated)</Label>
+                <Input value={supportingMonks} onChange={(e) => setSupportingMonks(e.target.value)} placeholder="MS 1, MS 2..." className="h-9 mt-1" />
               </div>
             </div>
 
@@ -747,8 +924,8 @@ export default function ToursPage() {
                 <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Palitana, Gujarat" required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Cover Image URL</Label>
-                <Input placeholder="/static/tours/cover.png" className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">Dharamshala ID Link</Label>
+                <Input value={dharamshalaId} onChange={(e) => setDharamshalaId(e.target.value)} placeholder="Dharamshala ID" className="h-9 mt-1" />
               </div>
             </div>
 

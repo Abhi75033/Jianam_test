@@ -82,7 +82,13 @@ export default function DonationsPage() {
       // Fetch orgs list if super admin
       if (isSuperAdmin) {
         api.get("/temples")
-          .then((r) => setOrgsList(r.data?.data?.items || r.data?.data || []))
+          .then((r) => {
+            const list = r.data?.data?.items || r.data?.data || [];
+            setOrgsList(list);
+            if (list.length > 0) {
+              setTargetOrgId((prev) => prev || list[0].id);
+            }
+          })
           .catch(() => {});
       }
     }
@@ -124,53 +130,73 @@ export default function DonationsPage() {
 
   const handleRecordSubmit = async (e) => {
     e.preventDefault();
-    const finalOrgId = isSuperAdmin ? targetOrgId : orgId;
-    if (!finalOrgId) { toast.error("Please select an organization."); return; }
+    let finalOrgId = isSuperAdmin ? targetOrgId : orgId;
+    if (!finalOrgId && orgsList.length > 0) {
+      finalOrgId = orgsList[0].id;
+      setTargetOrgId(orgsList[0].id);
+    }
+    if (!finalOrgId) { toast.error("Please select a temple/organization."); return; }
     if (!amount || Number(amount) <= 0) { toast.error("Please enter a valid amount."); return; }
-    if (!txRef) { toast.error("Transaction reference is required."); return; }
-    if (!proofFile) { toast.error("Payment proof file is required."); return; }
 
     // Validate category splits sum
     const totalAmountNum = Number(amount);
+    let currentSplits = { ...splits };
+    let filledSum = Object.values(currentSplits).reduce((sum, v) => sum + (Number(v) || 0), 0);
+
+    // Auto-allocate if user did not enter custom category splits
+    if (filledSum === 0 && categories.length > 0) {
+      const splitAmt = Number((totalAmountNum / categories.length).toFixed(2));
+      const autoSplits = {};
+      categories.forEach((c) => { autoSplits[c.id] = splitAmt; });
+      const autoSum = splitAmt * categories.length;
+      const diff = Number((totalAmountNum - autoSum).toFixed(2));
+      if (diff !== 0) {
+        autoSplits[categories[categories.length - 1].id] = Number((splitAmt + diff).toFixed(2));
+      }
+      currentSplits = autoSplits;
+    }
+
     let splitsSum = 0;
     const categorySplits = [];
-
-    Object.entries(splits).forEach(([catId, val]) => {
+    Object.entries(currentSplits).forEach(([catId, val]) => {
       const valNum = Number(val);
       if (valNum > 0) {
-        splitsSum += valNum;
+        splitsSum = Number((splitsSum + valNum).toFixed(2));
         categorySplits.push({ donationCategoryId: catId, amount: valNum });
       }
     });
 
-    if (Math.abs(splitsSum - totalAmountNum) > 0.01) {
-      toast.error(`Category splits sum (₹${splitsSum}) must equal total amount (₹${totalAmountNum}).`);
+    if (Math.abs(splitsSum - totalAmountNum) > 0.05) {
+      toast.error(`Category splits sum (₹${splitsSum}) must equal total amount (₹${totalAmountNum}). Click "Split Evenly" to auto-allocate.`);
       return;
     }
 
     setSubmitting(true);
     try {
-      // 1. Upload proof file
-      const fd = new FormData();
-      fd.append("proof", proofFile);
-      const uploadRes = await api.post(`/donations/upload-proof`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const proofUrl = uploadRes.data?.data?.proofUrl;
-
-      if (!proofUrl) throw new Error("Failed to upload proof");
+      let proofUrl = undefined;
+      // 1. Upload proof file if provided
+      if (proofFile) {
+        const fd = new FormData();
+        fd.append("proof", proofFile);
+        const uploadRes = await api.post(`/donations/upload-proof`, fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        proofUrl = uploadRes.data?.data?.proofUrl;
+      }
 
       // 2. Submit manual donation record
-      await api.post(`/donations/manual`, {
+      const payload = {
         organizationId: finalOrgId,
         totalAmount: totalAmountNum,
         currency: "INR",
-        transactionReference: txRef,
-        proofUrl,
         categorySplits,
-        donorMemberPublicId: donorId || undefined,
         idempotencyKey: "don_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36),
-      });
+      };
+      if (txRef && txRef.trim()) payload.transactionReference = txRef.trim();
+      if (proofUrl) payload.proofUrl = proofUrl;
+      if (donorId && donorId.trim()) payload.donorMemberPublicId = donorId.trim();
+
+      await api.post(`/donations/manual`, payload);
 
       toast.success("Donation recorded successfully.");
       setRecordOpen(false);
@@ -365,8 +391,8 @@ export default function DonationsPage() {
                 <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 5000" min={1} required />
               </div>
               <div>
-                <Label className="text-xs">Tx Ref / Receipt Number *</Label>
-                <Input value={txRef} onChange={(e) => setTxRef(e.target.value)} placeholder="e.g. UPI txn ref or cash no." required />
+                <Label className="text-xs">Tx Ref / Receipt Number (Optional)</Label>
+                <Input value={txRef} onChange={(e) => setTxRef(e.target.value)} placeholder="e.g. UPI txn ref or cash no." />
               </div>
               <div className="col-span-2">
                 <Label className="text-xs">Donor Member ID (Optional)</Label>
@@ -397,7 +423,7 @@ export default function DonationsPage() {
 
             {/* Payment Proof File */}
             <div>
-              <Label className="text-xs">Payment Proof Receipt *</Label>
+              <Label className="text-xs">Payment Proof Receipt (Optional)</Label>
               <div className="flex items-center gap-3 mt-1.5">
                 <div className="h-16 w-16 rounded-lg bg-slate-100 border flex items-center justify-center overflow-hidden">
                   {proofPreview ? (

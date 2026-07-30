@@ -206,7 +206,9 @@ function IdCardVisual({ member, relation }) {
 
 /* ─── Edit Panel: 21/22 Sections ─── */
 function EditPanel({ member, onSave, onCancel }) {
-  const isJain = member?.category === "JAIN" || !member?.category;
+  // A member is Jain only when category === "JAIN" (explicit) OR when category is absent/null (default).
+  // When category === "NON_JAIN", isJain must be false so Jain-specific tabs are hidden.
+  const isJain = member?.category !== "NON_JAIN";
   const [subTab, setSubTab] = useState("personal");
   
   // Simulated verification hooks
@@ -694,33 +696,43 @@ function EditPanel({ member, onSave, onCancel }) {
                   </Button>
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Full Address</Label>
-                  <Input value={form.currentAddress.line1} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, line1: e.target.value } })} className="bg-white mt-1" />
+                  <Label className="text-xs font-semibold text-slate-600">Address</Label>
+                  <Input value={form.currentAddress.line1} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, line1: e.target.value } })} placeholder="Full address, House/Flat No, Street" className="bg-white mt-1" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">City</Label>
-                    <Input value={form.currentAddress.city} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, city: e.target.value } })} className="bg-white mt-1" />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-semibold text-slate-600">State</Label>
-                    <Input value={form.currentAddress.state} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, state: e.target.value } })} className="bg-white mt-1" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs font-semibold text-slate-600">Country</Label>
+                    <Label className="text-xs font-semibold text-slate-600">Country (default India)</Label>
                     <SearchableSelect
-                      value={form.currentAddress.country}
+                      value={form.currentAddress.country || "India"}
                       onValueChange={(v) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: v } })}
                       options={NATIONALITY_OPTIONS}
-                      placeholder="Select country"
+                      placeholder="India"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">Pin Code</Label>
-                    <Input value={form.currentAddress.pincode} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, pincode: e.target.value } })} className="bg-white mt-1" />
+                    <Label className="text-xs font-semibold text-slate-600">Pincode</Label>
+                    <Input value={form.currentAddress.pincode} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, pincode: e.target.value } })} placeholder="6-digit Pincode" className="bg-white mt-1" maxLength={6} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs font-semibold text-slate-600">Area</Label>
+                    <Input value={form.currentAddress.area || ""} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, area: e.target.value } })} placeholder="Thane E or Thane W" className="bg-white mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-slate-600">City</Label>
+                    <Input value={form.currentAddress.city} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, city: e.target.value } })} placeholder="e.g. Thane" className="bg-white mt-1" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs font-semibold text-slate-600">District</Label>
+                    <Input value={form.currentAddress.district || ""} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, district: e.target.value } })} placeholder="e.g. Thane District" className="bg-white mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-slate-600">State</Label>
+                    <Input value={form.currentAddress.state} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, state: e.target.value } })} placeholder="e.g. Maharashtra" className="bg-white mt-1" />
                   </div>
                 </div>
               </div>
@@ -783,7 +795,7 @@ function EditPanel({ member, onSave, onCancel }) {
               </div>
 
               <div className="p-3 bg-orange-50 border border-orange-100 rounded-lg text-xs text-orange-700 leading-relaxed">
-                Preferred temples list and followed monk updates will receive primary priority in the custom mobile feeds.
+                Preferred temples list and followed MS updates will receive primary priority in the custom mobile feeds.
               </div>
             </div>
           )}
@@ -956,13 +968,17 @@ function EditPanel({ member, onSave, onCancel }) {
             <div className="space-y-4">
               {/* Family members builder */}
               <div className="space-y-2">
-                <div className="flex justify-between items-center border-b pb-1">
+                <div className="flex justify-between items-center border-b pb-2">
                   <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">👨‍👩‍👧‍👦 Family Members</h3>
-                  <Button type="button" className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-10 px-4 rounded-lg shadow transition-all" onClick={() => {
-                    const next = [...form.familyMembers, { id: Date.now(), fullName: "", relationship: "Son", mobile: "" }];
-                    setForm({ ...form, familyMembers: next });
-                  }}>
-                    + Add Family Member
+                  <Button
+                    type="button"
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-md transition-all"
+                    onClick={() => {
+                      const next = [...form.familyMembers, { id: Date.now(), fullName: "", relationship: "Son", mobile: "" }];
+                      setForm({ ...form, familyMembers: next });
+                    }}
+                  >
+                    + Add Member
                   </Button>
                 </div>
                 {form.familyMembers.length === 0 && (

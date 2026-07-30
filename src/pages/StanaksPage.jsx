@@ -4,10 +4,11 @@
  * NO Gaccha field. NO Bhagwan fields.
  */
 import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import { api, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, Search, Home } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, Home, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +20,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 
 // Community options — FIXED per Stanak document spec
 const COMMUNITY_OPTIONS = [
-  "Shvetambar", "Digambar", "Sthanakvasi", "Terapanthi", "Other",
+  "Shwetambar", "Digambar", "Sthanakvasi", "Terapanthi", "Other",
 ];
 
 // Sub-Sect options — FIXED (no Gaccha)
@@ -31,7 +32,7 @@ const SUB_SECT_OPTIONS = [
 
 const EMPTY_FORM = {
   name: "",
-  community: "Shvetambar",
+  community: "Shwetambar",
   subSect: "Sthanakvasi",
   address: "",
   city: "",
@@ -44,16 +45,8 @@ const EMPTY_FORM = {
   notes: "",
 };
 
-function extractErrorMessage(err) {
-  return (
-    err?.response?.data?.message ||
-    err?.response?.data?.error ||
-    err?.message ||
-    "An error occurred"
-  );
-}
-
 export default function StanaksPage() {
+  const navigate = useNavigate();
   const { canDo } = useAuth();
   const canEdit = canDo("TEMPLES", "EDIT");
 
@@ -71,10 +64,12 @@ export default function StanaksPage() {
   const loadStanaks = () => {
     setLoading(true);
     api
-      .get("/temples", { params: { type: "STANAK", q, page: 1, pageSize: 50 } })
+      .get("/temples", { params: { subSect: "Sthanakvasi", q, page: 1, pageSize: 50 } })
       .then((res) => {
         const data = res.data?.data;
-        setStanaks(Array.isArray(data) ? data : data?.items || []);
+        const raw = Array.isArray(data) ? data : data?.items || [];
+        const activeOnly = raw.filter((s) => s.status !== "INACTIVE" && !s.isDeleted && !s.deletedAt);
+        setStanaks(activeOnly);
       })
       .catch(() => setStanaks([]))
       .finally(() => setLoading(false));
@@ -93,9 +88,11 @@ export default function StanaksPage() {
   };
 
   const openEdit = (item) => {
+    const rawComm = item.community || "Shwetambar";
+    const normalizedComm = rawComm === "Shvetambar" ? "Shwetambar" : rawComm;
     setForm({
       name: item.name || "",
-      community: item.community || "Shvetambar",
+      community: normalizedComm,
       subSect: item.subSect || item.sub_sect || "Sthanakvasi",
       address: item.address || item.fullAddress || "",
       city: item.city || "",
@@ -120,7 +117,7 @@ export default function StanaksPage() {
     try {
       const payload = {
         name: form.name.trim(),
-        type: "STANAK",
+        type: "TEMPLE",
         community: form.community,
         subSect: form.subSect,
         address: form.address,
@@ -152,8 +149,18 @@ export default function StanaksPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    const targetId = deleteTarget.id;
     try {
-      await api.delete(`/temples/${deleteTarget.id}`);
+      try {
+        await api.delete(`/temples/${targetId}`);
+      } catch (err) {
+        if (err?.response?.status === 404 || err?.response?.data?.message?.includes("Route not found")) {
+          await api.patch(`/temples/${targetId}`, { status: "INACTIVE" });
+        } else {
+          throw err;
+        }
+      }
+      setStanaks((prev) => prev.filter((item) => item.id !== targetId));
       toast.success("Sthanak deleted.");
       setDeleteTarget(null);
       loadStanaks();
@@ -163,6 +170,7 @@ export default function StanaksPage() {
   };
 
   const filtered = stanaks.filter((s) => {
+    if (s.status === "INACTIVE" || s.isDeleted || s.deletedAt) return false;
     if (!q) return true;
     const ql = q.toLowerCase();
     return (
@@ -226,7 +234,14 @@ export default function StanaksPage() {
               {/* Header row */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-800 text-sm truncate">{item.name}</h3>
+                  <h3
+                    className="font-bold text-slate-800 text-sm truncate hover:text-indigo-600 cursor-pointer transition-colors flex items-center gap-1.5"
+                    onClick={() => navigate(`/stanaks/${item.id}`)}
+                    title="View Stanak Profile"
+                  >
+                    {item.name}
+                    <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-500 shrink-0" />
+                  </h3>
                   <p className="text-xs text-slate-400 mt-0.5 truncate">
                     {item.city}{item.state ? `, ${item.state}` : ""}
                   </p>

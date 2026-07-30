@@ -16,13 +16,45 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
-  INDIAN_STATE_OPTIONS, ORG_TYPE_OPTIONS,
+  INDIAN_STATE_OPTIONS, ORG_TYPE_OPTIONS, ALL_COUNTRIES,
   toOptions,
 } from "@/constants/dropdownOptions";
+import TimePicker, { TimeRangePicker } from "@/components/common/TimePicker";
+import MemberLinkSelect from "@/components/common/MemberLinkSelect";
 
 const FACILITY_OPTIONS = [
   "Parking", "CCTV", "Lift", "AC", "Cafeteria", "Medical", "Library", "Ramp", "Wheelchair Access",
   "Fire Safety", "Solar Power", "Dharamshala", "Bhojanshala", "Upashray", "Event Hall"
+];
+const ROOM_AMENITIES_LIST = [
+  "Heater",
+  "Extra Mattress Available upon Availability",
+  "Common Bathroom",
+  "Western Toilet",
+  "Indian Toilet",
+  "Hot Water (Geyser)",
+  "Solar Hot Water",
+  "Generator Backup",
+  "Free Wi-Fi",
+  "Drinking Water",
+  "Wheelchair Accessible",
+  "Lift Access",
+  "Senior Citizen Friendly",
+  "CCTV on Floor",
+  "First Aid Available",
+  "Parking",
+  "Pet Friendly",
+  "Other"
+];
+const TRUSTEE_DESIGNATIONS = [
+  "President",
+  "Vice President",
+  "Secretary",
+  "Joint Secretary",
+  "Treasurer",
+  "Trustee",
+  "Committee Member",
+  "Other"
 ];
 const TEMPLE_TYPES = ["SHIKHAR_BADDHA", "GHAR_DERASAR", "JAIN_CENTRE"];
 
@@ -187,11 +219,28 @@ export default function OrgListPage({
   const create = async () => {
     setCreating(true);
     try {
+      const payload = { ...form };
+      if (!payload.mulNayakBhagwanId) delete payload.mulNayakBhagwanId;
+      if (payload.buildings && Array.isArray(payload.buildings)) {
+        payload.buildings = payload.buildings.map((b) => ({
+          ...b,
+          roomTypes: (b.roomTypes || []).map((r) => ({
+            ...r,
+            roomCount: String(r.roomCount || r.totalCount || "0"),
+            bedCapacity: String(r.bedCapacity || r.maxOccupancy || "2"),
+            extraMattressCount: r.extraMattressCount ? Number(r.extraMattressCount) : 0,
+            extraMattressCharge: r.extraMattressCharge ? Number(r.extraMattressCharge) : undefined,
+            roomNumber: typeof r.roomNumbers === "string" ? r.roomNumbers : String(r.roomNumbers || ""),
+            roomNumbers: typeof r.roomNumbers === "string" ? r.roomNumbers.split(",").map(x => x.trim()).filter(Boolean) : (r.roomNumbers || []),
+            images: (r.images || []).slice(0, 6),
+          })),
+        }));
+      }
       await api.post(endpoint, { 
-        ...form, 
+        ...payload, 
         type: ORG_TYPE[entity] || "TEMPLE",
-        muritCount: form.muritCount ? Number(form.muritCount) : undefined,
-        establishedDate: form.establishedDate ? new Date(form.establishedDate).toISOString() : undefined
+        muritCount: payload.muritCount ? Number(payload.muritCount) : undefined,
+        establishedDate: payload.establishedDate ? new Date(payload.establishedDate).toISOString() : undefined
       });
       toast.success(`${label} created successfully.`);
       setOpen(false);
@@ -349,17 +398,17 @@ export default function OrgListPage({
 
   const columns = [
     {
-      key: "cover", header: "", width: 60,
+      key: "logoUrl", header: "Logo", width: 70,
       render: (r) => (
-        <div className="h-10 w-10 rounded bg-primary/10 overflow-hidden flex items-center justify-center">
-          {r.coverImageUrl || r.logoUrl ? (
+        <div className="h-10 w-10 rounded-lg bg-orange-50 border border-orange-200/60 overflow-hidden flex items-center justify-center shadow-xs">
+          {r.logoUrl || r.coverImageUrl ? (
             <img
-              src={r.coverImageUrl?.startsWith("http") ? r.coverImageUrl : `${STATIC_URL}${r.coverImageUrl || r.logoUrl}`}
+              src={r.logoUrl?.startsWith("http") ? r.logoUrl : r.coverImageUrl?.startsWith("http") ? r.coverImageUrl : `${STATIC_URL}${r.logoUrl || r.coverImageUrl}`}
               alt="" className="h-full w-full object-cover"
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           ) : (
-            <Building2 className="h-5 w-5 text-primary/65" />
+            <Building2 className="h-5 w-5 text-orange-600/70" />
           )}
         </div>
       ),
@@ -388,7 +437,34 @@ export default function OrgListPage({
       ),
     },
     { key: "templeType", header: "Type", render: (r) => <span className="text-xs font-bold text-slate-655 bg-slate-50 border px-2 py-0.5 rounded">{r.templeType || r.type || "—"}</span> },
-    { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status || "ACTIVE"} /> },
+    {
+      key: "status",
+      header: "Status & Access Control",
+      render: (r) => {
+        const hasAdminAccess = Boolean(
+          r.adminUserId ||
+          (r.userOrganizations && r.userOrganizations.length > 0) ||
+          r.hasAdminAccess ||
+          r.status === "ACTIVE"
+        );
+        return (
+          <div className="flex flex-col gap-0.5">
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold w-max ${
+                hasAdminAccess
+                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                  : "bg-rose-100 text-rose-800 border border-rose-300"
+              }`}
+            >
+              {hasAdminAccess ? "ACTIVE" : "INACTIVE"}
+            </span>
+            <span className="text-[9px] text-slate-400 font-medium leading-tight">
+              {hasAdminAccess ? "Admin Access Assigned" : "No Admin Access"}
+            </span>
+          </div>
+        );
+      },
+    },
   ];
 
   const filtered = q
@@ -431,7 +507,7 @@ export default function OrgListPage({
                   <Plus className="h-4 w-4 mr-2" /> New {label}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-2xl shadow-2xl bg-white border border-slate-100 h-[75vh] flex flex-col">
+              <DialogContent className="max-w-5xl md:max-w-5xl w-full p-0 overflow-hidden rounded-2xl shadow-2xl bg-white border border-slate-100 h-[88vh] max-h-[92vh] flex flex-col">
                 <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
                   
                   {/* Left panel selector */}
@@ -500,7 +576,7 @@ export default function OrgListPage({
                             </div>
                           )}
 
-                          {!isDharamshala && (
+                          {!isDharamshala && label !== "Stanak" && entity !== "STANAK" && form.subSect !== "Sthanakvasi" && (
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="flex items-center justify-between">
                                   <Label className="text-xs">Mul Nayak Bhagwan</Label>
@@ -573,7 +649,35 @@ export default function OrgListPage({
                           {toggle("Temple Available Inside?", "hasTempleInside")}
                           {form.hasTempleInside && (
                             <div className="space-y-3 pl-6 border-l-2 border-l-orange-500">
-                              {field("Mul Nayak Bhagwan Name", "templeMulNayakName")}
+                              <div>
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-xs font-semibold text-slate-700">Mul Nayak Bhagwan</Label>
+                                  {isSuperAdmin && (
+                                    <button type="button" onClick={() => setCreateDeityOpen(true)}
+                                      className="text-[10px] text-purple-700 hover:text-purple-900 font-bold transition-all">
+                                      + Create Deity
+                                    </button>
+                                  )}
+                                </div>
+                                <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
+                                  value={form.templeMulNayakName || ""} onChange={(e) => setForm({ ...form, templeMulNayakName: e.target.value })}>
+                                  <option value="">Select Bhagwan...</option>
+                                  {bhagwans.filter(b => b.category === "24 Tirthankars").length > 0 && (
+                                    <optgroup label="24 Tirthankars">
+                                      {bhagwans.filter(b => b.category === "24 Tirthankars").map(b => (
+                                        <option key={b.id} value={b.name}>{b.name}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                  {bhagwans.filter(b => b.category !== "24 Tirthankars").length > 0 && (
+                                    <optgroup label="Others">
+                                      {bhagwans.filter(b => b.category !== "24 Tirthankars").map(b => (
+                                        <option key={b.id} value={b.name}>{b.name}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                </select>
+                              </div>
                               {field("Mul Nayak Image URL", "templeMulNayakImageUrl", "text", "https://...")}
                               <div>
                                 <Label className="text-xs">Temple Type</Label>
@@ -593,11 +697,59 @@ export default function OrgListPage({
                                   <option value="Other">Other</option>
                                 </select>
                               </div>
-                              {field("Temple Opening Days & Hours", "templeOpeningHours", "text", "Daily 06:00 AM - 08:30 PM")}
-                              <div className="grid grid-cols-3 gap-3">
-                                {field("Pakshal Timings", "templePakshalStart", "text", "06:30 AM")}
-                                {field("Morning Pooja Timings", "templePoojaStart", "text", "07:30 AM")}
-                                {field("Evening Pooja / Aarti Timings", "templeAartiEvening", "text", "07:15 PM")}
+
+                              {/* Opening Timings: Morning & Evening Clock Time Pickers */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-xs font-semibold text-slate-700 mb-1 block">Morning Opening Timings</Label>
+                                  <TimeRangePicker
+                                    fromValue={form.morningStart || "06:00 AM"}
+                                    toValue={form.morningEnd || "12:00 PM"}
+                                    onFromChange={(val) => setForm(prev => ({ ...prev, morningStart: val }))}
+                                    onToChange={(val) => setForm(prev => ({ ...prev, morningEnd: val }))}
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-xs font-semibold text-slate-700 mb-1 block">Evening Opening Timings</Label>
+                                  <TimeRangePicker
+                                    fromValue={form.eveningStart || "05:30 PM"}
+                                    toValue={form.eveningEnd || "09:00 PM"}
+                                    onFromChange={(val) => setForm(prev => ({ ...prev, eveningStart: val }))}
+                                    onToChange={(val) => setForm(prev => ({ ...prev, eveningEnd: val }))}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Pakshal, Pooja & Aarti Clock Pickers */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div>
+                                  <Label className="text-xs font-semibold text-slate-700 mb-1 block">Pakshal Timings</Label>
+                                  <TimePicker
+                                    value={form.templePakshalStart || form.pakshalStart || "06:30 AM"}
+                                    onChange={(t) => setForm(prev => ({ ...prev, templePakshalStart: t, pakshalStart: t }))}
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-xs font-semibold text-slate-700 mb-1 block">Morning Pooja Timings</Label>
+                                  <TimePicker
+                                    value={form.templePoojaStart || form.poojaStart || "07:30 AM"}
+                                    onChange={(t) => setForm(prev => ({ ...prev, templePoojaStart: t, poojaStart: t }))}
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-xs font-semibold text-slate-700 mb-1 block">Morning Aarti Timings</Label>
+                                  <TimePicker
+                                    value={form.aartiMorning || "08:30 AM"}
+                                    onChange={(t) => setForm(prev => ({ ...prev, aartiMorning: t }))}
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-xs font-semibold text-slate-700 mb-1 block">Evening Aarti Timings</Label>
+                                  <TimePicker
+                                    value={form.templeAartiEvening || form.aartiEvening || "07:15 PM"}
+                                    onChange={(t) => setForm(prev => ({ ...prev, templeAartiEvening: t, aartiEvening: t }))}
+                                  />
+                                </div>
                               </div>
                             </div>
                           )}
@@ -614,10 +766,34 @@ export default function OrgListPage({
                             {isDharamshala && field("District", "district")}
                             {field("City", "city")}
                             {field("State", "state")}
-                            {field("Country", "country")}
+                            <div>
+                               <Label className="text-xs font-semibold text-slate-655">Country</Label>
+                               <select
+                                 className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
+                                 value={form.country || "India"}
+                                 onChange={(e) => setForm({ ...form, country: e.target.value })}
+                               >
+                                 {ALL_COUNTRIES.map((c) => (
+                                   <option key={c} value={c}>{c}</option>
+                                 ))}
+                               </select>
+                             </div>
                             {field("Pin Code", "pincode")}
                             <div className="col-span-2">{field("Google Maps Link", "googleMapsLink")}</div>
-                            <div className="col-span-2">{field("General Contact Number", "phone", "tel")}</div>
+                            <div className="col-span-2 space-y-1.5">
+                              <Label className="text-xs font-semibold text-slate-655">Contact Number</Label>
+                              <Input className="bg-white h-9" type="tel" value={form.phone || ""} placeholder="+91..."
+                                onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                              <div className="pt-1">
+                                <Label className="text-[10px] font-bold text-slate-500 block mb-0.5">Link Member for Contact Number</Label>
+                                <MemberLinkSelect
+                                  value={form.primaryContactMemberId}
+                                  onChange={(v) => setForm({ ...form, primaryContactMemberId: v })}
+                                  placeholder="Search member by ID or name to link..."
+                                  showPhone
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -675,14 +851,17 @@ export default function OrgListPage({
                                       <div className="grid grid-cols-3 gap-2">
                                         <div>
                                           <Label className="text-[10px] font-bold text-slate-500">Room Type Name</Label>
-                                          <Input value={r.name} onChange={(e) => updateRoomType(b.id, r.id, "name", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" placeholder="e.g. AC Deluxe Room" />
+                                          <Input value={r.name} onChange={(e) => updateRoomType(b.id, r.id, "name", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" placeholder="e.g. Standard AC Room" />
                                         </div>
                                         <div>
                                           <Label className="text-[10px] font-bold text-slate-500">Category</Label>
                                           <select className="w-full mt-0.5 h-8 rounded border bg-white px-2 text-xs focus:outline-none"
                                             value={r.category} onChange={(e) => updateRoomType(b.id, r.id, "category", e.target.value)}>
-                                            <option value="AC">AC Room</option>
-                                            <option value="Non-AC">Non-AC Room</option>
+                                            <option value="AC Room">AC Room</option>
+                                            <option value="Non-AC Room">Non-AC Room</option>
+                                            <option value="Deluxe Room">Deluxe Room</option>
+                                            <option value="Suite">Suite</option>
+                                            <option value="Dormitory">Dormitory</option>
                                           </select>
                                         </div>
                                         <div>
@@ -690,23 +869,67 @@ export default function OrgListPage({
                                           <select className="w-full mt-0.5 h-8 rounded border bg-white px-2 text-xs focus:outline-none"
                                             value={r.type} onChange={(e) => updateRoomType(b.id, r.id, "type", e.target.value)}>
                                             <option value="Private">Private</option>
+                                            <option value="Shared">Shared</option>
                                             <option value="Dormitory">Dormitory</option>
                                           </select>
                                         </div>
                                       </div>
 
-                                      <div className="grid grid-cols-4 gap-2">
+                                      {/* Room Numbers setup & auto room count */}
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <Label className="text-[10px] font-bold text-slate-500">Room Numbers Setup (e.g. 101, 102, 103)</Label>
+                                          <Input
+                                            value={r.roomNumbers || ""}
+                                            onChange={(e) => {
+                                              const val = e.target.value;
+                                              const count = val.split(",").filter(x => x.trim().length > 0).length;
+                                              updateRoomType(b.id, r.id, "roomNumbers", val);
+                                              if (count > 0) updateRoomType(b.id, r.id, "roomCount", count);
+                                            }}
+                                            className="h-8 text-xs mt-0.5 bg-white"
+                                            placeholder="101, 102, 103, 104"
+                                          />
+                                        </div>
                                         <div>
                                           <Label className="text-[10px] font-bold text-slate-500">No. of Rooms</Label>
-                                          <Input type="number" value={r.roomCount} onChange={(e) => updateRoomType(b.id, r.id, "roomCount", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" />
+                                          <Input type="number" value={r.roomCount || r.totalCount} onChange={(e) => updateRoomType(b.id, r.id, "roomCount", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" placeholder="4" />
+                                        </div>
+                                      </div>
+
+                                      {/* Occupancy & Bed Type */}
+                                      <div className="grid grid-cols-4 gap-2">
+                                        <div>
+                                          <Label className="text-[10px] font-bold text-slate-500">Maximum Occupancy</Label>
+                                          <Input type="number" value={r.maxOccupancy || 2} onChange={(e) => updateRoomType(b.id, r.id, "maxOccupancy", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" placeholder="2" />
                                         </div>
                                         <div>
-                                          <Label className="text-[10px] font-bold text-slate-500">Bed Capacity</Label>
-                                          <Input type="number" value={r.bedCapacity} onChange={(e) => updateRoomType(b.id, r.id, "bedCapacity", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" />
+                                          <Label className="text-[10px] font-bold text-slate-500">Bed Type</Label>
+                                          <select className="w-full mt-0.5 h-8 rounded border bg-white px-2 text-xs focus:outline-none"
+                                            value={r.bedType || "Double Occupancy"} onChange={(e) => updateRoomType(b.id, r.id, "bedType", e.target.value)}>
+                                            <option value="Single Occupancy">Single Occupancy</option>
+                                            <option value="Double Occupancy">Double Occupancy</option>
+                                          </select>
                                         </div>
                                         <div>
-                                          <Label className="text-[10px] font-bold text-slate-500">Charges</Label>
-                                          <Input type="number" value={r.charges} onChange={(e) => updateRoomType(b.id, r.id, "charges", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" />
+                                          <Label className="text-[10px] font-bold text-slate-500">Extra Mattress?</Label>
+                                          <select className="w-full mt-0.5 h-8 rounded border bg-white px-2 text-xs focus:outline-none"
+                                            value={r.hasExtraMattress || "No"} onChange={(e) => updateRoomType(b.id, r.id, "hasExtraMattress", e.target.value)}>
+                                            <option value="No">No</option>
+                                            <option value="Yes">Yes</option>
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <Label className="text-[10px] font-bold text-slate-500">Extra Mattress Count</Label>
+                                          <Input type="number" disabled={r.hasExtraMattress !== "Yes"} value={r.extraMattressCount || (r.hasExtraMattress === "Yes" ? 1 : 0)} onChange={(e) => updateRoomType(b.id, r.id, "extraMattressCount", e.target.value)} className="h-8 text-xs mt-0.5 bg-white disabled:bg-slate-100" placeholder="1" />
+                                        </div>
+                                      </div>
+
+                                      {/* Charges with Currency, Basis & Extra Mattress Charge */}
+                                      <div className="grid grid-cols-4 gap-2">
+                                        <div>
+                                          <Label className="text-[10px] font-bold text-slate-500">Charges ({form.preferredCurrency || "INR (₹)"})</Label>
+                                          <Input type="number" value={r.charges} onChange={(e) => updateRoomType(b.id, r.id, "charges", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" placeholder="1200" />
                                         </div>
                                         <div>
                                           <Label className="text-[10px] font-bold text-slate-500">Charge Basis</Label>
@@ -714,15 +937,21 @@ export default function OrgListPage({
                                             value={r.chargesType} onChange={(e) => updateRoomType(b.id, r.id, "chargesType", e.target.value)}>
                                             <option value="Per Room">Per Room</option>
                                             <option value="Per Bed">Per Bed</option>
+                                            <option value="Per Person">Per Person</option>
                                           </select>
+                                        </div>
+                                        <div>
+                                          <Label className="text-[10px] font-bold text-slate-500">Extra Mattress Charge (Rs/Mattress)</Label>
+                                          <Input type="number" disabled={r.hasExtraMattress !== "Yes"} value={r.extraMattressCharge || ""} onChange={(e) => updateRoomType(b.id, r.id, "extraMattressCharge", e.target.value)} className="h-8 text-xs mt-0.5 bg-white disabled:bg-slate-100" placeholder="e.g. 200" />
+                                        </div>
+                                        <div>
+                                          <Label className="text-[10px] font-bold text-slate-500">Security Deposit</Label>
+                                          <Input type="number" value={r.deposit} onChange={(e) => updateRoomType(b.id, r.id, "deposit", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" placeholder="500" />
                                         </div>
                                       </div>
 
+                                      {/* Bathroom & Room View */}
                                       <div className="grid grid-cols-3 gap-2">
-                                        <div>
-                                          <Label className="text-[10px] font-bold text-slate-500">Security Deposit</Label>
-                                          <Input type="number" value={r.deposit} onChange={(e) => updateRoomType(b.id, r.id, "deposit", e.target.value)} className="h-8 text-xs mt-0.5 bg-white" />
-                                        </div>
                                         <div>
                                           <Label className="text-[10px] font-bold text-slate-500">Attached Bathroom?</Label>
                                           <select className="w-full mt-0.5 h-8 rounded border bg-white px-2 text-xs focus:outline-none"
@@ -732,10 +961,100 @@ export default function OrgListPage({
                                           </select>
                                         </div>
                                         <div>
-                                          <Label className="text-[10px] font-bold text-slate-500">Amenities (comma-separated)</Label>
-                                          <Input value={r.amenities?.join(", ") || ""} onChange={(e) => updateRoomType(b.id, r.id, "amenities", e.target.value.split(",").map(x => x.trim()))} className="h-8 text-xs mt-0.5 bg-white" placeholder="Fan, Geyser, Cupboard" />
+                                          <Label className="text-[10px] font-bold text-slate-500">Bathroom Type</Label>
+                                          <select className="w-full mt-0.5 h-8 rounded border bg-white px-2 text-xs focus:outline-none"
+                                            value={r.bathroomType || "Western"} onChange={(e) => updateRoomType(b.id, r.id, "bathroomType", e.target.value)}>
+                                            <option value="Western">Western</option>
+                                            <option value="Indian">Indian</option>
+                                            <option value="Both">Both (Western & Indian)</option>
+                                          </select>
+                                        </div>
+                                        <div>
+                                           <Label className="text-[10px] font-bold text-slate-500">Room View</Label>
+                                           <select className="w-full mt-0.5 h-8 rounded border bg-white px-2 text-xs focus:outline-none"
+                                             value={r.viewType || "Garden View"} onChange={(e) => updateRoomType(b.id, r.id, "viewType", e.target.value)}>
+                                             <option value="Garden View">Garden View</option>
+                                             <option value="Temple View">Temple View</option>
+                                             <option value="Road View">Road View</option>
+                                             <option value="Inside View">Inside View</option>
+                                             <option value="Other">Other</option>
+                                           </select>
+                                         </div>
+                                      </div>
+
+                                       {/* Multi-Select Amenities Badges */}
+                                       <div>
+                                         <div className="flex items-center justify-between mb-1">
+                                           <Label className="text-[10px] font-bold text-slate-500">Amenities (Multi-Select)</Label>
+                                           <span className="text-[9px] text-slate-400 font-medium">Click badges to select/deselect</span>
+                                         </div>
+                                         <div className="flex flex-wrap gap-1.5 p-2 bg-white border rounded-lg max-h-32 overflow-y-auto">
+                                           {ROOM_AMENITIES_LIST.map((amenity) => {
+                                             const selected = (r.amenities || []).includes(amenity);
+                                             return (
+                                               <button
+                                                 key={amenity}
+                                                 type="button"
+                                                 onClick={() => {
+                                                   const current = r.amenities || [];
+                                                   const next = selected ? current.filter((x) => x !== amenity) : [...current, amenity];
+                                                   updateRoomType(b.id, r.id, "amenities", next);
+                                                 }}
+                                                 className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all border ${
+                                                   selected
+                                                     ? "bg-orange-500 text-white border-orange-500 shadow-xs"
+                                                     : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                                                 }`}
+                                               >
+                                                 {selected ? "✓ " : "+ "}{amenity}
+                                               </button>
+                                             );
+                                           })}
+                                         </div>
+                                       </div>
+
+                                      {/* Image Upload Option (up to 5-6 images) */}
+                                      <div className="mt-2 pt-2 border-t space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                          <Label className="text-[10px] font-bold text-slate-600">Room Type Images (Up to 6 images)</Label>
+                                          <span className="text-[9px] text-slate-400 font-semibold">{(r.images || []).length}/6 images uploaded</span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          {(r.images || []).map((img, imgIdx) => (
+                                            <div key={imgIdx} className="relative group w-11 h-11 rounded border bg-white overflow-hidden shrink-0 shadow-xs">
+                                              <img src={img} alt={`Room ${imgIdx}`} className="w-full h-full object-cover" />
+                                              <button type="button" onClick={() => {
+                                                const updated = (r.images || []).filter((_, i) => i !== imgIdx);
+                                                updateRoomType(b.id, r.id, "images", updated);
+                                              }} className="absolute top-0 right-0 bg-red-500 text-white p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <X className="h-3 w-3" />
+                                              </button>
+                                            </div>
+                                          ))}
+                                          {(r.images || []).length < 6 && (
+                                            <label className="w-11 h-11 rounded border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-orange-500 text-slate-400 hover:text-orange-500 transition-colors">
+                                              <Plus className="h-3.5 w-3.5" />
+                                              <span className="text-[7px] font-bold mt-0.5">Upload</span>
+                                              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
+                                                const files = Array.from(e.target.files || []);
+                                                const available = 6 - (r.images || []).length;
+                                                files.slice(0, available).forEach(file => {
+                                                  const reader = new FileReader();
+                                                  reader.onload = (evt) => {
+                                                    if (evt.target?.result) {
+                                                      const currentImages = r.images || [];
+                                                      updateRoomType(b.id, r.id, "images", [...currentImages, evt.target.result]);
+                                                    }
+                                                  };
+                                                  reader.readAsDataURL(file);
+                                                });
+                                                e.target.value = "";
+                                              }} />
+                                            </label>
+                                          )}
                                         </div>
                                       </div>
+
                                     </div>
                                   ))}
                                 </div>
@@ -887,11 +1206,34 @@ export default function OrgListPage({
                                         <option value="Both">Both AC and Non-AC</option>
                                       </select>
                                     </div>
-                                    {field("Office Timings", "dharamshalaOffice", "text", "09:00 AM - 08:00 PM")}
+                                    <div>
+                                      <Label className="text-xs mb-1 block">Office Timings</Label>
+                                      {(() => {
+                                        const parts = (form.dharamshalaOffice || "").split("-").map(s => s.trim());
+                                        return (
+                                          <TimeRangePicker
+                                            fromValue={parts[0] || ""}
+                                            toValue={parts[1] || ""}
+                                            onFromChange={(val) => setForm({ ...form, dharamshalaOffice: `${val} - ${parts[1] || ""}` })}
+                                            onToChange={(val) => setForm({ ...form, dharamshalaOffice: `${parts[0] || ""} - ${val}` })}
+                                          />
+                                        );
+                                      })()}
+                                    </div>
                                     {field("Contact Phone", "dharamshalaPhone", "tel", "+91...")}
                                   </div>
                                   <div className="grid grid-cols-2 gap-3">
-                                    {field("Contact Person / Manager", "dharamshalaContact", "text", "Manager Name")}
+                                    <div>
+                                      <Label className="text-xs font-semibold">Contact Person / Manager (Link Member)</Label>
+                                      <MemberLinkSelect
+                                        value={form.dharamshalaContact}
+                                        onChange={(v) => setForm({ ...form, dharamshalaContact: v })}
+                                        placeholder="Search manager by ID or name..."
+                                        showPhone
+                                        className="mt-1"
+                                      />
+                                      <span className="text-[10px] text-emerald-600 font-medium mt-0.5 block">Mobile number will be visible to members</span>
+                                    </div>
                                     <div>
                                       <Label className="text-xs">Online Booking Available?</Label>
                                       <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
@@ -912,9 +1254,32 @@ export default function OrgListPage({
                               {toggle("Pathshala Available", "hasPathshala")}
                               {form.hasPathshala && (
                                 <div className="grid grid-cols-3 gap-3 pl-6 border-l-2 border-l-orange-500">
-                                  {field("Pathshala Timings", "pathshalaTimings", "text", "04:30 PM - 06:00 PM")}
+                                  <div>
+                                    <Label className="text-xs mb-1 block">Pathshala Timings</Label>
+                                    {(() => {
+                                      const parts = (form.pathshalaTimings || "").split("-").map(s => s.trim());
+                                      return (
+                                        <TimeRangePicker
+                                          fromValue={parts[0] || ""}
+                                          toValue={parts[1] || ""}
+                                          onFromChange={(val) => setForm({ ...form, pathshalaTimings: `${val} - ${parts[1] || ""}` })}
+                                          onToChange={(val) => setForm({ ...form, pathshalaTimings: `${parts[0] || ""} - ${val}` })}
+                                        />
+                                      );
+                                    })()}
+                                  </div>
                                   {field("Pathshala Days", "pathshalaDays", "text", "Sat, Sun")}
-                                  {field("Teacher Name", "pathshalaTeacher", "text", "Shastriji / Teacher")}
+                                  <div>
+                                    <Label className="text-xs font-semibold">Teacher Name (Link Member)</Label>
+                                    <MemberLinkSelect
+                                      value={form.pathshalaTeacher}
+                                      onChange={(v) => setForm({ ...form, pathshalaTeacher: v })}
+                                      placeholder="Search teacher by ID or name..."
+                                      showPhone
+                                      className="mt-1"
+                                    />
+                                    <span className="text-[10px] text-emerald-600 font-medium mt-0.5 block">Teacher mobile number will be visible to members</span>
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -929,13 +1294,113 @@ export default function OrgListPage({
                           {toggle("Bhojanalay Available Inside?", "hasBhojanshala")}
                           {form.hasBhojanshala && (
                             <div className="space-y-3 pl-6 border-l-2 border-l-orange-500">
-                              <div className="grid grid-cols-2 gap-3">
-                                {field("Breakfast Charges & Timings", "bhojanshalaBreakfast", "text", "Rs. 50 | 07:30 AM - 09:00 AM")}
-                                {field("Lunch Charges & Timings", "bhojanshalaLunch", "text", "Rs. 100 | 11:30 AM - 01:00 PM")}
-                                {field("Dinner Charges & Timings", "bhojanshalaDinner", "text", "Rs. 80 | 05:00 PM - 06:00 PM")}
-                                {field("Contact Person / Manager", "bhojanshalaContact", "text", "Caretaker Name")}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                                {/* Breakfast */}
+                                <div className="bg-amber-50/40 border border-amber-200/70 rounded-xl p-3.5 space-y-2.5 shadow-2xs hover:border-amber-300 transition-colors">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">🥣 Breakfast</span>
+                                  </div>
+                                  <div>
+                                    <Label className="text-[11px] font-bold text-slate-600 block mb-1">Charges (₹)</Label>
+                                    <Input
+                                      type="number"
+                                      className="h-8.5 text-xs bg-white border-slate-200 focus:border-amber-500 focus:ring-amber-500 font-medium"
+                                      value={form.bhojanshalaBreakfastCharge || ""}
+                                      onChange={(e) => setForm({ ...form, bhojanshalaBreakfastCharge: e.target.value })}
+                                      placeholder="e.g. 50"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[11px] font-bold text-slate-600 block mb-1">Timings (From – To)</Label>
+                                    {(() => {
+                                      const parts = (form.bhojanshalaBreakfastTiming || "07:00 AM - 08:30 AM").split("-").map(s => s.trim());
+                                      return (
+                                        <TimeRangePicker
+                                          fromValue={parts[0] || "07:00 AM"}
+                                          toValue={parts[1] || "08:30 AM"}
+                                          onFromChange={(val) => setForm(prev => ({ ...prev, bhojanshalaBreakfastTiming: `${val} - ${parts[1] || "08:30 AM"}` }))}
+                                          onToChange={(val) => setForm(prev => ({ ...prev, bhojanshalaBreakfastTiming: `${parts[0] || "07:00 AM"} - ${val}` }))}
+                                        />
+                                      );
+                                    })()}
+                                  </div>
+                                </div>
+
+                                {/* Lunch */}
+                                <div className="bg-emerald-50/40 border border-emerald-200/70 rounded-xl p-3.5 space-y-2.5 shadow-2xs hover:border-emerald-300 transition-colors">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">🍱 Lunch</span>
+                                  </div>
+                                  <div>
+                                    <Label className="text-[11px] font-bold text-slate-600 block mb-1">Charges (₹)</Label>
+                                    <Input
+                                      type="number"
+                                      className="h-8.5 text-xs bg-white border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 font-medium"
+                                      value={form.bhojanshalaLunchCharge || ""}
+                                      onChange={(e) => setForm({ ...form, bhojanshalaLunchCharge: e.target.value })}
+                                      placeholder="e.g. 100"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[11px] font-bold text-slate-600 block mb-1">Timings (From – To)</Label>
+                                    {(() => {
+                                      const parts = (form.bhojanshalaLunchTiming || "11:30 AM - 01:00 PM").split("-").map(s => s.trim());
+                                      return (
+                                        <TimeRangePicker
+                                          fromValue={parts[0] || "11:30 AM"}
+                                          toValue={parts[1] || "01:00 PM"}
+                                          onFromChange={(val) => setForm(prev => ({ ...prev, bhojanshalaLunchTiming: `${val} - ${parts[1] || "01:00 PM"}` }))}
+                                          onToChange={(val) => setForm(prev => ({ ...prev, bhojanshalaLunchTiming: `${parts[0] || "11:30 AM"} - ${val}` }))}
+                                        />
+                                      );
+                                    })()}
+                                  </div>
+                                </div>
+
+                                {/* Choviyar / Dinner */}
+                                <div className="bg-purple-50/40 border border-purple-200/70 rounded-xl p-3.5 space-y-2.5 shadow-2xs hover:border-purple-300 transition-colors">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-purple-900 flex items-center gap-1.5">🌇 Choviyar / Dinner</span>
+                                  </div>
+                                  <div>
+                                    <Label className="text-[11px] font-bold text-slate-600 block mb-1">Charges (₹)</Label>
+                                    <Input
+                                      type="number"
+                                      className="h-8.5 text-xs bg-white border-slate-200 focus:border-purple-500 focus:ring-purple-500 font-medium"
+                                      value={form.bhojanshalaDinnerCharge || ""}
+                                      onChange={(e) => setForm({ ...form, bhojanshalaDinnerCharge: e.target.value })}
+                                      placeholder="e.g. 80"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[11px] font-bold text-slate-600 block mb-1">Timings (From – To)</Label>
+                                    {(() => {
+                                      const parts = (form.bhojanshalaDinnerTiming || "05:00 PM - 06:00 PM").split("-").map(s => s.trim());
+                                      return (
+                                        <TimeRangePicker
+                                          fromValue={parts[0] || "05:00 PM"}
+                                          toValue={parts[1] || "06:00 PM"}
+                                          onFromChange={(val) => setForm(prev => ({ ...prev, bhojanshalaDinnerTiming: `${val} - ${parts[1] || "06:00 PM"}` }))}
+                                          onToChange={(val) => setForm(prev => ({ ...prev, bhojanshalaDinnerTiming: `${parts[0] || "05:00 PM"} - ${val}` }))}
+                                        />
+                                      );
+                                    })()}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="grid grid-cols-2 gap-3">
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                                <div>
+                                  <Label className="text-xs font-semibold">Contact Person / Manager (Link Member: Jain, Non-Jain or Staff)</Label>
+                                  <MemberLinkSelect
+                                    value={form.bhojanshalaContactMemberId || form.bhojanshalaContact}
+                                    onChange={(v) => setForm({ ...form, bhojanshalaContactMemberId: v, bhojanshalaContact: v })}
+                                    placeholder="Search Jain, Non-Jain or staff member..."
+                                    showPhone
+                                    className="mt-1"
+                                  />
+                                  <span className="text-[10px] text-emerald-600 font-medium mt-0.5 block">Mobile number will be visible to members</span>
+                                </div>
                                 <div>
                                   <Label className="text-xs">Availability</Label>
                                   <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
@@ -958,7 +1423,16 @@ export default function OrgListPage({
                           <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">👥 Contacts & Verification</h3>
                           <div className="space-y-3">
                             <MemberSelect label="Primary Contact Person (Jain / Non-Jain)" value={form.primaryContactMemberId} onChange={(val) => setForm({ ...form, primaryContactMemberId: val })} placeholder="Link primary member..." />
-                            {field("Secondary Contact Number", "secondaryContactNumber", "tel", "+91...")}
+                            <div>
+                              <Label className="text-xs font-semibold">Secondary Contact Person (Link Member: Jain or Non-Jain)</Label>
+                              <MemberLinkSelect
+                                value={form.secondaryContactMemberId || form.secondaryContactNumber}
+                                onChange={(v) => setForm({ ...form, secondaryContactMemberId: v, secondaryContactNumber: v })}
+                                placeholder="Search member by ID or name to link..."
+                                showPhone
+                                className="mt-1"
+                              />
+                            </div>
                             
                             <div className="border-t pt-3 space-y-2">
                               <Label className="text-xs block font-semibold mb-1">Contact Details Verification Flags</Label>
@@ -969,14 +1443,42 @@ export default function OrgListPage({
                               </div>
                             </div>
 
-                            <div>
-                              <Label className="text-xs">Primary Contact Preference</Label>
-                              <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
-                                value={form.primaryContactPreference || "Mobile"} onChange={(e) => setForm({ ...form, primaryContactPreference: e.target.value })}>
-                                <option value="Mobile">Mobile</option>
-                                <option value="WhatsApp">WhatsApp</option>
-                                <option value="Email">Email</option>
-                              </select>
+                            <div className="space-y-3">
+                              <div>
+                                <Label className="text-xs font-semibold">Primary Contact Preference</Label>
+                                <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
+                                  value={form.primaryContactPreference || "Mobile"} onChange={(e) => setForm({ ...form, primaryContactPreference: e.target.value })}>
+                                  <option value="Mobile">Mobile</option>
+                                  <option value="WhatsApp">WhatsApp</option>
+                                  <option value="Email">Email</option>
+                                </select>
+                              </div>
+
+                              {form.primaryContactPreference === "Email" && (
+                                <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-200 space-y-1">
+                                  <Label className="text-xs font-bold text-orange-900">Primary Contact Email ID *</Label>
+                                  <Input
+                                    type="email"
+                                    value={form.email || form.primaryContactEmail || ""}
+                                    onChange={(e) => setForm({ ...form, email: e.target.value, primaryContactEmail: e.target.value })}
+                                    placeholder="e.g. contact@dharamshala.org"
+                                    className="h-9 bg-white text-sm"
+                                  />
+                                </div>
+                              )}
+
+                              {form.primaryContactPreference === "WhatsApp" && (
+                                <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-200 space-y-1">
+                                  <Label className="text-xs font-bold text-emerald-900">Primary Contact WhatsApp Number *</Label>
+                                  <Input
+                                    type="tel"
+                                    value={form.whatsapp || form.primaryContactWhatsapp || ""}
+                                    onChange={(e) => setForm({ ...form, whatsapp: e.target.value, primaryContactWhatsapp: e.target.value })}
+                                    placeholder="e.g. +91 9876543210"
+                                    className="h-9 bg-white text-sm"
+                                  />
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -993,15 +1495,45 @@ export default function OrgListPage({
                           
                           <div className="space-y-3">
                             {(form.trusteesList || []).map((t, idx) => (
-                              <div key={t.id || idx} className="flex items-end gap-3 bg-white p-3 rounded-xl border relative">
+                              <div key={t.id || idx} className="flex items-start gap-3 bg-white p-3 rounded-xl border relative">
                                 <button type="button" onClick={() => removeTrusteeRow(t.id)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
                                   <X className="h-4 w-4" />
                                 </button>
                                 <div className="flex-1">
                                   <MemberSelect label={`Trustee #${idx+1} Member`} value={t.memberId} onChange={(val) => updateTrusteeRow(t.id, "memberId", val)} placeholder="Link trustee member..." />
                                 </div>
-                                <div className="w-48">
-                                  {field("Designation", "designation", "text", "e.g. Trustee / President")}
+                                <div className="w-56">
+                                  <Label className="text-xs font-semibold text-slate-700">Designation *</Label>
+                                  <select
+                                    className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium focus:outline-none focus:border-orange-500"
+                                    value={
+                                      TRUSTEE_DESIGNATIONS.includes(t.designation)
+                                        ? t.designation
+                                        : t.designation
+                                        ? "Other"
+                                        : "Trustee"
+                                    }
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      if (val === "Other") {
+                                        updateTrusteeRow(t.id, "designation", "Other");
+                                      } else {
+                                        updateTrusteeRow(t.id, "designation", val);
+                                      }
+                                    }}
+                                  >
+                                    {TRUSTEE_DESIGNATIONS.map((d) => (
+                                      <option key={d} value={d}>{d}</option>
+                                    ))}
+                                  </select>
+                                  {(!TRUSTEE_DESIGNATIONS.includes(t.designation) || t.designation === "Other") && (
+                                    <Input
+                                      className="h-8 text-xs mt-1.5 bg-white"
+                                      value={t.customDesignation || (t.designation === "Other" ? "" : t.designation)}
+                                      onChange={(e) => updateTrusteeRow(t.id, "designation", e.target.value)}
+                                      placeholder="Specify custom designation..."
+                                    />
+                                  )}
                                 </div>
                               </div>
                             ))}
@@ -1039,13 +1571,9 @@ export default function OrgListPage({
                           <div className="space-y-3">
                             <div>
                               <Label className="text-xs font-bold">Rules & Guidelines Section</Label>
-                              <textarea rows={4} className="w-full mt-1 rounded-md border border-slate-205 bg-white px-3 py-2 text-sm focus:outline-none"
+                              <textarea rows={6} className="w-full mt-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:border-orange-500"
                                 value={form.rulesText} onChange={(e) => setForm({ ...form, rulesText: e.target.value })}
                                 placeholder="Define Dharamshala rules, ID requirements, stay limits, cleanliness instructions, and discipline guidelines..." />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 border-t pt-3">
-                              {field("Emergency Contact Number", "emergencyContact", "tel")}
-                              {field("Caretaker / Manager Details", "caretakerDetails", "text", "Name & Designation")}
                             </div>
                           </div>
                         </div>
@@ -1055,19 +1583,29 @@ export default function OrgListPage({
                         <div className="space-y-4">
                           <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">💰 Bank & Donation Details</h3>
                           <div className="grid grid-cols-2 gap-3">
-                            {field("Account Number", "bankAccount")}
-                            {field("Bank Name", "bankName")}
-                            {field("Branch Name", "bankBranch")}
-                            {field("IFSC Code", "bankIfsc")}
+                            {field("Bank Account Name", "bankAccountName", "text", "e.g. Shree Jain Sangh Trust")}
+                            {field("Bank Account Number", "bankAccount", "text", "Account Number")}
+                            {field("IFSC Code", "bankIfsc", "text", "e.g. SBIN0001234")}
+                            {field("Bank Name", "bankName", "text", "e.g. State Bank of India")}
+                            <div className="col-span-2">{field("Branch Address", "bankBranch", "text", "Branch Name / Address")}</div>
                             {field("UPI ID", "upiId", "text", "name@upi")}
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            {field("Donation QR Code Image URL", "donationQrCodeUrl", "text", "https://...")}
                             <div>
-                              <Label className="text-xs">Preferred display Currency</Label>
-                              <Input className="mt-1 bg-white h-9" value={form.preferredCurrency || "INR (₹)"}
-                                onChange={(e) => setForm({ ...form, preferredCurrency: e.target.value })} />
+                              <Label className="text-xs font-semibold text-slate-700">Preferred Display Currency</Label>
+                              <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:border-orange-500"
+                                value={form.preferredCurrency || "INR (₹)"}
+                                onChange={(e) => setForm({ ...form, preferredCurrency: e.target.value })}>
+                                <option value="INR (₹)">INR (₹)</option>
+                                <option value="USD ($)">USD ($)</option>
+                                <option value="EUR (€)">EUR (€)</option>
+                                <option value="GBP (£)">GBP (£)</option>
+                                <option value="AED (AED)">AED (AED)</option>
+                                <option value="CAD ($)">CAD ($)</option>
+                                <option value="AUD ($)">AUD ($)</option>
+                                <option value="SGD ($)">SGD ($)</option>
+                                <option value="Other">Other</option>
+                              </select>
                             </div>
+                            <div className="col-span-2">{field("QR Code upload / Image URL", "donationQrCodeUrl", "text", "https://...")}</div>
                           </div>
                           <div className="flex flex-wrap gap-4 mt-2 bg-white p-3.5 border rounded-xl">
                             {toggle("Eligible for 80G Tax Deductions", "is80gEligible")}
@@ -1096,32 +1634,110 @@ export default function OrgListPage({
                         <div className="space-y-4">
                           <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🕒 Slot & Ritual Timings</h3>
                           <div className="grid grid-cols-2 gap-3">
-                            {field("Morning Timing Start", "morningStart", "text", "06:00 AM")}
-                            {field("Morning Timing End", "morningEnd", "text", "12:00 PM")}
-                            {field("Evening Timing Start", "eveningStart", "text", "05:30 PM")}
-                            {field("Evening Timing End", "eveningEnd", "text", "09:00 PM")}
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Morning Darshan From *</Label>
+                              <TimePicker
+                                value={form.morningStart || "08:00 AM"}
+                                onChange={(t) => setForm({ ...form, morningStart: t })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Morning Darshan To *</Label>
+                              <TimePicker
+                                value={form.morningEnd || "12:00 PM"}
+                                onChange={(t) => setForm({ ...form, morningEnd: t })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Evening Darshan From</Label>
+                              <TimePicker
+                                value={form.eveningStart || "05:30 PM"}
+                                onChange={(t) => setForm({ ...form, eveningStart: t })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Evening Darshan To</Label>
+                              <TimePicker
+                                value={form.eveningEnd || "09:00 PM"}
+                                onChange={(t) => setForm({ ...form, eveningEnd: t })}
+                                className="mt-1"
+                              />
+                            </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3 border-t pt-3">
-                            {field("Pakshal Timing Start", "pakshalStart", "text", "06:30 AM")}
-                            {field("Pakshal Timing End", "pakshalEnd", "text", "08:00 AM")}
-                            {field("Morning Pooja Start", "poojaStart", "text", "07:00 AM")}
-                            {field("Morning Pooja End", "poojaEnd", "text", "08:30 AM")}
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Pakshal Timing From</Label>
+                              <TimePicker
+                                value={form.pakshalStart || "06:30 AM"}
+                                onChange={(t) => setForm({ ...form, pakshalStart: t })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Pakshal Timing To</Label>
+                              <TimePicker
+                                value={form.pakshalEnd || "08:00 AM"}
+                                onChange={(t) => setForm({ ...form, pakshalEnd: t })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Morning Pooja From</Label>
+                              <TimePicker
+                                value={form.poojaStart || "07:00 AM"}
+                                onChange={(t) => setForm({ ...form, poojaStart: t })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Morning Pooja To</Label>
+                              <TimePicker
+                                value={form.poojaEnd || "08:30 AM"}
+                                onChange={(t) => setForm({ ...form, poojaEnd: t })}
+                                className="mt-1"
+                              />
+                            </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3 border-t pt-3">
-                            {field("Morning Aarti Start", "aartiMorning", "text", "08:30 AM")}
-                            {field("Evening Aarti Start", "aartiEvening", "text", "07:30 PM")}
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Morning Aarti From</Label>
+                              <TimePicker
+                                value={form.aartiMorning || "08:30 AM"}
+                                onChange={(t) => setForm({ ...form, aartiMorning: t })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Evening Aarti To</Label>
+                              <TimePicker
+                                value={form.aartiEvening || "07:30 PM"}
+                                onChange={(t) => setForm({ ...form, aartiEvening: t })}
+                                className="mt-1"
+                              />
+                            </div>
                           </div>
                         </div>
                       )}
 
                       {!isDharamshala && tab === "finance" && (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                           <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">💰 Bank & Donation Details</h3>
                           <div className="grid grid-cols-2 gap-3">
+                            {field("Bank Account Name", "bankAccountName", "text", "e.g. Shree Jain Sangh Trust")}
+                            {field("Bank Account Number", "bankAccount", "text", "Account Number")}
+                            {field("IFSC Code", "bankIfsc", "text", "e.g. SBIN0001234")}
+                            {field("Bank Name", "bankName", "text", "e.g. State Bank of India")}
+                            <div className="col-span-2">{field("Branch Address", "bankBranch", "text", "Branch Name / Address")}</div>
                             {field("UPI ID", "upiId", "text", "name@upi")}
-                            {field("Preferred display Currency", "preferredCurrency")}
-                            {field("Bank Account Number", "bankAccount")}
-                            {field("Bank IFSC Code", "bankIfsc")}
+                            <div>
+                              <Label className="text-xs font-semibold text-slate-700">Currency</Label>
+                              <Input className="mt-1 bg-white h-9" value={form.preferredCurrency || "INR (₹)"}
+                                onChange={(e) => setForm({ ...form, preferredCurrency: e.target.value })} placeholder="INR (₹)" />
+                            </div>
+                            <div className="col-span-2">{field("QR Code upload / Image URL", "donationQrCodeUrl", "text", "https://...")}</div>
                           </div>
                           <div className="flex flex-wrap gap-4 mt-2 bg-white p-3.5 border rounded-xl">
                             {toggle("Eligible for 80G Tax Deductions", "is80gEligible")}

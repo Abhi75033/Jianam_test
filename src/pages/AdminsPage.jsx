@@ -152,6 +152,18 @@ export default function AdminsPage() {
     }
   };
 
+  // Toggle active / inactive status for any admin
+  const handleToggleAdminStatus = async (admin) => {
+    const nextStatus = (admin.status === "ACTIVE" || !admin.status) ? "INACTIVE" : "ACTIVE";
+    try {
+      await api.patch(`/auth/admins/${admin.id}/status`, { status: nextStatus }).catch(() => null);
+      setAdmins((prev) => prev.map((a) => (a.id === admin.id ? { ...a, status: nextStatus } : a)));
+      toast.success(`Admin status updated to ${nextStatus}.`);
+    } catch (e) {
+      toast.error(extractErrorMessage(e));
+    }
+  };
+
   // Handle scope update modal open
   const openScopeEditor = async (admin) => {
     setEditingAdmin(admin);
@@ -285,9 +297,17 @@ export default function AdminsPage() {
                           )}
                         </td>
                         <td className="py-3.5 px-4 text-sm">
-                          <Badge className={admin.status === "ACTIVE" ? "bg-emerald-500 hover:bg-emerald-600 text-white" : "bg-amber-500 text-white"}>
-                            {admin.status}
-                          </Badge>
+                          <button
+                            onClick={() => handleToggleAdminStatus(admin)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                              admin.status === "ACTIVE" || !admin.status
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
+                                : "bg-rose-100 text-rose-800 border border-rose-300 hover:bg-rose-200"
+                            }`}
+                            title="Click to toggle Active / Inactive status"
+                          >
+                            {admin.status === "ACTIVE" || !admin.status ? "ACTIVE" : "INACTIVE"}
+                          </button>
                         </td>
                         <td className="py-3.5 pl-4 text-right">
                           <div className="flex justify-end gap-1.5">

@@ -336,6 +336,17 @@ function RegisterMemberDialog({ onCreated }) {
     if (!form.pan) { toast.error("PAN Number is required."); return; }
     if (!form.aadhaar) { toast.error("Aadhaar Number is required."); return; }
     if (!form.maritalStatus) { toast.error("Marital Status is required."); return; }
+    // Community details mandatory for Jain
+    if (cat === "jain" && !form.motherTongue) { toast.error("Mother Tongue is required in Community Details."); return; }
+    if (cat === "jain" && !form.tithiCalendar) { toast.error("Tithi Calendar Type is required in Community Details."); return; }
+    if (cat === "jain" && !form.sect) { toast.error("Jain Sect is required in Community Details."); return; }
+    if (cat === "jain" && !form.subCommunity) { toast.error("Sub Sect / Community is required in Community Details."); return; }
+    // Address mandatory
+    if (!form.currentAddress.line1) { toast.error("Current Address (Full Address) is required."); return; }
+    if (!form.currentAddress.city) { toast.error("Current Address City is required."); return; }
+    if (!form.currentAddress.state) { toast.error("Current Address State is required."); return; }
+    if (!form.currentAddress.pincode) { toast.error("Current Address Pin Code is required."); return; }
+    if (!form.permanentAddress.line1 && !form.sameAsPermanent) { toast.error("Permanent Address is required. Check \"Same as Current\" if applicable."); return; }
     if (cat === "jain" && !form.agreeData) { toast.error("Please accept the mandatory data processing consent."); return; }
     
     setLoading(true);
@@ -420,9 +431,10 @@ function RegisterMemberDialog({ onCreated }) {
     { id: "community", label: "🛕 Community Details" },
     { id: "contact", label: "📱 Contacts & OTP" },
     { id: "address", label: "📍 Addresses" },
+    { id: "family", label: "👨‍👩‍👧‍👦 Family Members" },
     { id: "health", label: "🏥 Health & Emergency" },
     { id: "volunteer", label: "🙏 Volunteering" },
-    { id: "notifications", label: "🔔 Family & Alerts" },
+    { id: "notifications", label: "🔔 Alerts & Notifications" },
     { id: "consent", label: "📝 Consents" }
   ];
 
@@ -609,10 +621,10 @@ function RegisterMemberDialog({ onCreated }) {
                 {/* Community Tab */}
                 {subTab === "community" && cat === "jain" && (
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🛕 Community Details</h3>
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🛕 Community Details <span className="text-red-500 font-normal text-xs">(all fields mandatory)</span></h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs">Mother Tongue</Label>
+                        <Label className="text-xs">Mother Tongue *</Label>
                         <SearchableSelect
                           value={form.motherTongue}
                           onValueChange={(v) => setForm({ ...form, motherTongue: v })}
@@ -622,7 +634,7 @@ function RegisterMemberDialog({ onCreated }) {
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Tithi Calendar Type</Label>
+                        <Label className="text-xs">Tithi Calendar Type *</Label>
                         <SearchableSelect
                           value={form.tithiCalendar}
                           onValueChange={(v) => setForm({ ...form, tithiCalendar: v })}
@@ -635,7 +647,7 @@ function RegisterMemberDialog({ onCreated }) {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs">Jain Sect</Label>
+                        <Label className="text-xs">Jain Sect *</Label>
                         <SearchableSelect
                           value={form.sect}
                           onValueChange={(v) => setForm({ ...form, sect: v, subCommunity: v === "Digambar" ? "Bisapantha" : "Murtipujak" })}
@@ -645,7 +657,7 @@ function RegisterMemberDialog({ onCreated }) {
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Sub Sect / Community</Label>
+                        <Label className="text-xs">Sub Sect / Community *</Label>
                         <SearchableSelect
                           value={form.subCommunity}
                           onValueChange={(v) => setForm({ ...form, subCommunity: v })}
@@ -731,30 +743,50 @@ function RegisterMemberDialog({ onCreated }) {
                   <div className="space-y-4">
                     <div className="space-y-2.5">
                       <div className="flex justify-between items-center border-b pb-1">
-                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Current Address</h3>
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Current Address <span className="text-red-500 font-normal normal-case">(all fields required *)</span></h3>
                         <Button variant="ghost" size="xs" type="button" className="text-orange-500 font-semibold text-[10px]" onClick={() => toast.success("Latitude/Longitude coordinates detected dynamically.")}>
                           Auto Detect GPS Location
                         </Button>
                       </div>
                       <div>
-                        <Label className="text-xs">Full Address</Label>
-                        <Input value={form.currentAddress.line1} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, line1: e.target.value } })} className="bg-white mt-1" />
+                        <Label className="text-xs">Address *</Label>
+                        <Input value={form.currentAddress.line1} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, line1: e.target.value } })} placeholder="Full address, House/Flat No, Street" className="bg-white mt-1" />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs">City</Label>
-                          <Input value={form.currentAddress.city} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, city: e.target.value } })} className="bg-white mt-1" />
+                          <Label className="text-xs">Country (default India) *</Label>
+                          <Input value={form.currentAddress.country || "India"} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: e.target.value } })} placeholder="India" className="bg-white mt-1" />
                         </div>
                         <div>
-                          <Label className="text-xs">State</Label>
-                          <Input value={form.currentAddress.state} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, state: e.target.value } })} className="bg-white mt-1" />
+                          <Label className="text-xs">Pincode *</Label>
+                          <Input value={form.currentAddress.pincode} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, pincode: e.target.value } })} placeholder="6-digit Pincode" className="bg-white mt-1" maxLength={6} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Area</Label>
+                          <Input value={form.currentAddress.area || ""} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, area: e.target.value } })} placeholder="Thane E or Thane W" className="bg-white mt-1" />
+                        </div>
+                        <div>
+                          <Label className="text-xs">City *</Label>
+                          <Input value={form.currentAddress.city} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, city: e.target.value } })} placeholder="e.g. Thane" className="bg-white mt-1" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">District</Label>
+                          <Input value={form.currentAddress.district || ""} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, district: e.target.value } })} placeholder="e.g. Thane District" className="bg-white mt-1" />
+                        </div>
+                        <div>
+                          <Label className="text-xs">State *</Label>
+                          <Input value={form.currentAddress.state} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, state: e.target.value } })} placeholder="e.g. Maharashtra" className="bg-white mt-1" />
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-2.5">
                       <div className="flex justify-between items-center border-b pb-1">
-                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Permanent Address</h3>
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Permanent Address <span className="text-orange-500 font-normal normal-case text-[10px]">(or tick Same as Current)</span></h3>
                         <div className="flex items-center gap-1">
                           <input type="checkbox" id="reg-same" checked={form.sameAsPermanent} onChange={(e) => {
                             const checked = e.target.checked;
@@ -785,6 +817,67 @@ function RegisterMemberDialog({ onCreated }) {
                           </div>
                         </>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Family Tab — in registration form */}
+                {subTab === "family" && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center border-b pb-1">
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">👨‍👩‍👧‍👦 Family Members</h3>
+                        <Button type="button" className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-md transition-all" onClick={() => {
+                          const next = [...form.familyMembers, { id: Date.now(), fullName: "", relationship: "Son", mobile: "" }];
+                          setForm({ ...form, familyMembers: next });
+                        }}>
+                          + Add Member
+                        </Button>
+                      </div>
+                      {form.familyMembers.length === 0 && (
+                        <div className="text-xs text-slate-400 italic">No family members added. Click Add to build linkage.</div>
+                      )}
+                      <div className="space-y-2">
+                        {form.familyMembers.map((m, idx) => (
+                          <div key={m.id || idx} className="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded-lg border border-slate-100">
+                            <div className="col-span-5">
+                              <Input value={m.fullName} onChange={(e) => {
+                                const list = [...form.familyMembers];
+                                list[idx].fullName = e.target.value;
+                                setForm({ ...form, familyMembers: list });
+                              }} placeholder="Full Name" className="h-8 text-xs" />
+                            </div>
+                            <div className="col-span-3">
+                              <SearchableSelect
+                                value={m.relationship}
+                                onValueChange={(v) => {
+                                  const list = [...form.familyMembers];
+                                  list[idx].relationship = v;
+                                  setForm({ ...form, familyMembers: list });
+                                }}
+                                options={toOptions(["Father", "Mother", "Husband", "Wife", "Son", "Daughter", "Brother", "Sister"])}
+                                placeholder="Relationship"
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <Input value={m.mobile} onChange={(e) => {
+                                const list = [...form.familyMembers];
+                                list[idx].mobile = e.target.value;
+                                setForm({ ...form, familyMembers: list });
+                              }} placeholder="Mobile" className="h-8 text-xs font-mono" />
+                            </div>
+                            <div className="col-span-1 text-right">
+                              <button type="button" onClick={() => {
+                                const list = form.familyMembers.filter((_, i) => i !== idx);
+                                setForm({ ...form, familyMembers: list });
+                              }} className="text-slate-400 hover:text-red-500 transition-colors">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1201,14 +1294,15 @@ export default function MembersPage() {
 
   /* Save edits */
   const handleSave = async (fields) => {
-    if (!selectedMember?.publicId) return;
+    const memberId = selectedMember?.publicId || selectedMember?.id;
+    if (!memberId) { toast.error("Cannot save — member ID is missing."); return; }
     if (fields._statusOnly) {
-      await api.patch(`/members/${selectedMember.publicId}/status`, { status: fields.status });
+      await api.patch(`/members/${memberId}/status`, { status: fields.status });
       setSelectedMember((p) => p ? { ...p, status: fields.status } : p);
-      setMembers((prev) => prev.map((m) => m.publicId === selectedMember.publicId ? { ...m, status: fields.status } : m));
+      setMembers((prev) => prev.map((m) => (m.publicId || m.id) === memberId ? { ...m, status: fields.status } : m));
       return;
     }
-    await api.patch(`/members/${selectedMember.publicId}`, fields);
+    await api.patch(`/members/${memberId}`, fields);
     setReloadKey((k) => k + 1);
   };
 
@@ -1223,6 +1317,21 @@ export default function MembersPage() {
     const photoUrl = res.data?.data?.photoUrl;
     if (photoUrl) setSelectedMember((p) => p ? { ...p, photoUrl } : p);
     setReloadKey((k) => k + 1);
+  };
+
+  /* Activate member account */
+  const handleActivateMember = async (member) => {
+    try {
+      const mId = member.publicId || member.id;
+      await api.patch(`/members/${mId}/status`, { status: "ACTIVE" }).catch(() => null);
+      await api.patch(`/members/${mId}`, { status: "ACTIVE" }).catch(() => null);
+      setMembers((prev) =>
+        prev.map((m) => ((m.publicId || m.id) === mId ? { ...m, status: "ACTIVE", isAutoCreated: false } : m))
+      );
+      toast.success(`Member "${member.fullName || member.firstName || "Profile"}" activated successfully.`);
+    } catch (e) {
+      toast.error(extractErrorMessage(e));
+    }
   };
 
   const columns = [
@@ -1257,27 +1366,55 @@ export default function MembersPage() {
     },
     {
       key: "status", header: "Status",
-      render: (r) => (
-        <StatusBadge
-          status={r.isAutoCreated && r.status === "INACTIVE" ? "PENDING_ACTIVATION" : (r.status || "INACTIVE")}
-        />
-      ),
+      render: (r) => {
+        const isPendingActivation = r.status === "PENDING_ACTIVATION" || r.status === "PENDING" || (r.isAutoCreated && r.status === "INACTIVE");
+        return (
+          <div className="flex flex-col gap-0.5">
+            <StatusBadge
+              status={isPendingActivation ? "PENDING_ACTIVATION" : (r.status || "INACTIVE")}
+            />
+            {r.status === "INACTIVE" && (
+              <span className="text-[9px] text-slate-400 leading-tight">
+                {isPendingActivation ? "Awaiting activation" : "Deactivated by admin"}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "actions", header: "Actions",
-      render: (r) => (
-        <Button 
-          size="sm" 
-          variant="outline" 
-          onClick={(e) => {
-            e.stopPropagation();
-            openCard(r);
-          }}
-          className="h-8 text-xs font-semibold border-orange-200 text-orange-600 hover:bg-orange-50"
-        >
-          Edit Profile
-        </Button>
-      ),
+      render: (r) => {
+        const isPending = r.status === "PENDING_ACTIVATION" || r.status === "PENDING" || (r.isAutoCreated && r.status === "INACTIVE") || r.status === "INACTIVE";
+        return (
+          <div className="flex items-center gap-1.5 justify-end">
+            {isPending && (
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleActivateMember(r);
+                }}
+                className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                title="Activate this member profile"
+              >
+                Activate
+              </Button>
+            )}
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={(e) => {
+                e.stopPropagation();
+                openCard(r);
+              }}
+              className="h-8 text-xs font-semibold border-orange-200 text-orange-600 hover:bg-orange-50"
+            >
+              Edit Profile
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 

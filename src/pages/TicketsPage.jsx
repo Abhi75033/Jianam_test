@@ -1,19 +1,27 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api, extractErrorMessage } from "@/lib/api";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { StatCard } from "@/components/common/StatCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { QrScanner } from "@/components/common/QrScanner";
 import { formatDateTime } from "@/lib/utils";
-import { Ticket, ScanLine, CheckCircle2, XCircle, Users } from "lucide-react";
+import { Ticket, ScanLine, CheckCircle2, XCircle, Users, Armchair, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeCanvas } from "qrcode.react";
+import SeatingPage from "./SeatingPage";
 
-export default function TicketsPage() {
+export default function TicketsPage({ defaultTab }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = defaultTab || searchParams.get("tab") || "tickets";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scanOpen, setScanOpen] = useState(false);
@@ -27,6 +35,11 @@ export default function TicketsPage() {
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
   }, [reload]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   const handleScan = async (qrText) => {
     setScanOpen(false);
@@ -61,32 +74,51 @@ export default function TicketsPage() {
   const activeCount = rows.filter((r) => r.status === "TICKET_GENERATED" || r.status === "PAYMENT_SUCCESSFUL").length;
 
   return (
-    <div data-testid="tickets-page">
+    <div data-testid="tickets-page" className="space-y-4">
       <PageHeader
-        title="Tickets"
-        subtitle="Paid event tickets with QR check-in support."
+        title="Tickets & Seating"
+        subtitle="Paid event tickets, QR check-in scanner, and venue seating chart manager."
         actions={
-          <Button onClick={() => setScanOpen(true)} data-testid="tickets-scan-button">
-            <ScanLine className="h-4 w-4 mr-2" /> Scan QR
-          </Button>
+          activeTab === "tickets" && (
+            <Button onClick={() => setScanOpen(true)} data-testid="tickets-scan-button" className="bg-orange-600 hover:bg-orange-700 text-white font-bold">
+              <ScanLine className="h-4 w-4 mr-2" /> Scan QR
+            </Button>
+          )
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <StatCard label="Total Tickets" value={rows.length} icon={Ticket} tone="blue" testId="stat-tickets-total" />
-        <StatCard label="Active" value={activeCount} icon={Users} tone="green" testId="stat-tickets-active" />
-        <StatCard label="Checked In" value={checkedInCount} icon={CheckCircle2} tone="green" testId="stat-tickets-in" />
-        <StatCard label="Cancelled" value={rows.filter((r) => r.status === "CANCELLED").length} icon={XCircle} tone="red" testId="stat-tickets-cancelled" />
-      </div>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md bg-slate-100 p-1 rounded-xl">
+          <TabsTrigger value="tickets" className="font-bold flex items-center justify-center gap-2">
+            <Ticket className="h-4 w-4" /> Tickets & QR Check-In
+          </TabsTrigger>
+          <TabsTrigger value="seating" className="font-bold flex items-center justify-center gap-2">
+            <Armchair className="h-4 w-4" /> Seating Layout Builder
+          </TabsTrigger>
+        </TabsList>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        loading={loading}
-        testId="tickets-table"
-        emptyTitle="No tickets yet"
-        emptyDescription="Purchased tickets will appear here."
-      />
+        <TabsContent value="tickets" className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <StatCard label="Total Tickets" value={rows.length} icon={Ticket} tone="blue" testId="stat-tickets-total" />
+            <StatCard label="Active" value={activeCount} icon={Users} tone="green" testId="stat-tickets-active" />
+            <StatCard label="Checked In" value={checkedInCount} icon={CheckCircle2} tone="green" testId="stat-tickets-in" />
+            <StatCard label="Cancelled" value={rows.filter((r) => r.status === "CANCELLED").length} icon={XCircle} tone="red" testId="stat-tickets-cancelled" />
+          </div>
+
+          <DataTable
+            columns={columns}
+            rows={rows}
+            loading={loading}
+            testId="tickets-table"
+            emptyTitle="No tickets yet"
+            emptyDescription="Purchased tickets will appear here."
+          />
+        </TabsContent>
+
+        <TabsContent value="seating" className="space-y-4 mt-4">
+          <SeatingPage />
+        </TabsContent>
+      </Tabs>
 
       {scanOpen && <QrScanner onScan={handleScan} onClose={() => setScanOpen(false)} />}
 

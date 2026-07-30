@@ -61,27 +61,27 @@ export default function TimePicker({
         disabled={disabled}
         onClick={() => !disabled && setOpen((o) => !o)}
         className={cn(
-          "flex items-center gap-2 w-full h-9 px-3 rounded-md border border-input bg-background text-sm",
-          "hover:bg-accent/50 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
-          disabled && "opacity-50 cursor-not-allowed",
-          open && "ring-2 ring-ring ring-offset-1"
+          "flex items-center justify-between w-full h-8.5 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-2xs",
+          "hover:border-orange-400 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20",
+          disabled && "opacity-50 cursor-not-allowed bg-slate-100",
+          open && "ring-2 ring-orange-500/20 border-orange-500"
         )}
         data-testid="time-picker-trigger"
       >
-        <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <span className={cn("flex-1 text-left", !value && "text-muted-foreground")}>
+        <span className={cn("truncate font-semibold", !value && "text-slate-400 font-normal")}>
           {value || placeholder}
         </span>
+        <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0 ml-1" />
       </button>
 
       {open && (
         <div
-          className="absolute z-50 mt-1 bg-popover border border-border rounded-xl shadow-xl p-3 flex gap-3 items-start min-w-[220px]"
+          className="absolute z-50 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl p-3 flex gap-3 items-start min-w-[220px]"
           data-testid="time-picker-panel"
         >
           {/* Hours */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wide">Hour</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">Hour</span>
             <div className="h-48 overflow-y-auto scrollbar-thin flex flex-col gap-0.5 pr-1">
               {hours.map((h) => (
                 <button
@@ -89,10 +89,10 @@ export default function TimePicker({
                   type="button"
                   onClick={() => emitChange(h, minute, period)}
                   className={cn(
-                    "w-10 h-7 rounded-md text-sm font-mono font-medium transition-colors",
+                    "w-10 h-7 rounded-md text-xs font-mono font-bold transition-colors",
                     h === hour
-                      ? "bg-orange-500 text-white"
-                      : "hover:bg-accent text-foreground"
+                      ? "bg-orange-500 text-white shadow-xs"
+                      : "hover:bg-slate-100 text-slate-700"
                   )}
                 >
                   {h}
@@ -102,11 +102,11 @@ export default function TimePicker({
           </div>
 
           {/* Separator */}
-          <div className="text-lg font-bold text-muted-foreground mt-8 select-none">:</div>
+          <div className="text-sm font-bold text-slate-400 mt-7 select-none">:</div>
 
           {/* Minutes */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wide">Min</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">Min</span>
             <div className="h-48 overflow-y-auto scrollbar-thin flex flex-col gap-0.5 pr-1">
               {minutes.map((m) => (
                 <button
@@ -114,10 +114,10 @@ export default function TimePicker({
                   type="button"
                   onClick={() => emitChange(hour, m, period)}
                   className={cn(
-                    "w-10 h-7 rounded-md text-sm font-mono font-medium transition-colors",
+                    "w-10 h-7 rounded-md text-xs font-mono font-bold transition-colors",
                     m === minute
-                      ? "bg-orange-500 text-white"
-                      : "hover:bg-accent text-foreground"
+                      ? "bg-orange-500 text-white shadow-xs"
+                      : "hover:bg-slate-100 text-slate-700"
                   )}
                 >
                   {m}
@@ -128,7 +128,7 @@ export default function TimePicker({
 
           {/* AM/PM */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wide">Period</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">Period</span>
             <div className="flex flex-col gap-1.5 mt-1">
               {["AM", "PM"].map((p) => (
                 <button
@@ -138,8 +138,8 @@ export default function TimePicker({
                   className={cn(
                     "w-12 h-8 rounded-lg text-xs font-bold transition-colors",
                     p === period
-                      ? "bg-orange-500 text-white shadow-sm"
-                      : "bg-muted hover:bg-accent text-muted-foreground hover:text-foreground"
+                      ? "bg-orange-500 text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-600"
                   )}
                 >
                   {p}
@@ -149,7 +149,7 @@ export default function TimePicker({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="mt-4 text-[10px] text-muted-foreground underline hover:text-foreground"
+              className="mt-4 text-[10px] font-bold text-orange-600 hover:underline"
             >
               Done
             </button>
@@ -162,30 +162,26 @@ export default function TimePicker({
 
 /**
  * TimeRangePicker — Two TimePickers (From / To) side by side.
- * Props:
- *   fromValue, toValue — strings
- *   onFromChange, onToChange — callbacks
- *   fromLabel, toLabel — optional labels (default "From", "To")
  */
 export function TimeRangePicker({
   fromValue,
   toValue,
   onFromChange,
   onToChange,
-  fromLabel = "From",
-  toLabel = "To",
+  fromLabel,
+  toLabel,
   disabled = false,
 }) {
   return (
-    <div className="flex items-end gap-2">
-      <div className="flex-1">
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{fromLabel}</span>
-        <TimePicker value={fromValue} onChange={onFromChange} disabled={disabled} className="mt-1" />
+    <div className="flex items-center gap-1.5 w-full">
+      <div className="flex-1 min-w-0">
+        {fromLabel && <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">{fromLabel}</span>}
+        <TimePicker value={fromValue} onChange={onFromChange} disabled={disabled} />
       </div>
-      <span className="text-muted-foreground mb-2 text-sm">–</span>
-      <div className="flex-1">
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{toLabel}</span>
-        <TimePicker value={toValue} onChange={onToChange} disabled={disabled} className="mt-1" />
+      <span className="text-slate-400 text-xs font-bold shrink-0 mt-3.5">–</span>
+      <div className="flex-1 min-w-0">
+        {toLabel && <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">{toLabel}</span>}
+        <TimePicker value={toValue} onChange={onToChange} disabled={disabled} />
       </div>
     </div>
   );

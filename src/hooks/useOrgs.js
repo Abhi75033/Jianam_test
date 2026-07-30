@@ -19,6 +19,8 @@ export function useOrgs() {
       api.get("/temples").catch(() => ({ data: { data: [] } })),
       api.get("/dharamshalas").catch(() => ({ data: { data: [] } })),
       api.get("/jain-centers").catch(() => ({ data: { data: [] } })),
+      api.get("/sthanaks").catch(() => ({ data: { data: [] } })),
+      api.get("/community-pages").catch(() => ({ data: { data: [] } })),
     ])
       .then((results) => {
         const list = results.flatMap((r) => {

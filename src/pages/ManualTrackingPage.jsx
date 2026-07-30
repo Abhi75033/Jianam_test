@@ -56,7 +56,7 @@ export default function ManualTrackingPage() {
 
   const handleSubmit = async () => {
     if (!form.monkName || !form.stationName) {
-      toast.error("Monk Name and Current Station are required.");
+      toast.error("MS Name and Current Station are required.");
       return;
     }
     setSaving(true);
@@ -93,7 +93,7 @@ export default function ManualTrackingPage() {
 
   const columns = [
     {
-      key: "monkId", header: "Monk ID",
+      key: "monkId", header: "MS ID",
       render: (r) => (
         <Badge variant="secondary" className="font-mono text-[10px]">
           {r.monk?.publicId || r.monkPublicId || "—"}
@@ -101,7 +101,7 @@ export default function ManualTrackingPage() {
       ),
     },
     {
-      key: "monkName", header: "Monk / MS Name",
+      key: "monkName", header: "MS Name",
       render: (r) => (
         <div className="flex items-center gap-2">
           {r.monk?.photoUrl && (
@@ -146,7 +146,7 @@ export default function ManualTrackingPage() {
     <div data-testid="manual-tracking-page">
       <PageHeader
         title="Manual Vihar Tracking"
-        subtitle="Log manual location checkpoints for monks traveling without GPS devices."
+        subtitle="Log manual location checkpoints for MS members traveling without GPS devices."
         actions={
           <Button onClick={() => setOpenDialog(true)} data-testid="manual-tracking-create-btn">
             <Plus className="h-4 w-4 mr-2" /> Log Location
@@ -160,7 +160,7 @@ export default function ManualTrackingPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search by monk name or station…"
+            placeholder="Search by MS name or station…"
             value={q}
             onChange={handleSearch}
             data-testid="manual-tracking-search"
@@ -190,7 +190,7 @@ export default function ManualTrackingPage() {
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div>
-              <Label className="text-xs">Monk ID (Optional)</Label>
+              <Label className="text-xs">MS ID (Optional)</Label>
               <Input
                 value={form.monkPublicId}
                 onChange={(e) => setForm({ ...form, monkPublicId: e.target.value })}
@@ -199,7 +199,7 @@ export default function ManualTrackingPage() {
               />
             </div>
             <div>
-              <Label className="text-xs">Monk / MS Name *</Label>
+              <Label className="text-xs">MS Name *</Label>
               <Input
                 value={form.monkName}
                 onChange={(e) => setForm({ ...form, monkName: e.target.value })}

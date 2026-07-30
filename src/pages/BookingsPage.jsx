@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api, extractErrorMessage, API_BASE } from "@/lib/api";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
@@ -62,8 +63,14 @@ export default function BookingsPage() {
   const [q, setQ] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
 
-  // Active Tab
-  const [activeTab, setActiveTab] = useState("admin_bookings");
+  // URL Query Parameters Sync for distinct tabs (Requests, Reservations, Calendar, Stay Operations)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get("tab") || "admin_bookings";
+  const activeTab = urlTab;
+
+  const handleTabChange = (newTab) => {
+    setSearchParams({ tab: newTab });
+  };
 
   // Advanced Filters for Bookings Search
   const [filterStatus, setFilterStatus] = useState("ALL");
@@ -79,11 +86,46 @@ export default function BookingsPage() {
   const [blackoutOpen, setBlackoutOpen] = useState(false);
   const [requestInfoOpen, setRequestInfoOpen] = useState(false);
 
-  // Selected Booking Item for Calendar View
+  // Front-Desk Stay Operations States
+  const [checkInOpen, setCheckInOpen] = useState(false);
+  const [checkOutOpen, setCheckOutOpen] = useState(false);
+  const [extendOpen, setExtendOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+
+  const [vehicleNumber, setVehicleNumber] = useState("");
+  const [idProofType, setIdProofType] = useState("Aadhaar Card");
+  const [idProofNumber, setIdProofNumber] = useState("");
+  const [additionalGuests, setAdditionalGuests] = useState(0);
+  const [stayNotes, setStayNotes] = useState("");
+  const [additionalCharges, setAdditionalCharges] = useState(0);
+  const [splitCash, setSplitCash] = useState(0);
+  const [splitUpi, setSplitUpi] = useState(0);
+  const [newRoomId, setNewRoomId] = useState("");
+  const [transferReason, setTransferReason] = useState("");
+  const [extendDays, setExtendDays] = useState(1);
+
+  // Selected Booking Item & Availability Calendar State
   const [selectedCalendarItem, setSelectedCalendarItem] = useState(null);
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
   const [itemCalendarDays, setItemCalendarDays] = useState([]);
+
+  // Date Click Options State
+  const [dateOptionsOpen, setDateOptionsOpen] = useState(false);
+  const [selectedClickedDate, setSelectedClickedDate] = useState(null);
+
+  const handleDateClick = (dateNum, status) => {
+    const formattedMonth = String(calendarMonth + 1).padStart(2, '0');
+    const formattedDay = String(dateNum).padStart(2, '0');
+    const dateStr = `${calendarYear}-${formattedMonth}-${formattedDay}`;
+    setSelectedClickedDate({
+      dateNum,
+      dateStr,
+      status,
+      formattedDate: `${dateNum} ${new Date(calendarYear, calendarMonth).toLocaleString("default", { month: "short" })} ${calendarYear}`
+    });
+    setDateOptionsOpen(true);
+  };
 
   // Form Fields - Setup Booking Item
   const [itemName, setItemName] = useState("");
@@ -319,6 +361,82 @@ export default function BookingsPage() {
     }
   };
 
+  // Front Desk Stay Operations Handlers
+  const handleCheckIn = async (e) => {
+    e.preventDefault();
+    if (!detailBooking) return;
+    try {
+      await api.post(`/bookings/${detailBooking.id}/check-in`, {
+        vehicleNumber,
+        idProofType,
+        idProofNumber,
+        additionalGuests: Number(additionalGuests),
+        stayNotes,
+      });
+      toast.success("Guest checked in successfully!");
+      setCheckInOpen(false);
+      setDetailBooking(null);
+      setReloadKey(k => k + 1);
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    }
+  };
+
+  const handleCheckOut = async (e) => {
+    e.preventDefault();
+    if (!detailBooking) return;
+    try {
+      const splitPayments = [];
+      if (Number(splitCash) > 0) splitPayments.push({ mode: "CASH", amount: Number(splitCash) });
+      if (Number(splitUpi) > 0) splitPayments.push({ mode: "UPI", amount: Number(splitUpi) });
+
+      await api.post(`/bookings/${detailBooking.id}/check-out`, {
+        additionalCharges: Number(additionalCharges),
+        splitPayments,
+        notes: stayNotes,
+      });
+      toast.success("Check-out complete! Final stay receipt generated.");
+      setCheckOutOpen(false);
+      setDetailBooking(null);
+      setReloadKey(k => k + 1);
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    }
+  };
+
+  const handleTransferRoom = async (e) => {
+    e.preventDefault();
+    if (!detailBooking || !newRoomId) return;
+    try {
+      await api.post(`/bookings/${detailBooking.id}/transfer-room`, {
+        newRoomId,
+        reason: transferReason || "Front desk room transfer request",
+      });
+      toast.success("Room transferred successfully.");
+      setTransferOpen(false);
+      setDetailBooking(null);
+      setReloadKey(k => k + 1);
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    }
+  };
+
+  const handleExtendStay = async (e) => {
+    e.preventDefault();
+    if (!detailBooking) return;
+    try {
+      await api.post(`/bookings/${detailBooking.id}/extend-stay`, {
+        additionalDays: Number(extendDays),
+      });
+      toast.success(`Stay extended by ${extendDays} day(s). Booking dates updated.`);
+      setExtendOpen(false);
+      setDetailBooking(null);
+      setReloadKey(k => k + 1);
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    }
+  };
+
   const handleExportReports = async (type, format) => {
     try {
       const token = localStorage.getItem("jinanam_access_token");
@@ -437,11 +555,13 @@ export default function BookingsPage() {
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4 bg-slate-100 p-1 rounded-xl">
-          <TabsTrigger value="admin_bookings" className="px-5 py-2 font-bold text-xs rounded-lg">🛡️ Admin Ledger ({bookings.length})</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="mb-4 bg-slate-100 p-1 rounded-xl flex-wrap">
+          <TabsTrigger value="admin_bookings" className="px-5 py-2 font-bold text-xs rounded-lg">🛡️ Booking Requests ({bookings.filter(b => b.status === "SUBMITTED" || b.status === "PENDING_APPROVAL" || b.status === "PAYMENT_PENDING" || b.status === "PAYMENT_VERIFICATION").length})</TabsTrigger>
+          <TabsTrigger value="reservations" className="px-5 py-2 font-bold text-xs rounded-lg">📋 Confirmed Reservations ({bookings.filter(b => b.status === "CONFIRMED" || b.status === "APPROVED").length})</TabsTrigger>
           <TabsTrigger value="availability_calendar" className="px-5 py-2 font-bold text-xs rounded-lg">📅 Live Availability Grid</TabsTrigger>
-          <TabsTrigger value="my_bookings" className="px-5 py-2 font-bold text-xs rounded-lg">👤 My Unified Bookings ({myBookings.length})</TabsTrigger>
+          <TabsTrigger value="stay_management" className="px-5 py-2 font-bold text-xs rounded-lg">🏨 Front Desk Stay Operations ({bookings.filter(b => b.status === "CHECKED_IN").length})</TabsTrigger>
+          <TabsTrigger value="my_bookings" className="px-5 py-2 font-bold text-xs rounded-lg">👤 My Bookings ({myBookings.length})</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Admin Bookings Ledger */}
@@ -514,107 +634,238 @@ export default function BookingsPage() {
 
         {/* Tab 2: Availability Calendar Grid */}
         <TabsContent value="availability_calendar" className="space-y-4">
-          <div className="grid grid-cols-12 gap-5">
-            {/* Left selector */}
-            <Card className="col-span-12 md:col-span-3 p-4 bg-white border rounded-xl shadow-sm space-y-4">
-              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">Bookable Services</h3>
-              <div className="space-y-2 text-xs">
-                {bookingItems.length === 0 ? (
-                  <div className="text-slate-400 text-center py-4">No services configured.</div>
-                ) : (
-                  bookingItems.map(item => (
-                    <button
-                      key={item.id}
-                      onClick={() => setSelectedCalendarItem(item)}
-                      className={`w-full text-left p-3 rounded-lg border transition-all ${
-                        selectedCalendarItem?.id === item.id
-                          ? "border-orange-500 bg-orange-50/20 text-orange-850 font-bold"
-                          : "border-slate-100 hover:bg-slate-50 text-slate-700"
-                      }`}
-                    >
-                      <div>{item.name}</div>
-                      <div className="text-[10px] text-slate-400 font-semibold mt-0.5">{item.category}</div>
-                    </button>
-                  ))
-                )}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
+              <div className="p-3 bg-amber-50 text-amber-700 rounded-lg"><CalendarDays className="h-5 w-5" /></div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Total Bookings This Month</div>
+                <div className="text-xl font-black text-slate-800">{bookings.length}</div>
               </div>
-
-              {selectedCalendarItem && (
-                <div className="pt-4 border-t flex flex-col gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setReserveOpen(true)} className="w-full text-[11px] font-bold">
-                    Add Internal Reservation
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setBlackoutOpen(true)} className="w-full text-[11px] font-bold">
-                    Add Maintenance / Block
-                  </Button>
-                </div>
-              )}
             </Card>
-
-            {/* Calendar Grid */}
-            <Card className="col-span-12 md:col-span-9 p-5 bg-white border rounded-xl shadow-sm space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-                  <CalendarDays className="h-5 w-5 text-orange-500" />
-                  Availability: {selectedCalendarItem?.name || "—"} ({new Date(calendarYear, calendarMonth).toLocaleString("default", { month: "long", year: "numeric" })})
-                </h3>
-                <div className="flex gap-1.5">
-                  <Button size="sm" variant="outline" onClick={() => {
-                    if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(y => y - 1); }
-                    else setCalendarMonth(m => m - 1);
-                  }}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => {
-                    if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(y => y + 1); }
-                    else setCalendarMonth(m => m + 1);
-                  }}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+            <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
+              <div className="p-3 bg-emerald-50 text-emerald-700 rounded-lg"><Building className="h-5 w-5" /></div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Dharamshala Rooms</div>
+                <div className="text-xl font-black text-slate-800">{bookings.filter(b => b.bookingItem?.category?.includes("Room") || b.bookingItem?.type === "ROOM").length} Rooms</div>
               </div>
-
-              <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-400">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => <div key={d}>{d}</div>)}
-              </div>
-
-              <div className="grid grid-cols-7 gap-2">
-                {Array.from({ length: new Date(calendarYear, calendarMonth, 1).getDay() }).map((_, pad) => (
-                  <div key={`pad-${pad}`} className="h-16 bg-slate-50/50 rounded-lg"></div>
-                ))}
-
-                {itemCalendarDays.map((day, idx) => {
-                  const dateNum = new Date(day.date).getDate();
-                  const isAvailable = day.status === "AVAILABLE";
-                  const isBooked = day.status === "BOOKED";
-                  const isMaintenance = day.status === "MAINTENANCE";
-                  const isReserved = day.status === "RESERVED" || day.status === "UNAVAILABLE";
-
-                  return (
-                    <div key={idx} className={`h-20 p-1.5 rounded-lg border flex flex-col justify-between transition-all ${
-                      isAvailable ? "border-slate-100 hover:border-orange-300 bg-white" :
-                      isBooked ? "border-rose-100 bg-rose-50/40 text-rose-800" :
-                      isMaintenance ? "border-amber-100 bg-amber-50/30 text-amber-800" :
-                      "border-slate-200 bg-slate-100 text-slate-500"
-                    }`}>
-                      <span className="text-[10px] font-black">{dateNum}</span>
-                      <span className={`text-[8px] uppercase tracking-wider font-extrabold w-fit px-1 rounded ${
-                        isAvailable ? "bg-emerald-50 text-emerald-700" :
-                        isBooked ? "bg-rose-100 text-rose-800" :
-                        isMaintenance ? "bg-amber-100 text-amber-800" :
-                        "bg-slate-200 text-slate-600"
-                      }`}>
-                        {day.status}
-                      </span>
-                    </div>
-                  );
-                })}
+            </Card>
+            <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
+              <div className="p-3 bg-sky-50 text-sky-700 rounded-lg"><Check className="h-5 w-5" /></div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Halls Confirmed</div>
+                <div className="text-xl font-black text-slate-800">{bookings.filter(b => b.status === "CONFIRMED" || b.status === "APPROVED").length} Reservation(s)</div>
               </div>
             </Card>
           </div>
+
+          <Card className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold text-base text-slate-800 flex items-center gap-1.5">
+                  <CalendarDays className="h-5 w-5 text-orange-500" />
+                  {new Date(calendarYear, calendarMonth).toLocaleString("default", { month: "long", year: "numeric" })}
+                </h3>
+                {bookingItems.length > 0 && (
+                  <select
+                    value={selectedCalendarItem?.id || ""}
+                    onChange={(e) => setSelectedCalendarItem(bookingItems.find(i => i.id === e.target.value))}
+                    className="h-8 rounded-lg border text-xs font-semibold text-slate-700 px-2 bg-slate-50 focus:outline-none"
+                  >
+                    <option value="">All Service Units</option>
+                    {bookingItems.map(item => (
+                      <option key={item.id} value={item.id}>{item.name} ({item.category})</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div className="flex gap-1.5 items-center">
+                <Button size="sm" variant="outline" onClick={() => setReserveOpen(true)} className="h-8 text-[11px] font-bold text-slate-700">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Block
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(y => y - 1); }
+                  else setCalendarMonth(m => m - 1);
+                }} className="h-8 w-8 p-0">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(y => y + 1); }
+                  else setCalendarMonth(m => m + 1);
+                }} className="h-8 w-8 p-0">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-400 mb-1">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => <div key={d}>{d}</div>)}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {Array.from({ length: new Date(calendarYear, calendarMonth, 1).getDay() }).map((_, pad) => (
+                <div key={`pad-${pad}`} className="h-24 bg-slate-50/50 rounded-lg border border-dashed border-slate-100"></div>
+              ))}
+
+              {Array.from({ length: new Date(calendarYear, calendarMonth + 1, 0).getDate() }, (_, i) => i + 1).map((dateNum) => {
+                const dayData = itemCalendarDays.find(d => {
+                  const dt = new Date(d.date);
+                  return dt.getDate() === dateNum && dt.getMonth() === calendarMonth && dt.getFullYear() === calendarYear;
+                });
+                const status = dayData?.status || "AVAILABLE";
+
+                const isToday = new Date().getDate() === dateNum && new Date().getMonth() === calendarMonth && new Date().getFullYear() === calendarYear;
+
+                // Find bookings on this day
+                const dayBookings = bookings.filter(b => {
+                  const bFrom = new Date(b.dateFrom);
+                  const bTo = b.dateTo ? new Date(b.dateTo) : bFrom;
+                  const currentDay = new Date(calendarYear, calendarMonth, dateNum);
+                  return currentDay >= new Date(bFrom.getFullYear(), bFrom.getMonth(), bFrom.getDate()) &&
+                         currentDay <= new Date(bTo.getFullYear(), bTo.getMonth(), bTo.getDate());
+                });
+
+                const isAvailable = status === "AVAILABLE" && dayBookings.length === 0;
+                const isBooked = dayBookings.length > 0 || status === "BOOKED";
+                const isMaintenance = status === "MAINTENANCE";
+
+                return (
+                  <div
+                    key={dateNum}
+                    onClick={() => handleDateClick(dateNum, isBooked ? "BOOKED" : status)}
+                    className={`h-24 p-2 rounded-xl border flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md ${
+                      isToday ? "border-orange-500 bg-orange-50/30" :
+                      isAvailable ? "border-slate-200 hover:border-orange-400 bg-white" :
+                      isBooked ? "border-rose-200 bg-rose-50/40 text-rose-800" :
+                      isMaintenance ? "border-amber-200 bg-amber-50/40 text-amber-800" :
+                      "border-slate-200 bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className={`text-[10px] font-extrabold h-5 w-5 rounded-full flex items-center justify-center ${
+                        isToday ? "bg-orange-600 text-white shadow-sm" : "text-slate-700 bg-slate-100"
+                      }`}>
+                        {dateNum}
+                      </span>
+                      <Plus className="h-3 w-3 text-slate-400 hover:text-orange-600" />
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-1 my-1">
+                      {dayBookings.slice(0, 2).map((b) => (
+                        <div key={b.id} className="text-[8px] px-1 rounded py-0.5 truncate font-bold bg-orange-100 text-orange-900 border border-orange-200/60" title={`${b.member?.fullName} (${b.bookingItem?.name})`}>
+                          {b.member?.fullName || "Booked"} ({b.bookingItem?.name || "Unit"})
+                        </div>
+                      ))}
+                      {dayBookings.length > 2 && (
+                        <div className="text-[8px] font-bold text-orange-700">+{dayBookings.length - 2} more</div>
+                      )}
+                    </div>
+
+                    <span className={`text-[8px] uppercase tracking-wider font-extrabold w-fit px-1.5 py-0.5 rounded ${
+                      isAvailable ? "bg-emerald-100 text-emerald-800" :
+                      isBooked ? "bg-rose-100 text-rose-800" :
+                      isMaintenance ? "bg-amber-100 text-amber-800" :
+                      "bg-slate-200 text-slate-700"
+                    }`}>
+                      {isBooked ? `BOOKED (${dayBookings.length})` : status}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
         </TabsContent>
 
-        {/* Tab 3: Unified Member Bookings */}
+        {/* Tab 2: Dedicated Confirmed & Internal Reservations View */}
+        <TabsContent value="reservations" className="space-y-4">
+          <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h3 className="font-bold text-sm text-slate-800">Confirmed Reservations & Internal Blocks</h3>
+                <p className="text-[11px] text-slate-400">All confirmed room reservations, VIP blocks, and internal allocations.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => setReserveOpen(true)} className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-8 text-xs">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Internal Block
+                </Button>
+              </div>
+            </div>
+
+            <DataTable
+              columns={[
+                { key: "publicId", header: "Reservation ID", render: (r) => <Badge variant="outline" className="font-mono text-[9px]">{r.publicId}</Badge> },
+                { key: "item", header: "Resource Unit", render: (r) => <span className="font-bold text-slate-800 text-xs">{r.bookingItem?.name || "—"}</span> },
+                { key: "devotee", header: "Devotee / Blocked For", render: (r) => <span className="font-semibold text-slate-700 text-xs">{r.member?.fullName || "Internal Block"}</span> },
+                { key: "dates", header: "Reserved Dates", render: (r) => <span className="font-mono text-xs text-slate-500">{formatDate(r.dateFrom)} {r.dateTo ? `→ ${formatDate(r.dateTo)}` : ""}</span> },
+                { key: "amount", header: "Charges", render: (r) => <span className="font-bold text-xs font-mono-num">{formatCurrency(r.amount)}</span> },
+                { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} /> },
+                {
+                  key: "action",
+                  header: "Manage",
+                  render: (r) => (
+                    <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setDetailBooking(r)}>
+                      Review / Action
+                    </Button>
+                  )
+                }
+              ]}
+              rows={bookings.filter(b => b.status === "CONFIRMED" || b.status === "APPROVED" || b.status === "CHECKED_IN")}
+              loading={loading}
+              emptyTitle="No active confirmed reservations"
+              emptyDescription="New confirmed bookings and internal blocks will appear in this registry."
+            />
+          </Card>
+        </TabsContent>
+
+        {/* Tab 4: Front Desk Stay Management */}
+        <TabsContent value="stay_management" className="space-y-4">
+          <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h3 className="font-bold text-sm text-slate-800">Front Desk Live Stay Management</h3>
+                <p className="text-[11px] text-slate-400">Front desk operations for active checked-in guests, extensions, room transfers, and check-outs.</p>
+              </div>
+            </div>
+
+            <DataTable
+              columns={[
+                { key: "publicId", header: "Stay Booking ID", render: (r) => <Badge variant="outline" className="font-mono text-[9px]">{r.publicId}</Badge> },
+                { key: "item", header: "Unit Allocated", render: (r) => <span className="font-bold text-slate-800 text-xs">{r.allocatedRoomId || r.bookingItem?.name || "Unit 101"}</span> },
+                { key: "devotee", header: "Guest Name", render: (r) => <span className="font-semibold text-slate-700 text-xs">{r.member?.fullName || "Guest"}</span> },
+                { key: "dates", header: "Stay Duration", render: (r) => <span className="font-mono text-xs text-slate-500">{formatDate(r.dateFrom)} {r.dateTo ? `→ ${formatDate(r.dateTo)}` : ""}</span> },
+                { key: "status", header: "Stay Status", render: (r) => <StatusBadge status={r.status} /> },
+                {
+                  key: "action",
+                  header: "Front Desk Actions",
+                  render: (r) => (
+                    <div className="flex gap-1">
+                      {r.status === "CONFIRMED" && (
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-7 text-[10px]" onClick={() => { setDetailBooking(r); setCheckInOpen(true); }}>
+                          Check-In
+                        </Button>
+                      )}
+                      {r.status === "CHECKED_IN" && (
+                        <>
+                          <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-7 text-[10px]" onClick={() => { setDetailBooking(r); setCheckOutOpen(true); }}>
+                            Check-Out
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => { setDetailBooking(r); setExtendOpen(true); }}>
+                            Extend
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )
+                }
+              ]}
+              rows={bookings.filter(b => b.status === "CONFIRMED" || b.status === "CHECKED_IN")}
+              loading={loading}
+              emptyTitle="No active stays at front desk"
+              emptyDescription="Checked-in guests and upcoming arrivals will appear here."
+            />
+          </Card>
+        </TabsContent>
+
+        {/* Tab 5: Unified Member Bookings */}
         <TabsContent value="my_bookings" className="space-y-4">
           <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
             <div className="flex justify-between items-center">
@@ -981,6 +1232,32 @@ export default function BookingsPage() {
                     </Button>
                   </>
                 )}
+
+                {/* Admin flow for CONFIRMED → Check-In */}
+                {detailBooking.status === "CONFIRMED" && (
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 text-xs"
+                    onClick={() => setCheckInOpen(true)}>
+                    Front Desk Check-In
+                  </Button>
+                )}
+
+                {/* Front Desk flow for CHECKED_IN → Check-Out, Extend, Transfer */}
+                {detailBooking.status === "CHECKED_IN" && (
+                  <>
+                    <Button className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-9 text-xs"
+                      onClick={() => setCheckOutOpen(true)}>
+                      Front Desk Check-Out
+                    </Button>
+                    <Button className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9 text-xs"
+                      onClick={() => setExtendOpen(true)}>
+                      Extend Stay
+                    </Button>
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-9 text-xs"
+                      onClick={() => setTransferOpen(true)}>
+                      Transfer Room
+                    </Button>
+                  </>
+                )}
               </DialogFooter>
             </div>
           )}
@@ -1056,6 +1333,245 @@ export default function BookingsPage() {
               </Button>
             </DialogFooter>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* dialog 8: Front Desk Check-In Modal */}
+      <Dialog open={checkInOpen} onOpenChange={setCheckInOpen}>
+        <DialogContent className="sm:max-w-md text-xs">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-emerald-600" /> Front Desk Check-In
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCheckIn} className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">Vehicle Number (Optional)</Label>
+                <Input value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} placeholder="e.g. GJ 01 AB 1234" className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">Additional Guests Count</Label>
+                <Input type="number" min={0} value={additionalGuests} onChange={(e) => setAdditionalGuests(e.target.value)} className="mt-1" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">ID Proof Type</Label>
+                <select value={idProofType} onChange={(e) => setIdProofType(e.target.value)} className="w-full mt-1 h-9 rounded border text-xs px-2">
+                  <option value="Aadhaar Card">Aadhaar Card</option>
+                  <option value="PAN Card">PAN Card</option>
+                  <option value="Passport">Passport</option>
+                  <option value="Voter ID">Voter ID</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">ID Proof Number</Label>
+                <Input value={idProofNumber} onChange={(e) => setIdProofNumber(e.target.value)} placeholder="e.g. 1234-5678-9012" className="mt-1" />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">Check-In Stay Remarks</Label>
+              <Textarea value={stayNotes} onChange={(e) => setStayNotes(e.target.value)} placeholder="Front desk notes..." className="mt-1" />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="ghost" onClick={() => setCheckInOpen(false)}>Cancel</Button>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Complete Check-In (Set Occupied)</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* dialog 9: Front Desk Check-Out Modal */}
+      <Dialog open={checkOutOpen} onOpenChange={setCheckOutOpen}>
+        <DialogContent className="sm:max-w-md text-xs">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-rose-600" /> Front Desk Check-Out & Final Bill
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCheckOut} className="space-y-4 pt-2">
+            <div>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">Additional Charges (INR)</Label>
+              <Input type="number" min={0} value={additionalCharges} onChange={(e) => setAdditionalCharges(e.target.value)} placeholder="0" className="mt-1" />
+            </div>
+
+            <div className="border-t pt-3 space-y-2">
+              <Label className="text-[10px] uppercase font-bold text-slate-400">Split Payment Collection</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[10px] text-slate-500">Cash (INR)</Label>
+                  <Input type="number" min={0} value={splitCash} onChange={(e) => setSplitCash(e.target.value)} placeholder="0" className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-slate-500">UPI / Card (INR)</Label>
+                  <Input type="number" min={0} value={splitUpi} onChange={(e) => setSplitUpi(e.target.value)} placeholder="0" className="mt-1" />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="ghost" onClick={() => setCheckOutOpen(false)}>Cancel</Button>
+              <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white font-bold">Confirm Check-Out & Issue Receipt</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* dialog 10: Room Transfer Modal */}
+      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+        <DialogContent className="sm:max-w-md text-xs">
+          <DialogHeader>
+            <DialogTitle>Transfer Room / Unit</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleTransferRoom} className="space-y-4 pt-2">
+            <div>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">New Room / Unit ID *</Label>
+              <Input value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)} placeholder="e.g. Room 202" required className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">Transfer Reason</Label>
+              <Input value={transferReason} onChange={(e) => setTransferReason(e.target.value)} placeholder="e.g. AC malfunction in 101" className="mt-1" />
+            </div>
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="ghost" onClick={() => setTransferOpen(false)}>Cancel</Button>
+              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Transfer Room</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* dialog 11: Extend Stay Modal */}
+      <Dialog open={extendOpen} onOpenChange={setExtendOpen}>
+        <DialogContent className="sm:max-w-md text-xs">
+          <DialogHeader>
+            <DialogTitle>Extend Stay Duration</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleExtendStay} className="space-y-4 pt-2">
+            <div>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">Additional Days *</Label>
+              <Input type="number" min={1} value={extendDays} onChange={(e) => setExtendDays(e.target.value)} required className="mt-1" />
+            </div>
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="ghost" onClick={() => setExtendOpen(false)}>Cancel</Button>
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold">Extend Stay & Update Booking</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* dialog 12: Date Click Action Options Modal */}
+      <Dialog open={dateOptionsOpen} onOpenChange={setDateOptionsOpen}>
+        <DialogContent className="sm:max-w-md text-xs">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between font-bold text-slate-850">
+              <span className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-orange-600" />
+                Actions for {selectedClickedDate?.formattedDate}
+              </span>
+              <StatusBadge status={selectedClickedDate?.status || "AVAILABLE"} />
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-2">
+            <p className="text-slate-500 text-[11px]">
+              Select an operational action to perform for <strong className="text-slate-800">{selectedCalendarItem?.name || "this facility"}</strong> on <strong className="text-slate-800">{selectedClickedDate?.formattedDate}</strong>:
+            </p>
+
+            <div className="grid grid-cols-1 gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setDateOptionsOpen(false);
+                  setBookDateFrom(selectedClickedDate.dateStr);
+                  setBookDateTo(selectedClickedDate.dateStr);
+                  setNewBookingOpen(true);
+                }}
+                className="w-full p-3 rounded-xl border border-slate-200 hover:border-orange-500 hover:bg-orange-50/40 flex items-center justify-between text-left transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 text-orange-700 rounded-lg group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-800 text-xs">Submit New Booking Request</div>
+                    <div className="text-[10px] text-slate-400">Pre-fill booking start date for {selectedClickedDate?.formattedDate}</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-orange-600" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDateOptionsOpen(false);
+                  setReserveDate(selectedClickedDate.dateStr);
+                  setReserveOpen(true);
+                }}
+                className="w-full p-3 rounded-xl border border-slate-200 hover:border-amber-500 hover:bg-amber-50/40 flex items-center justify-between text-left transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-100 text-amber-700 rounded-lg group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                    <Ban className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-800 text-xs">Add Internal Reservation / Block</div>
+                    <div className="text-[10px] text-slate-400">Reserve unit for VIP, Monk, Trust, or Private event</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-amber-600" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDateOptionsOpen(false);
+                  setBlackoutDate(selectedClickedDate.dateStr);
+                  setBlackoutOpen(true);
+                }}
+                className="w-full p-3 rounded-xl border border-slate-200 hover:border-rose-500 hover:bg-rose-50/40 flex items-center justify-between text-left transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-rose-100 text-rose-700 rounded-lg group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                    <AlertTriangle className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-800 text-xs">Mark Maintenance / Blackout Date</div>
+                    <div className="text-[10px] text-slate-400">Block facility for repairs or cleaning blackout</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDateOptionsOpen(false);
+                  setQ(selectedClickedDate.dateStr);
+                  handleTabChange("admin_bookings");
+                }}
+                className="w-full p-3 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/40 flex items-center justify-between text-left transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    <Search className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-800 text-xs">View Ledger Requests on This Date</div>
+                    <div className="text-[10px] text-slate-400">Filter and audit bookings for {selectedClickedDate?.formattedDate}</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-600" />
+              </button>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button variant="ghost" onClick={() => setDateOptionsOpen(false)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

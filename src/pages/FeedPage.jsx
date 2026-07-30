@@ -516,6 +516,48 @@ export default function FeedPage() {
                       </div>
                     )}
 
+                    {/* Poll Component (§4.11.4) */}
+                    {p.poll && (
+                      <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 mb-4">
+                        <div className="font-bold text-slate-800 text-xs flex items-center gap-2">
+                          <span className="text-sm">📊</span>
+                          <span>{p.poll.question}</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {(Array.isArray(p.poll.options) ? p.poll.options : []).map((opt, oIdx) => {
+                            const totalVotes = p.poll.votes?.length || 0;
+                            const optVotes = p.poll.votes?.filter(v => v.optionIndex === oIdx).length || 0;
+                            const optPct = totalVotes > 0 ? Math.round((optVotes / totalVotes) * 100) : 0;
+                            const hasVoted = p.poll.votes?.some(v => v.memberId === user?.id);
+
+                            return (
+                              <button
+                                key={oIdx}
+                                type="button"
+                                disabled={hasVoted}
+                                onClick={async () => {
+                                  try {
+                                    await api.post(`/feed/polls/${p.poll.id}/vote`, { optionIndex: oIdx });
+                                    toast.success("Vote recorded successfully!");
+                                    loadFeed(true);
+                                  } catch (e) {
+                                    toast.error(extractErrorMessage(e));
+                                  }
+                                }}
+                                className="w-full text-left p-2 rounded-lg border bg-white hover:bg-purple-50/50 transition-all text-xs relative overflow-hidden"
+                              >
+                                <div className="absolute left-0 top-0 bottom-0 bg-purple-100/60 transition-all" style={{ width: `${optPct}%` }}></div>
+                                <div className="relative flex justify-between items-center font-semibold text-slate-700">
+                                  <span>{opt}</span>
+                                  <span className="text-[10px] text-slate-400 font-mono-num">{optPct}% ({optVotes} votes)</span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {/* External PDF/Video Links & Action Buttons */}
                     <div className="flex flex-wrap gap-2 mb-4 border-b pb-4 border-slate-100">
                       {p.pdfUrl && (

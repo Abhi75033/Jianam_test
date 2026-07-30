@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Search,
   UserPlus,
+  UserX,
   LogIn,
   LogOut,
   Calendar,
@@ -214,12 +215,67 @@ export default function StaffPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId]);
 
+  const validatePersonalTab = () => {
+    if (!form.name.trim()) { toast.error("Staff Full Name is required."); return false; }
+    if (!form.mobile.trim()) { toast.error("Mobile Number is required."); return false; }
+    if (!form.dob) { toast.error("Date of Birth is required."); return false; }
+    if (!form.gender) { toast.error("Gender is required."); return false; }
+    if (!form.email.trim()) { toast.error("Email Address is required."); return false; }
+    if (!form.aadhaar.trim()) { toast.error("Aadhaar Card Number is required."); return false; }
+    if (!form.pan.trim()) { toast.error("PAN Number is required."); return false; }
+    if (!form.currentAddress.line?.trim()) { toast.error("Current Address Street / House is required."); return false; }
+    if (!form.currentAddress.area?.trim()) { toast.error("Current Address Area is required."); return false; }
+    if (!form.currentAddress.city?.trim()) { toast.error("Current Address City is required."); return false; }
+    if (!form.currentAddress.state?.trim()) { toast.error("Current Address State is required."); return false; }
+    if (!form.currentAddress.country?.trim()) { toast.error("Current Address Country is required."); return false; }
+    if (!form.currentAddress.pincode?.trim()) { toast.error("Current Address Pincode is required."); return false; }
+    if (!form.sameAsCurrent) {
+      if (!form.permanentAddress.line?.trim()) { toast.error("Permanent Address Street / House is required."); return false; }
+      if (!form.permanentAddress.area?.trim()) { toast.error("Permanent Address Area is required."); return false; }
+      if (!form.permanentAddress.city?.trim()) { toast.error("Permanent Address City is required."); return false; }
+      if (!form.permanentAddress.state?.trim()) { toast.error("Permanent Address State is required."); return false; }
+      if (!form.permanentAddress.country?.trim()) { toast.error("Permanent Address Country is required."); return false; }
+      if (!form.permanentAddress.pincode?.trim()) { toast.error("Permanent Address Pincode is required."); return false; }
+    }
+    return true;
+  };
+
+  const validateEmploymentTab = () => {
+    if (!form.joiningDate) { toast.error("Joining Date is required."); return false; }
+    if (!form.category) { toast.error("Staff Category Designation is required."); return false; }
+    if (form.category === "Other" && !form.categorySpecify?.trim()) { toast.error("Please specify Staff Category Name."); return false; }
+    if (!form.reportingTo?.trim()) { toast.error("Reporting Manager Name is required."); return false; }
+    if (!form.departmentId) { toast.error("Department Assign is required."); return false; }
+    if (form.departmentId === "OTHER" && !form.departmentSpecify?.trim()) { toast.error("Please specify Department Name."); return false; }
+    if (!form.designationId) { toast.error("Designation Assign is required."); return false; }
+    if (form.designationId === "OTHER" && !form.designationSpecify?.trim()) { toast.error("Please specify Designation Name."); return false; }
+    return true;
+  };
+
+  const validateEmergencyTab = () => {
+    if (!form.emergencyName?.trim()) { toast.error("Emergency Contact Name is required."); return false; }
+    if (!form.emergencyRelation?.trim()) { toast.error("Emergency Relationship is required."); return false; }
+    if (!form.emergencyMobile?.trim()) { toast.error("Emergency Mobile Number is required."); return false; }
+    if (!form.bloodGroup) { toast.error("Blood Group is required."); return false; }
+    if (!form.medicalConditions?.trim()) { toast.error("Medical Conditions details are required."); return false; }
+    if (!form.allergies?.trim()) { toast.error("Allergies details are required."); return false; }
+    return true;
+  };
+
+  const handleNextTab = () => {
+    if (wizardTab === "personal") {
+      if (validatePersonalTab()) setWizardTab("employment");
+    } else if (wizardTab === "employment") {
+      if (validateEmploymentTab()) setWizardTab("emergency");
+    }
+  };
+
   const handleCreateStaff = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.mobile) {
-      toast.error("Staff Name and Mobile Number are required.");
-      return;
-    }
+    if (!validatePersonalTab()) return;
+    if (!validateEmploymentTab()) return;
+    if (!validateEmergencyTab()) return;
+
     setSaving(true);
     try {
       const payload = {
@@ -482,57 +538,57 @@ export default function StaffPage() {
             <Card className="p-4 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
               <div className="p-3 rounded-lg bg-teal-50 text-teal-700"><User className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Total Registered</div>
-                <div className="text-xl font-black text-slate-800">{metrics.total}</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Total Staff</div>
+                <div className="text-xl font-black text-slate-800">{metrics.total || rows.length}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
               <div className="p-3 rounded-lg bg-emerald-50 text-emerald-700"><ShieldCheck className="h-5 w-5" /></div>
               <div>
                 <div className="text-[10px] uppercase font-bold text-slate-400">Active Staff</div>
-                <div className="text-xl font-black text-slate-800">{metrics.active}</div>
+                <div className="text-xl font-black text-slate-800">{metrics.active || rows.filter(r => r.employmentStatus === "ACTIVE").length}</div>
+              </div>
+            </Card>
+            <Card className="p-4 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
+              <div className="p-3 rounded-lg bg-rose-50 text-rose-700"><UserX className="h-5 w-5" /></div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Inactive Staff</div>
+                <div className="text-xl font-black text-slate-800">{metrics.inactive ?? Math.max(0, (metrics.total || rows.length) - (metrics.active || 0))}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
               <div className="p-3 rounded-lg bg-sky-50 text-sky-700"><Clock className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Present Today</div>
-                <div className="text-xl font-black text-slate-800">{metrics.present}</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Staff Present Today</div>
+                <div className="text-xl font-black text-slate-800">{metrics.present ?? 0}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
-              <div className="p-3 rounded-lg bg-rose-50 text-rose-700"><X className="h-5 w-5" /></div>
+              <div className="p-3 rounded-lg bg-red-50 text-red-700"><X className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Absent Today</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Staff Absent Today</div>
                 <div className="text-xl font-black text-slate-800">{metrics.absent ?? 0}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
               <div className="p-3 rounded-lg bg-amber-50 text-amber-700"><Calendar className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">On Leave Today</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Staff on Leave</div>
                 <div className="text-xl font-black text-slate-800">{metrics.onLeave ?? 0}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
               <div className="p-3 rounded-lg bg-indigo-50 text-indigo-700"><LogOut className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Yet to Check-Out</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Staff Yet to Check Out</div>
                 <div className="text-xl font-black text-slate-800">{metrics.yetToCheckOut ?? 0}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
-              <div className="p-3 rounded-lg bg-emerald-55 text-emerald-800"><UserPlus className="h-5 w-5" /></div>
+              <div className="p-3 rounded-lg bg-emerald-50 text-emerald-800"><UserPlus className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">New This Month</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">New Staff Added This Month</div>
                 <div className="text-xl font-black text-slate-800">{metrics.newThisMonth ?? 0}</div>
-              </div>
-            </Card>
-            <Card className="p-4 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
-              <div className="p-3 rounded-lg bg-orange-50 text-orange-700"><AlertTriangle className="h-5 w-5" /></div>
-              <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Expiring Documents</div>
-                <div className="text-xl font-black text-orange-700">{metrics.docsExpiringSoon}</div>
               </div>
             </Card>
           </div>
@@ -770,64 +826,64 @@ export default function StaffPage() {
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Date of Birth</Label>
-                    <Input type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Date of Birth *</Label>
+                    <Input type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} required className="h-9" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Gender</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Gender *</Label>
                     <SearchableSelect
                       value={form.gender}
                       onValueChange={(v) => setForm({ ...form, gender: v })}
                       options={GENDER_OPTIONS}
-                      placeholder="Select gender"
+                      placeholder="Select gender *"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Email ID (Optional)</Label>
-                    <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@domain.com" className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Email ID *</Label>
+                    <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@domain.com" required className="h-9" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Aadhaar Card Number</Label>
-                    <Input value={form.aadhaar} onChange={(e) => setForm({ ...form, aadhaar: e.target.value })} placeholder="e.g. 1234 5678 9012" className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Aadhaar Card Number *</Label>
+                    <Input value={form.aadhaar} onChange={(e) => setForm({ ...form, aadhaar: e.target.value })} placeholder="e.g. 1234 5678 9012" required className="h-9" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">PAN Number</Label>
-                    <Input value={form.pan} onChange={(e) => setForm({ ...form, pan: e.target.value })} placeholder="e.g. ABCDE1234F" className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">PAN Number *</Label>
+                    <Input value={form.pan} onChange={(e) => setForm({ ...form, pan: e.target.value })} placeholder="e.g. ABCDE1234F" required className="h-9" />
                   </div>
                 </div>
 
                 <div className="border-t pt-3 space-y-3">
-                  <h4 className="font-bold text-slate-700 text-xs">Current Residence Address</h4>
+                  <h4 className="font-bold text-slate-700 text-xs">Current Residence Address *</h4>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="col-span-2">
-                      <Label className="text-[10px] uppercase font-bold text-slate-400">Street / House</Label>
-                      <Input value={form.currentAddress.line} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, line: e.target.value } })} className="h-9" />
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">Street / House *</Label>
+                      <Input value={form.currentAddress.line} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, line: e.target.value } })} required className="h-9" />
                     </div>
                     <div>
-                      <Label className="text-[10px] uppercase font-bold text-slate-400">Area</Label>
-                      <Input value={form.currentAddress.area} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, area: e.target.value } })} className="h-9" />
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">Area *</Label>
+                      <Input value={form.currentAddress.area} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, area: e.target.value } })} required className="h-9" />
                     </div>
                   </div>
                   <div className="grid grid-cols-4 gap-2">
                     <div>
-                      <Label className="text-[10px] uppercase font-bold text-slate-400">City</Label>
-                      <Input value={form.currentAddress.city} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, city: e.target.value } })} className="h-9" />
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">City *</Label>
+                      <Input value={form.currentAddress.city} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, city: e.target.value } })} required className="h-9" />
                     </div>
                     <div>
-                      <Label className="text-[10px] uppercase font-bold text-slate-400">State</Label>
-                      <Input value={form.currentAddress.state} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, state: e.target.value } })} className="h-9" />
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">State *</Label>
+                      <Input value={form.currentAddress.state} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, state: e.target.value } })} required className="h-9" />
                     </div>
                     <div>
-                      <Label className="text-[10px] uppercase font-bold text-slate-400">Country</Label>
-                      <Input value={form.currentAddress.country} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: e.target.value } })} className="h-9" />
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">Country *</Label>
+                      <Input value={form.currentAddress.country} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: e.target.value } })} required className="h-9" />
                     </div>
                     <div>
-                      <Label className="text-[10px] uppercase font-bold text-slate-400">Pincode</Label>
-                      <Input value={form.currentAddress.pincode} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, pincode: e.target.value } })} className="h-9" />
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">Pincode *</Label>
+                      <Input value={form.currentAddress.pincode} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, pincode: e.target.value } })} required className="h-9" />
                     </div>
                   </div>
                 </div>
@@ -841,33 +897,33 @@ export default function StaffPage() {
 
                 {!form.sameAsCurrent && (
                   <div className="border-t pt-3 space-y-3">
-                    <h4 className="font-bold text-slate-700 text-xs">Permanent Address Details</h4>
+                    <h4 className="font-bold text-slate-700 text-xs">Permanent Address Details *</h4>
                     <div className="grid grid-cols-3 gap-2">
                       <div className="col-span-2">
-                        <Label className="text-[10px] uppercase font-bold text-slate-400">Street / House</Label>
-                        <Input value={form.permanentAddress.line} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, line: e.target.value } })} className="h-9" />
+                        <Label className="text-[10px] uppercase font-bold text-slate-400">Street / House *</Label>
+                        <Input value={form.permanentAddress.line} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, line: e.target.value } })} required className="h-9" />
                       </div>
                       <div>
-                        <Label className="text-[10px] uppercase font-bold text-slate-400">Area</Label>
-                        <Input value={form.permanentAddress.area} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, area: e.target.value } })} className="h-9" />
+                        <Label className="text-[10px] uppercase font-bold text-slate-400">Area *</Label>
+                        <Input value={form.permanentAddress.area} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, area: e.target.value } })} required className="h-9" />
                       </div>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                       <div>
-                        <Label className="text-[10px] uppercase font-bold text-slate-400">City</Label>
-                        <Input value={form.permanentAddress.city} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, city: e.target.value } })} className="h-9" />
+                        <Label className="text-[10px] uppercase font-bold text-slate-400">City *</Label>
+                        <Input value={form.permanentAddress.city} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, city: e.target.value } })} required className="h-9" />
                       </div>
                       <div>
-                        <Label className="text-[10px] uppercase font-bold text-slate-400">State</Label>
-                        <Input value={form.permanentAddress.state} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, state: e.target.value } })} className="h-9" />
+                        <Label className="text-[10px] uppercase font-bold text-slate-400">State *</Label>
+                        <Input value={form.permanentAddress.state} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, state: e.target.value } })} required className="h-9" />
                       </div>
                       <div>
-                        <Label className="text-[10px] uppercase font-bold text-slate-400">Country</Label>
-                        <Input value={form.permanentAddress.country} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, country: e.target.value } })} className="h-9" />
+                        <Label className="text-[10px] uppercase font-bold text-slate-400">Country *</Label>
+                        <Input value={form.permanentAddress.country} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, country: e.target.value } })} required className="h-9" />
                       </div>
                       <div>
-                        <Label className="text-[10px] uppercase font-bold text-slate-400">Pincode</Label>
-                        <Input value={form.permanentAddress.pincode} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, pincode: e.target.value } })} className="h-9" />
+                        <Label className="text-[10px] uppercase font-bold text-slate-400">Pincode *</Label>
+                        <Input value={form.permanentAddress.pincode} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, pincode: e.target.value } })} required className="h-9" />
                       </div>
                     </div>
                   </div>
@@ -879,8 +935,8 @@ export default function StaffPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Joining Date</Label>
-                    <Input type="date" value={form.joiningDate} onChange={(e) => setForm({ ...form, joiningDate: e.target.value })} className="h-9 animate-none" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Joining Date *</Label>
+                    <Input type="date" value={form.joiningDate} onChange={(e) => setForm({ ...form, joiningDate: e.target.value })} required className="h-9 animate-none" />
                   </div>
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-slate-400">Staff Category Designation *</Label>
@@ -888,7 +944,7 @@ export default function StaffPage() {
                       value={form.category}
                       onValueChange={(v) => setForm({ ...form, category: v })}
                       options={WORK_CATEGORY_OPTIONS}
-                      placeholder="Select category"
+                      placeholder="Select category *"
                       className="mt-1"
                     />
                   </div>
@@ -903,16 +959,20 @@ export default function StaffPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Reporting To (Manager / Admin Name)</Label>
-                    <Input value={form.reportingTo} onChange={(e) => setForm({ ...form, reportingTo: e.target.value })} placeholder="e.g. Ramesh Shah" className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Reporting To (Manager / Admin Name) *</Label>
+                    <Input value={form.reportingTo} onChange={(e) => setForm({ ...form, reportingTo: e.target.value })} placeholder="e.g. Ramesh Shah" required className="h-9" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Department Assign</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Department Assign *</Label>
                     <SearchableSelect
                       value={form.departmentId}
                       onValueChange={(v) => setForm({ ...form, departmentId: v })}
-                      options={[{ value: "", label: "Select Department" }, ...depts.map(d => ({ value: d.id, label: d.name }))]}
-                      placeholder="Select Department"
+                      options={[
+                        { value: "", label: "Select Department *" },
+                        ...depts.map(d => ({ value: d.id, label: d.name })),
+                        { value: "OTHER", label: "Other (Please Specify)" },
+                      ]}
+                      placeholder="Select Department *"
                       className="mt-1"
                     />
                   </div>
@@ -920,16 +980,16 @@ export default function StaffPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Designation Assign</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Designation Assign *</Label>
                     <SearchableSelect
                       value={form.designationId}
                       onValueChange={(v) => setForm({ ...form, designationId: v })}
                       options={[
-                        { value: "", label: "Select Designation" },
+                        { value: "", label: "Select Designation *" },
                         ...designations.map(d => ({ value: d.id, label: d.name })),
                         { value: "OTHER", label: "Other (Please Specify)" },
                       ]}
-                      placeholder="Select Designation"
+                      placeholder="Select Designation *"
                       className="mt-1"
                     />
                   </div>
@@ -943,6 +1003,7 @@ export default function StaffPage() {
                       value={form.departmentSpecify || ""}
                       onChange={(e) => setForm({ ...form, departmentSpecify: e.target.value })}
                       placeholder="e.g. Yatra Management"
+                      required
                       className="h-9 mt-1"
                     />
                   </div>
@@ -956,6 +1017,7 @@ export default function StaffPage() {
                       value={form.designationSpecify || ""}
                       onChange={(e) => setForm({ ...form, designationSpecify: e.target.value })}
                       placeholder="e.g. Event Coordinator"
+                      required
                       className="h-9 mt-1"
                     />
                   </div>
@@ -967,27 +1029,27 @@ export default function StaffPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Emergency Contact Name</Label>
-                    <Input value={form.emergencyName} onChange={(e) => setForm({ ...form, emergencyName: e.target.value })} placeholder="e.g. Suresh Shah" className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Emergency Contact Name *</Label>
+                    <Input value={form.emergencyName} onChange={(e) => setForm({ ...form, emergencyName: e.target.value })} placeholder="e.g. Suresh Shah" required className="h-9" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Emergency Relation</Label>
-                    <Input value={form.emergencyRelation} onChange={(e) => setForm({ ...form, emergencyRelation: e.target.value })} placeholder="e.g. Brother" className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Emergency Relation *</Label>
+                    <Input value={form.emergencyRelation} onChange={(e) => setForm({ ...form, emergencyRelation: e.target.value })} placeholder="e.g. Brother" required className="h-9" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Emergency Contact Mobile</Label>
-                    <Input value={form.emergencyMobile} onChange={(e) => setForm({ ...form, emergencyMobile: e.target.value })} placeholder="e.g. 9876543210" className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Emergency Contact Mobile *</Label>
+                    <Input value={form.emergencyMobile} onChange={(e) => setForm({ ...form, emergencyMobile: e.target.value })} placeholder="e.g. 9876543210" required className="h-9" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Blood Group</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Blood Group *</Label>
                     <SearchableSelect
                       value={form.bloodGroup}
                       onValueChange={(v) => setForm({ ...form, bloodGroup: v })}
                       options={BLOOD_GROUP_OPTIONS}
-                      placeholder="Select blood group"
+                      placeholder="Select blood group *"
                       className="mt-1"
                     />
                   </div>
@@ -995,12 +1057,12 @@ export default function StaffPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Medical Conditions (Admins-only visibility)</Label>
-                    <Input value={form.medicalConditions} onChange={(e) => setForm({ ...form, medicalConditions: e.target.value })} placeholder="e.g. Hypertension" className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Medical Conditions * (Admins-only visibility)</Label>
+                    <Input value={form.medicalConditions} onChange={(e) => setForm({ ...form, medicalConditions: e.target.value })} placeholder="e.g. None / Hypertension" required className="h-9" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Allergies</Label>
-                    <Input value={form.allergies} onChange={(e) => setForm({ ...form, allergies: e.target.value })} placeholder="e.g. Peanuts" className="h-9" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">Allergies *</Label>
+                    <Input value={form.allergies} onChange={(e) => setForm({ ...form, allergies: e.target.value })} placeholder="e.g. None / Peanuts" required className="h-9" />
                   </div>
                 </div>
               </div>
@@ -1009,7 +1071,7 @@ export default function StaffPage() {
             <DialogFooter className="gap-2 border-t pt-3 shrink-0">
               <Button type="button" variant="ghost" onClick={() => setAddOpen(false)}>Cancel Onboarding</Button>
               {wizardTab !== "emergency" ? (
-                <Button type="button" onClick={() => setWizardTab(wizardTab === "personal" ? "employment" : "emergency")} className="bg-slate-800 hover:bg-slate-900 text-white font-bold">
+                <Button type="button" onClick={handleNextTab} className="bg-slate-800 hover:bg-slate-900 text-white font-bold">
                   Continue Form
                 </Button>
               ) : (
