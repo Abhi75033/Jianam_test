@@ -13,6 +13,7 @@ import { Save, Sliders, Shield, History, Bell, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ALL_MODULES, ALL_ACTIONS, ROLE_LABELS } from "@/constants/modules";
 import { formatDateTime } from "@/lib/utils";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const ROLES = [
@@ -611,12 +612,20 @@ function OrgAuditHistory({ orgId }) {
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+
   const simulatedRole = localStorage.getItem("simulatedRole");
   const activeRole = simulatedRole || user?.primaryRoleKey || "MEMBER";
   const isSuperAdminUser = activeRole === "SUPER_ADMIN";
   const orgId = user?.organizationIds?.[0];
 
-  const defaultTab = isSuperAdminUser ? "rbac" : "org-config";
+  const validSuperTabs = ["rbac", "user-overrides", "app", "alerts", "login-history", "security"];
+  const currentTab = (tabParam === "security" ? "rbac" : tabParam) || (isSuperAdminUser ? "app" : "org-config");
+
+  const handleTabChange = (val) => {
+    setSearchParams({ tab: val });
+  };
 
   if (!isSuperAdminUser) {
     return (
@@ -625,7 +634,7 @@ export default function SettingsPage() {
           title="Organization Settings"
           subtitle="Configure working rules, timings, and view audit history logs for your center."
         />
-        <Tabs key={defaultTab} defaultValue={defaultTab}>
+        <Tabs value={currentTab} onValueChange={handleTabChange}>
           <TabsList className="mb-4">
             <TabsTrigger value="org-config">
               <Sliders className="h-3.5 w-3.5 mr-1.5" /> Working Rules
@@ -648,19 +657,19 @@ export default function SettingsPage() {
   return (
     <div data-testid="settings-page">
       <PageHeader
-        title="Settings"
-        subtitle="Roles & permissions, app configuration, alert thresholds and security."
+        title="Settings & Platform Governance"
+        subtitle="Roles & permissions, app configuration, alert thresholds, and security controls."
       />
-      <Tabs key={defaultTab} defaultValue={defaultTab}>
+      <Tabs value={validSuperTabs.includes(currentTab) ? currentTab : "app"} onValueChange={handleTabChange}>
         <TabsList className="mb-4">
+          <TabsTrigger value="app" data-testid="settings-tab-app">
+            <Sliders className="h-3.5 w-3.5 mr-1.5" /> Platform Settings
+          </TabsTrigger>
           <TabsTrigger value="rbac" data-testid="settings-tab-rbac">
-            <Shield className="h-3.5 w-3.5 mr-1.5" /> Roles & Permissions
+            <Shield className="h-3.5 w-3.5 mr-1.5" /> Security & Access Control
           </TabsTrigger>
           <TabsTrigger value="user-overrides" data-testid="settings-tab-user-overrides">
             <UserCheck className="h-3.5 w-3.5 mr-1.5" /> User Overrides
-          </TabsTrigger>
-          <TabsTrigger value="app" data-testid="settings-tab-app">
-            <Sliders className="h-3.5 w-3.5 mr-1.5" /> App
           </TabsTrigger>
           <TabsTrigger value="alerts" data-testid="settings-tab-alerts">
             <Bell className="h-3.5 w-3.5 mr-1.5" /> Alert Thresholds
@@ -669,9 +678,9 @@ export default function SettingsPage() {
             <History className="h-3.5 w-3.5 mr-1.5" /> Login History
           </TabsTrigger>
         </TabsList>
+        <TabsContent value="app"><AppSettings /></TabsContent>
         <TabsContent value="rbac"><RolePermissionMatrix /></TabsContent>
         <TabsContent value="user-overrides"><UserPermissionOverrides /></TabsContent>
-        <TabsContent value="app"><AppSettings /></TabsContent>
         <TabsContent value="alerts"><AlertThresholds /></TabsContent>
         <TabsContent value="login-history"><LoginHistory /></TabsContent>
       </Tabs>

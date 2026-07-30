@@ -58,6 +58,21 @@ function getHex(route) {
   return TONE_HEX[getTone(route)] || "#3B82F6";
 }
 
+// Helper: collect all registered base routes to avoid parent route highlighting when a specific sub-route is matched
+function getAllNavBaseRoutes() {
+  const routes = new Set();
+  const extract = (items) => {
+    (items || []).forEach((item) => {
+      if (item.route) routes.add(item.route.split("?")[0]);
+      if (item.children) extract(item.children);
+    });
+  };
+  extract(FLAT_NAV);
+  extract(NESTED_NAV);
+  return routes;
+}
+const ALL_NAV_BASE_ROUTES = getAllNavBaseRoutes();
+
 // ─── Single leaf nav link ──────────────────────────────────────────────────────
 function NavLeaf({ item, collapsed, onNavigate, indent }) {
   const location = useLocation();
@@ -72,8 +87,7 @@ function NavLeaf({ item, collapsed, onNavigate, indent }) {
     if (!routeBase) return false;
     if (routeBase === "/") return location.pathname === "/";
 
-    // Route has a query string → require BOTH path AND query to match
-    // e.g. "/staff?tab=attendance" is only active when URL is /staff?tab=attendance
+    // 1. Route has a query string → require BOTH path AND query to match
     if (routeQuery) {
       return (
         location.pathname === routeBase &&
@@ -81,13 +95,23 @@ function NavLeaf({ item, collapsed, onNavigate, indent }) {
       );
     }
 
-    // Route has no query string:
-    // If the browser URL currently has a search/query parameter,
-    // this plain route is NOT active (since a query-specific sub-item is active instead)
-    if (location.search && location.search.length > 1) {
-      return false;
+    // 2. Exact match on pathname
+    if (location.pathname === routeBase) {
+      if (location.search && location.search.length > 1) return false;
+      return true;
     }
-    return location.pathname === routeBase || location.pathname.startsWith(routeBase + "/");
+
+    // 3. Sub-route prefix match (e.g. /members/123 activates /members)
+    // BUT if the current URL is an exact route match for a specific sibling nav item (e.g. /members/bulk-import),
+    // then the parent route (/members) must NOT be active.
+    if (location.pathname.startsWith(routeBase + "/")) {
+      if (ALL_NAV_BASE_ROUTES.has(location.pathname)) {
+        return false;
+      }
+      return true;
+    }
+
+    return false;
   })();
 
   if (!item.route) return null;

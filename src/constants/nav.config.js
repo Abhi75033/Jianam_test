@@ -10,7 +10,7 @@ import {
   BarChart2, Globe, ShieldAlert, CheckSquare, PhoneCall, Wallet, FileText
 } from "lucide-react";
 
-export const NAV_LAYOUT = "flat"; // "flat" | "nested"
+export const NAV_LAYOUT = "nested"; // "flat" | "nested"
 
 export const ROUTE_TONES = {
   "/": "yellow",
