@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Community options — FIXED per Stanak document spec
 const COMMUNITY_OPTIONS = [
@@ -46,6 +47,7 @@ const EMPTY_FORM = {
 };
 
 export default function StanaksPage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { canDo } = useAuth();
   const canEdit = canDo("TEMPLES", "EDIT");
@@ -109,9 +111,9 @@ export default function StanaksPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) { toast.error("Sthanak name is required."); return; }
-    if (!form.community) { toast.error("Community is required."); return; }
-    if (!form.subSect) { toast.error("Sub-Sect is required."); return; }
+    if (!form.name.trim()) { toast.error(t("Sthanak name is required.")); return; }
+    if (!form.community) { toast.error(t("Community is required.")); return; }
+    if (!form.subSect) { toast.error(t("Sub-Sect is required.")); return; }
 
     setSaving(true);
     try {
@@ -133,10 +135,10 @@ export default function StanaksPage() {
 
       if (editTarget) {
         await api.patch(`/temples/${editTarget.id}`, payload);
-        toast.success("Sthanak updated successfully.");
+        toast.success(t("Sthanak updated successfully."));
       } else {
         await api.post("/temples", payload);
-        toast.success("Sthanak created successfully.");
+        toast.success(t("Sthanak created successfully."));
       }
       setOpen(false);
       loadStanaks();
@@ -161,7 +163,7 @@ export default function StanaksPage() {
         }
       }
       setStanaks((prev) => prev.filter((item) => item.id !== targetId));
-      toast.success("Sthanak deleted.");
+      toast.success(t("Sthanak deleted."));
       setDeleteTarget(null);
       loadStanaks();
     } catch (err) {
@@ -185,8 +187,8 @@ export default function StanaksPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-black text-slate-800">Sthanak Management</h1>
-          <p className="text-sm text-slate-500">Manage all Sthanakvasi and related Sthanaks.</p>
+          <h1 className="text-xl font-black text-slate-800">{t("Sthanak Management")}</h1>
+          <p className="text-sm text-slate-500">{t("Manage all Sthanakvasi and related Sthanaks.")}</p>
         </div>
         {canEdit && (
           <Button
@@ -195,7 +197,7 @@ export default function StanaksPage() {
             data-testid="stanaks-add-btn"
           >
             <Plus className="w-4 h-4" />
-            Add Sthanak
+            {t("Add Sthanak")}
           </Button>
         )}
       </div>
@@ -206,7 +208,7 @@ export default function StanaksPage() {
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by name, city, community…"
+          placeholder={t("Search by name, city, community…")}
           className="pl-9 h-9"
         />
       </div>
@@ -221,8 +223,8 @@ export default function StanaksPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Home}
-          title="No Sthanaks found"
-          description="Add your first Sthanak using the button above."
+          title={t("No Sthanaks found")}
+          description={t("Add your first Sthanak using the button above.")}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -237,7 +239,7 @@ export default function StanaksPage() {
                   <h3
                     className="font-bold text-slate-800 text-sm truncate hover:text-indigo-600 cursor-pointer transition-colors flex items-center gap-1.5"
                     onClick={() => navigate(`/stanaks/${item.id}`)}
-                    title="View Stanak Profile"
+                    title={t("View Sthanak Profile")}
                   >
                     {item.name}
                     <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-500 shrink-0" />
@@ -283,17 +285,17 @@ export default function StanaksPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editTarget ? "Edit Sthanak" : "Add New Sthanak"}</DialogTitle>
+            <DialogTitle>{editTarget ? t("Edit Sthanak") : t("Add New Sthanak")}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             {/* Name */}
             <div>
-              <Label className="text-xs font-semibold">Sthanak Name *</Label>
+              <Label className="text-xs font-semibold">{t("Sthanak Name *")}</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Ghatkopar Sthanakvasi Sangh"
+                placeholder={t("e.g. Ghatkopar Sthanakvasi Sangh")}
                 className="mt-1"
               />
             </div>
@@ -301,28 +303,28 @@ export default function StanaksPage() {
             {/* Community — FIXED dropdown */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">Community *</Label>
+                <Label className="text-xs font-semibold">{t("Community *")}</Label>
                 <select
                   value={form.community}
                   onChange={(e) => setForm({ ...form, community: e.target.value })}
                   className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   {COMMUNITY_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option key={opt} value={opt}>{t(opt)}</option>
                   ))}
                 </select>
               </div>
 
               {/* Sub-Sect — FIXED dropdown, NO Gaccha */}
               <div>
-                <Label className="text-xs font-semibold">Sub-Sect *</Label>
+                <Label className="text-xs font-semibold">{t("Sub-Sect *")}</Label>
                 <select
                   value={form.subSect}
                   onChange={(e) => setForm({ ...form, subSect: e.target.value })}
                   className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   {SUB_SECT_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option key={opt} value={opt}>{t(opt)}</option>
                   ))}
                 </select>
               </div>
@@ -330,26 +332,26 @@ export default function StanaksPage() {
 
             {/* Address */}
             <div>
-              <Label className="text-xs font-semibold">Address</Label>
+              <Label className="text-xs font-semibold">{t("Address")}</Label>
               <Input
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="Street address"
+                placeholder={t("Street address")}
                 className="mt-1"
               />
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label className="text-xs font-semibold">City</Label>
-                <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="City" className="mt-1" />
+                <Label className="text-xs font-semibold">{t("City")}</Label>
+                <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder={t("City")} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs font-semibold">State</Label>
-                <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="State" className="mt-1" />
+                <Label className="text-xs font-semibold">{t("State")}</Label>
+                <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder={t("State")} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs font-semibold">Pincode</Label>
+                <Label className="text-xs font-semibold">{t("Pincode")}</Label>
                 <Input value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} placeholder="400001" className="mt-1" />
               </div>
             </div>
@@ -357,33 +359,33 @@ export default function StanaksPage() {
             {/* Contact */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">Contact Number</Label>
+                <Label className="text-xs font-semibold">{t("Contact Number")}</Label>
                 <Input value={form.contactPhone} onChange={(e) => setForm({ ...form, contactPhone: e.target.value })} placeholder="9876543210" className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs font-semibold">Contact Email</Label>
+                <Label className="text-xs font-semibold">{t("Contact Email")}</Label>
                 <Input value={form.contactEmail} onChange={(e) => setForm({ ...form, contactEmail: e.target.value })} placeholder="sthanak@email.com" className="mt-1" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">Mukhya Shravak</Label>
-                <Input value={form.mukhyaShravak} onChange={(e) => setForm({ ...form, mukhyaShravak: e.target.value })} placeholder="Name of Mukhya Shravak" className="mt-1" />
+                <Label className="text-xs font-semibold">{t("Mukhya Shravak")}</Label>
+                <Input value={form.mukhyaShravak} onChange={(e) => setForm({ ...form, mukhyaShravak: e.target.value })} placeholder={t("Name of Mukhya Shravak")} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs font-semibold">Capacity (persons)</Label>
-                <Input type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} placeholder="e.g. 150" className="mt-1" />
+                <Label className="text-xs font-semibold">{t("Capacity (persons)")}</Label>
+                <Input type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} placeholder={t("e.g. 150")} className="mt-1" />
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <Label className="text-xs font-semibold">Notes / Description</Label>
+              <Label className="text-xs font-semibold">{t("Notes / Description")}</Label>
               <textarea
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Any additional information about this Sthanak"
+                placeholder={t("Any additional information about this Sthanak")}
                 rows={3}
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               />
@@ -391,9 +393,9 @@ export default function StanaksPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("Cancel")}</Button>
             <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-              {saving ? "Saving…" : editTarget ? "Save Changes" : "Create Sthanak"}
+              {saving ? t("Saving…") : editTarget ? t("Save Changes") : t("Create Sthanak")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -403,14 +405,14 @@ export default function StanaksPage() {
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Sthanak</DialogTitle>
+            <DialogTitle>{t("Delete Sthanak")}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-slate-600">
-            Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
+            {t("Are you sure you want to delete")} <strong>{deleteTarget?.name}</strong>{t("? This action cannot be undone.")}
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Cancel")}</Button>
+            <Button variant="destructive" onClick={handleDelete}>{t("Delete")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

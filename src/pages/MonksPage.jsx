@@ -30,7 +30,7 @@ import { formatDate } from "@/lib/utils";
 import TimePicker, { TimeRangePicker } from "@/components/common/TimePicker";
 import MemberLinkSelect from "@/components/common/MemberLinkSelect";
 
-const SHWETAMBAR_SUB = ["Murtipujak", "Sthanakvasi", "Terapanth"];
+const SHWETAMBAR_SUB = ["Murtipujak", "Sthanakvasi", "Terapanth", "Other"];
 const DIGAMBAR_SUB = ["Bisapantha", "Terapantha", "Taranapantha", "Gumanapantha", "Totapantha", "Kanjipantha", "Other Digambar Traditions"];
 
 const MURTIPUJAK_GACCHAS = [
@@ -68,6 +68,7 @@ const MemberSelect = ({ label, value, onChange, placeholder = "Select Member..."
 };
 
 const MonkSelect = ({ label, value, onChange, placeholder = "Select Sadhuji / Sadhviji..." }) => {
+  const { t } = useLanguage();
   const [monks, setMonks] = useState([]);
   useEffect(() => {
     api.get("/monks")
@@ -86,7 +87,7 @@ const MonkSelect = ({ label, value, onChange, placeholder = "Select Sadhuji / Sa
           label: `${m.dikshaName} (${m.publicId || "No ID"})`
         }))}
         placeholder={placeholder}
-        searchPlaceholder="Search MS by name/ID…"
+        searchPlaceholder={t("Search MS by name/ID…")}
         className="mt-1"
       />
     </div>
@@ -107,6 +108,7 @@ function fmtDate(d) {
  * Jain Monk ID Card — unique lotus/Om themed design
  * ───────────────────────────────────────────────────────────────────── */
 function MonkIdCardVisual({ monk }) {
+  const { t } = useLanguage();
   const isSadhvi = monk?.gender === "SADHVI";
   const accent   = isSadhvi ? "#9B2D7F" : "#4A1D6B"; // purple tones
   const light    = isSadhvi ? "#F5E6FF" : "#EDE0FF";
@@ -144,7 +146,7 @@ function MonkIdCardVisual({ monk }) {
               <div className="h-5 w-5 rounded bg-white/20 flex items-center justify-center">
                 <span className="text-white text-[8px] font-black">जि</span>
               </div>
-              <span className="text-[9px] font-bold tracking-widest text-white/80 uppercase">JiNANAM</span>
+              <span className="text-[9px] font-bold tracking-widest text-white/80 uppercase">{t("JiNANAM")}</span>
             </div>
             <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full border ${
               monk?.status === "ACTIVE"
@@ -176,7 +178,7 @@ function MonkIdCardVisual({ monk }) {
           <div className="text-center mt-3">
             <div className="font-black text-white text-base leading-tight">{monk?.dikshaName || "—"}</div>
             <div className="text-[10px] text-white/70 mt-0.5 font-semibold tracking-wide">
-              {monk?.gender === "SADHVI" ? "🌸 Sadhvi" : "🧘 Sadhu"}
+              {monk?.gender === "SADHVI" ? t("🌸 Sadhvi") : t("🧘 Sadhu")}
               {monk?.gaccha?.name && ` · ${monk.gaccha.name}`}
             </div>
           </div>
@@ -187,13 +189,13 @@ function MonkIdCardVisual({ monk }) {
           {monk?.nameBeforeDiksha && (
             <div className="flex items-center gap-2 text-[10px] text-slate-500">
               <Users className="h-3 w-3 shrink-0" style={{ color: accent }} />
-              <span>Born: <strong>{monk.nameBeforeDiksha}</strong></span>
+              <span>{t("Born:")} <strong>{monk.nameBeforeDiksha}</strong></span>
             </div>
           )}
           {monk?.dikshaDate && (
             <div className="flex items-center gap-2 text-[10px] text-slate-500">
               <CalendarDays className="h-3 w-3 shrink-0" style={{ color: accent }} />
-              <span>Diksha: <strong>{fmtDate(monk.dikshaDate)}</strong>
+              <span>{t("Diksha:")} <strong>{fmtDate(monk.dikshaDate)}</strong>
                 {monk.dikshaPlace && ` at ${monk.dikshaPlace}`}
               </span>
             </div>
@@ -223,7 +225,7 @@ function MonkIdCardVisual({ monk }) {
           style={{ background: accent }}>
           <div className="flex items-center gap-1.5">
             <Star className="h-3 w-3 text-yellow-300" />
-            <span className="text-[9px] text-white/70">{monk?._count?.followers ?? monk?.followers ?? 0} Followers</span>
+            <span className="text-[9px] text-white/70">{monk?._count?.followers ?? monk?.followers ?? 0} {t("Followers")}</span>
           </div>
           <span className="text-[10px] font-black font-mono text-white tracking-widest">
             {monk?.publicId || "—"}
@@ -236,14 +238,15 @@ function MonkIdCardVisual({ monk }) {
 
 /* ─── Status Switch ─────────────────────────────────────────────── */
 function StatusSwitch({ status, onChange }) {
+  const { t } = useLanguage();
   const on = status === "ACTIVE";
   return (
     <div className="flex items-center justify-between p-3 rounded-xl border"
       style={{ borderColor: "#7B2D8B22", background: "#F9F0FF" }}>
       <div>
-        <div className="text-sm font-semibold">Monk Status</div>
+        <div className="text-sm font-semibold">{t("Monk Status")}</div>
         <div className={`text-xs ${on ? "text-emerald-600" : "text-slate-400"}`}>
-          {on ? "Active — visible to community" : "Inactive — hidden from listings"}
+          {on ? t("Active — visible to community") : t("Inactive — hidden from listings")}
         </div>
       </div>
       <button type="button" onClick={() => onChange(on ? "INACTIVE" : "ACTIVE")}
@@ -256,6 +259,7 @@ function StatusSwitch({ status, onChange }) {
 
 /* ─── Monk ID Card Dialog ───────────────────────────────────────── */
 function MonkIdCardDialog({ open, onClose, monk, onSave, onPhotoSave, isSuperAdmin }) {
+  const { t } = useLanguage();
   const [mode, setMode]   = useState("preview");
   const [form, setForm]   = useState({});
   const [status, setStatus] = useState(monk?.status || "ACTIVE");
@@ -289,15 +293,15 @@ function MonkIdCardDialog({ open, onClose, monk, onSave, onPhotoSave, isSuperAdm
 
 
   const tabs = [
-    { id: "image",   Icon: Camera, label: "Photo" },
-    { id: "edit",    Icon: Pencil, label: "Edit" },
-    { id: "preview", Icon: Eye,    label: "Preview" },
+    { id: "image",   Icon: Camera, label: t("Photo") },
+    { id: "edit",    Icon: Pencil, label: t("Edit") },
+    { id: "preview", Icon: Eye,    label: t("Preview") },
   ];
 
   const handleStatusChange = async (s) => {
     setStatus(s);
     try { await onSave?.({ _statusOnly: true, status: s }); }
-    catch { setStatus(monk?.status || "ACTIVE"); toast.error("Failed to update status."); }
+    catch { setStatus(monk?.status || "ACTIVE"); toast.error(t("Failed to update status.")); }
   };
 
   const submitEdit = async (e) => {
@@ -315,20 +319,20 @@ function MonkIdCardDialog({ open, onClose, monk, onSave, onPhotoSave, isSuperAdm
         bio:              form.bio || undefined,
         currentTempleId:  form.currentTempleId || undefined,
       });
-      toast.success("Profile updated.");
+      toast.success(t("Profile updated."));
       setMode("preview");
-    } catch { toast.error("Failed to save changes."); }
+    } catch { toast.error(t("Failed to save changes.")); }
     finally { setSaving(false); }
   };
 
   const savePhoto = async () => {
-    if (!photoFile) { toast.error("Select an image first."); return; }
+    if (!photoFile) { toast.error(t("Select an image first.")); return; }
     setSaving(true);
     try {
       await onPhotoSave?.(photoFile);
-      toast.success("Photo updated.");
+      toast.success(t("Photo updated."));
       setMode("preview");
-    } catch { toast.error("Photo upload failed."); }
+    } catch { toast.error(t("Photo upload failed.")); }
     finally { setSaving(false); }
   };
 
@@ -365,7 +369,7 @@ function MonkIdCardDialog({ open, onClose, monk, onSave, onPhotoSave, isSuperAdm
                   <StatusSwitch status={status} onChange={handleStatusChange} />
                 )}
                 <Button className="w-full text-white" style={{ background: accent }}
-                  onClick={onClose}>Close</Button>
+                  onClick={onClose}>{t("Close")}</Button>
               </div>
             )}
 
@@ -374,46 +378,46 @@ function MonkIdCardDialog({ open, onClose, monk, onSave, onPhotoSave, isSuperAdm
               <form onSubmit={submitEdit}
                 className="bg-white rounded-xl p-4 max-h-[70vh] overflow-y-auto space-y-3">
                 <div className="text-sm font-semibold flex items-center gap-2 mb-1">
-                  <Pencil className="h-4 w-4" style={{ color: accent }} /> Edit Monk Profile
+                  <Pencil className="h-4 w-4" style={{ color: accent }} /> {t("Edit Monk Profile")}
                 </div>
 
                 {isSuperAdmin && <StatusSwitch status={status} onChange={handleStatusChange} />}
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="col-span-2">
-                    <Label className="text-xs">Diksha Name *</Label>
+                    <Label className="text-xs">{t("Diksha Name *")}</Label>
                     <Input {...f("dikshaName")} required />
                   </div>
                   <div>
-                    <Label className="text-xs">Gender</Label>
+                    <Label className="text-xs">{t("Gender")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
                       value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
-                      <option value="SADHU">Sadhu (Male)</option>
-                      <option value="SADHVI">Sadhvi (Female)</option>
+                      <option value="SADHU">{t("Sadhu (Male)")}</option>
+                      <option value="SADHVI">{t("Sadhvi (Female)")}</option>
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs">Name Before Diksha</Label>
+                    <Label className="text-xs">{t("Name Before Diksha")}</Label>
                     <Input {...f("nameBeforeDiksha")} />
                   </div>
                   <div>
-                    <Label className="text-xs">Diksha Date</Label>
+                    <Label className="text-xs">{t("Diksha Date")}</Label>
                     <Input type="date" {...f("dikshaDate")} />
                   </div>
                   <div>
-                    <Label className="text-xs">Diksha Place</Label>
-                    <Input placeholder="e.g. Palitana" {...f("dikshaPlace")} />
+                    <Label className="text-xs">{t("Diksha Place")}</Label>
+                    <Input placeholder={t("e.g. Palitana")} {...f("dikshaPlace")} />
                   </div>
                   <div>
-                    <Label className="text-xs">Date of Birth</Label>
+                    <Label className="text-xs">{t("Date of Birth")}</Label>
                     <Input type="date" {...f("dob")} />
                   </div>
                   <div>
-                    <Label className="text-xs">Birth Place</Label>
-                    <Input placeholder="e.g. Jaipur" {...f("dobPlace")} />
+                    <Label className="text-xs">{t("Birth Place")}</Label>
+                    <Input placeholder={t("e.g. Jaipur")} {...f("dobPlace")} />
                   </div>
                   <div className="col-span-2">
-                    <Label className="text-xs font-semibold">Current Temple / Upashray</Label>
+                    <Label className="text-xs font-semibold">{t("Current Temple / Upashray")}</Label>
                     <SearchableSelect
                       value={form.currentTempleId || ""}
                       onValueChange={(v) => setForm({ ...form, currentTempleId: v })}
@@ -421,21 +425,21 @@ function MonkIdCardDialog({ open, onClose, monk, onSave, onPhotoSave, isSuperAdm
                         value: t.id,
                         label: `[${t.publicId || t.code || t.id?.slice(0, 8) || "TMP"}] ${t.name}${t.city ? ` (${t.city})` : ""}`
                       }))}
-                      placeholder="Search temple by name or Temple ID…"
-                      searchPlaceholder="Type temple name or ID…"
+                      placeholder={t("Search temple by name or Temple ID…")}
+                      searchPlaceholder={t("Type temple name or ID…")}
                       className="mt-1"
                     />
                   </div>
                   <div className="col-span-2">
-                    <Label className="text-xs">Bio / Description</Label>
+                    <Label className="text-xs">{t("Bio / Description")}</Label>
                     <textarea rows={3} className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
                       value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
                   </div>
                 </div>
                 <div className="flex gap-2 pt-1">
-                  <Button type="button" variant="outline" className="flex-1" onClick={() => setMode("preview")}>Cancel</Button>
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => setMode("preview")}>{t("Cancel")}</Button>
                   <Button type="submit" className="flex-1 text-white" style={{ background: accent }} disabled={saving}>
-                    {saving ? "Saving…" : "Save Changes"}
+                    {saving ? t("Saving…") : t("Save Changes")}
                   </Button>
                 </div>
               </form>
@@ -445,18 +449,18 @@ function MonkIdCardDialog({ open, onClose, monk, onSave, onPhotoSave, isSuperAdm
             {mode === "image" && (
               <div className="bg-white rounded-xl p-4 flex flex-col items-center gap-4">
                 <div className="text-sm font-semibold flex items-center gap-2">
-                  <Camera className="h-4 w-4" style={{ color: accent }} /> Upload Photo
+                  <Camera className="h-4 w-4" style={{ color: accent }} /> {t("Upload Photo")}
                 </div>
                 <div
                   className="h-32 w-32 rounded-full overflow-hidden border-4 cursor-pointer flex items-center justify-center"
                   style={{ borderColor: `${accent}40`, background: "#F5EEFF" }}
                   onClick={() => fileRef.current?.click()}>
                   {preview ? (
-                    <img src={preview} alt="preview" className="h-full w-full object-cover" />
+                    <img src={preview} alt={t("preview")} className="h-full w-full object-cover" />
                   ) : (
                     <div className="text-center">
                       <Camera className="h-8 w-8 mx-auto mb-1" style={{ color: accent }} />
-                      <div className="text-xs" style={{ color: accent }}>Click to upload</div>
+                      <div className="text-xs" style={{ color: accent }}>{t("Click to upload")}</div>
                     </div>
                   )}
                 </div>
@@ -471,9 +475,9 @@ function MonkIdCardDialog({ open, onClose, monk, onSave, onPhotoSave, isSuperAdm
                   }}
                 />
                 <div className="flex gap-2 w-full mt-2">
-                  <Button variant="outline" className="flex-1" onClick={() => setMode("preview")}>Cancel</Button>
+                  <Button variant="outline" className="flex-1" onClick={() => setMode("preview")}>{t("Cancel")}</Button>
                   <Button className="flex-1 text-white" style={{ background: accent }} disabled={saving} onClick={savePhoto}>
-                    Save Photo
+                    {t("Save Photo")}
                   </Button>
                 </div>
               </div>
@@ -487,6 +491,7 @@ function MonkIdCardDialog({ open, onClose, monk, onSave, onPhotoSave, isSuperAdm
 
 /* ─── Register Monk Dialog ─────────────────────────────────────── */
 function RegisterMonkDialog({ onCreated }) {
+  const { t } = useLanguage();
   const [open, setOpen]     = useState(false);
   const [saving, setSaving] = useState(false);
   const [tab, setTab]       = useState("basic");
@@ -615,7 +620,7 @@ function RegisterMonkDialog({ onCreated }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.dikshaName) { toast.error("Diksha Name is required."); return; }
+    if (!form.dikshaName) { toast.error(t("Diksha Name is required.")); return; }
     setSaving(true);
     try {
       // Map form states directly to payload
@@ -718,7 +723,7 @@ function RegisterMonkDialog({ onCreated }) {
       }
 
       await api.post("/monks", payload);
-      toast.success("MS (Maharaj Saheb) profile created successfully.");
+      toast.success(t("MS (Maharaj Saheb) profile created successfully."));
       setOpen(false);
       onCreated?.();
     } catch (e) {
@@ -867,29 +872,29 @@ function RegisterMonkDialog({ onCreated }) {
   };
 
   const steps = [
-    { id: "basic", label: "👤 Basic Information" },
-    { id: "journey", label: "🧘 Journey & Sect" },
-    { id: "hierarchy", label: "🌳 Guru Parampara" },
-    { id: "group", label: "👥 Vihaar Group" },
-    { id: "family", label: "🏠 Family Details" },
-    { id: "tapasya", label: "Tapasya" },
-    { id: "movement", label: "📍 Location & Chaturmas" },
-    { id: "routine", label: "🕒 Routine & Guidelines" },
-    { id: "contacts", label: "📞 representatives" },
-    { id: "media", label: "🔗 Media & Links" },
+    { id: "basic", label: t("👤 Basic Information") },
+    { id: "journey", label: t("🧘 Journey & Sect") },
+    { id: "hierarchy", label: t("🌳 Guru Parampara") },
+    { id: "group", label: t("👥 Vihaar Group") },
+    { id: "family", label: t("🏠 Family Details") },
+    { id: "tapasya", label: t("Tapasya") },
+    { id: "movement", label: t("📍 Location & Chaturmas") },
+    { id: "routine", label: t("🕒 Routine & Guidelines") },
+    { id: "contacts", label: t("📞 representatives") },
+    { id: "media", label: t("🔗 Media & Links") },
   ];
 
   return (
     <>
       <Button onClick={() => setOpen(true)} data-testid="monks-add-button"
         className="bg-purple-700 hover:bg-purple-800 text-white font-bold transition-all shadow-md">
-        <UserPlus className="h-4 w-4 mr-2" /> New MS Profile
+        <UserPlus className="h-4 w-4 mr-2" /> {t("New MS Profile")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[92vh] p-0 overflow-hidden flex flex-col bg-slate-50 border-0 rounded-2xl shadow-2xl">
           <DialogHeader className="p-4 bg-white border-b shrink-0">
             <DialogTitle className="font-heading text-lg text-purple-950 flex items-center gap-2">
-              Onboard Maharaj Saheb / Sadhvi Profile
+              {t("Onboard Maharaj Saheb / Sadhvi Profile")}
             </DialogTitle>
           </DialogHeader>
 
@@ -905,7 +910,7 @@ function RegisterMonkDialog({ onCreated }) {
                         ? "bg-purple-700 text-white shadow-md shadow-purple-200"
                         : "text-slate-600 hover:bg-slate-200/50 hover:text-purple-950"
                     }`}>
-                    {s.label}
+                    {t(s.label)}
                   </button>
                 );
               })}
@@ -918,27 +923,27 @@ function RegisterMonkDialog({ onCreated }) {
                   
                   {tab === "basic" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5 flex items-center gap-2">👤 Personal & Basic Details</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5 flex items-center gap-2">{t("👤 Personal & Basic Details")}</h3>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="col-span-2">{field("Full Name (Diksha Name) *", "dikshaName", "text", "e.g. Param Pujya Acharya Maharaj")}</div>
                         {field("Short / Popular Name (Optional)", "shortName")}
                         <div>
-                          <Label className="text-xs font-semibold">Gender *</Label>
+                          <Label className="text-xs font-semibold">{t("Gender *")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
-                            <option value="SADHU">🧘 Sadhu (Male)</option>
-                            <option value="SADHVI">🌸 Sadhvi (Female)</option>
+                            <option value="SADHU">{t("🧘 Sadhu (Male)")}</option>
+                            <option value="SADHVI">{t("🌸 Sadhvi (Female)")}</option>
                           </select>
                         </div>
                         {field("Name Before Diksha", "nameBeforeDiksha")}
                         {field("Date of Birth", "dob", "date")}
                         {field("Place of Birth", "dobPlace", "text", "City, State")}
                         <div>
-                          <Label className="text-xs font-semibold">Current Spiritual Status</Label>
+                          <Label className="text-xs font-semibold">{t("Current Spiritual Status")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                            <option value="ACTIVE">Active (Vihaar / Darshan)</option>
-                            <option value="SAMADHI">Samadhi (Devlok / Nirvana)</option>
+                            <option value="ACTIVE">{t("Active (Vihaar / Darshan)")}</option>
+                            <option value="SAMADHI">{t("Samadhi (Devlok / Nirvana)")}</option>
                           </select>
                         </div>
                       </div>
@@ -951,42 +956,42 @@ function RegisterMonkDialog({ onCreated }) {
                       )}
 
                       <div>
-                        <Label className="text-xs font-semibold">Short Bio (3-5 Lines Summary)</Label>
+                        <Label className="text-xs font-semibold">{t("Short Bio (3-5 Lines Summary)")}</Label>
                         <textarea rows={3} className="w-full mt-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
                           value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                          placeholder="Introduce Maharaj Saheb..." />
+                          placeholder={t("Introduce Maharaj Saheb...")} />
                       </div>
                     </div>
                   )}
 
                   {tab === "journey" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5 flex items-center gap-2">🧘 Diksha & Sect Details</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5 flex items-center gap-2">{t("🧘 Diksha & Sect Details")}</h3>
                       <div className="grid grid-cols-2 gap-3">
                         {field("Diksha Date", "dikshaDate", "date")}
                         {field("Diksha Place", "dikshaPlace", "text", "e.g. Palitana")}
                         <div className="col-span-2">
-                          <MonkSelect label="Diksha Guru" value={form.dikshaGuruId} onChange={(val) => setForm({ ...form, dikshaGuruId: val })} />
+                          <MonkSelect label={t("Diksha Guru")} value={form.dikshaGuruId} onChange={(val) => setForm({ ...form, dikshaGuruId: val })} />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 border-t pt-3">
                         <div>
-                          <Label className="text-xs font-semibold">Community</Label>
+                          <Label className="text-xs font-semibold">{t("Community")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={form.sect} onChange={(e) => setForm({ ...form, sect: e.target.value, subSect: e.target.value === "Digambar" ? "Bisapantha" : "Murtipujak" })}>
-                            <option value="Shwetambar">Shwetambar</option>
-                            <option value="Digambar">Digambar</option>
+                            <option value="Shwetambar">{t("Shwetambar")}</option>
+                            <option value="Digambar">{t("Digambar")}</option>
                           </select>
                         </div>
                         <div>
-                          <Label className="text-xs font-semibold">Sub-Sect / Tradition</Label>
+                          <Label className="text-xs font-semibold">{t("Sub-Sect / Tradition")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={form.subSect} onChange={(e) => setForm({ ...form, subSect: e.target.value })}>
                             {form.sect === "Digambar" ? (
-                              DIGAMBAR_SUB.map(s => <option key={s} value={s}>{s}</option>)
+                              DIGAMBAR_SUB.map(s => <option key={s} value={s}>{t(s)}</option>)
                             ) : (
-                              SHWETAMBAR_SUB.map(s => <option key={s} value={s}>{s}</option>)
+                              SHWETAMBAR_SUB.map(s => <option key={s} value={s}>{t(s)}</option>)
                             )}
                           </select>
                         </div>
@@ -994,11 +999,11 @@ function RegisterMonkDialog({ onCreated }) {
 
                       {form.sect === "Shwetambar" && form.subSect === "Murtipujak" && (
                         <div>
-                          <Label className="text-xs font-semibold">Gaccha</Label>
+                          <Label className="text-xs font-semibold">{t("Gaccha")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={form.gacchaName} onChange={(e) => setForm({ ...form, gacchaName: e.target.value })}>
-                            <option value="">Select Gaccha...</option>
-                            {MURTIPUJAK_GACCHAS.map(g => <option key={g} value={g}>{g}</option>)}
+                            <option value="">{t("Select Gaccha...")}</option>
+                            {MURTIPUJAK_GACCHAS.map(g => <option key={g} value={g}>{t(g)}</option>)}
                           </select>
                         </div>
                       )}
@@ -1007,9 +1012,9 @@ function RegisterMonkDialog({ onCreated }) {
 
                   {tab === "hierarchy" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🌳 Guru-Disciple Lineage</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🌳 Guru-Disciple Lineage")}</h3>
                       <div className="space-y-3">
-                        <MonkSelect label="Acharya Guru (Parent Guru)" value={form.acharyaGuruId} onChange={(val) => setForm({ ...form, acharyaGuruId: val })} />
+                        <MonkSelect label={t("Acharya Guru (Parent Guru)")} value={form.acharyaGuruId} onChange={(val) => setForm({ ...form, acharyaGuruId: val })} />
                         {field("Current Sangh / Acharya Name (Optional)", "currentSangh", "text", "e.g. Acharya Shanti Suriswarji Sangh")}
                       </div>
                     </div>
@@ -1017,19 +1022,19 @@ function RegisterMonkDialog({ onCreated }) {
 
                   {tab === "group" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">👥 Vihaar Group Onboarding</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("👥 Vihaar Group Onboarding")}</h3>
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                           {field("Vihaar Group Name", "groupName", "text", "e.g. Vihar Group A")}
                           <div className="bg-slate-50 p-2.5 rounded-lg border text-xs text-slate-500 flex items-center justify-between mt-5">
-                            <span>🔢 Group ID: <strong>Auto (starts with JFMSV108)</strong></span>
+                            <span>{t("🔢 Group ID:")} <strong>{t("Auto (starts with JFMSV108)")}</strong></span>
                           </div>
                         </div>
                         
                         {/* Member collections */}
                         <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                          <Label className="text-xs font-bold text-slate-700 block">Link other MS Profiles in Group</Label>
-                          <MonkSelect label="Search & Add MS Profile" value="" onChange={(val) => {
+                          <Label className="text-xs font-bold text-slate-700 block">{t("Link other MS Profiles in Group")}</Label>
+                          <MonkSelect label={t("Search & Add MS Profile")} value="" onChange={(val) => {
                             if (val && !form.groupMembersMS.includes(val)) {
                               setForm(prev => ({ ...prev, groupMembersMS: [...prev.groupMembersMS, val] }));
                             }
@@ -1045,8 +1050,8 @@ function RegisterMonkDialog({ onCreated }) {
                         </div>
 
                         <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                          <Label className="text-xs font-bold text-slate-700 block">Link Jain Devotees travelling along</Label>
-                          <MemberSelect label="Search Jain Member" category="JAIN" value="" onChange={(val) => {
+                          <Label className="text-xs font-bold text-slate-700 block">{t("Link Jain Devotees travelling along")}</Label>
+                          <MemberSelect label={t("Search Jain Member")} category="JAIN" value="" onChange={(val) => {
                             if (val && !form.groupMembersJain.includes(val)) {
                               setForm(prev => ({ ...prev, groupMembersJain: [...prev.groupMembersJain, val] }));
                             }
@@ -1062,8 +1067,8 @@ function RegisterMonkDialog({ onCreated }) {
                         </div>
 
                         <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                          <Label className="text-xs font-bold text-slate-700 block">Link Non-Jain helpers</Label>
-                          <MemberSelect label="Search Non-Jain Helper" category="NON_JAIN" value="" onChange={(val) => {
+                          <Label className="text-xs font-bold text-slate-700 block">{t("Link Non-Jain helpers")}</Label>
+                          <MemberSelect label={t("Search Non-Jain Helper")} category="NON_JAIN" value="" onChange={(val) => {
                             if (val && !form.groupMembersNonJain.includes(val)) {
                               setForm(prev => ({ ...prev, groupMembersNonJain: [...prev.groupMembersNonJain, val] }));
                             }
@@ -1079,10 +1084,10 @@ function RegisterMonkDialog({ onCreated }) {
                         </div>
 
                         <div>
-                          <Label className="text-xs">Vihaar Notes</Label>
+                          <Label className="text-xs">{t("Vihaar Notes")}</Label>
                           <textarea rows={2} className="w-full mt-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
                             value={form.groupNotes} onChange={(e) => setForm({ ...form, groupNotes: e.target.value })}
-                            placeholder="Vihar details / routes..." />
+                            placeholder={t("Vihar details / routes...")} />
                         </div>
                       </div>
                     </div>
@@ -1090,25 +1095,25 @@ function RegisterMonkDialog({ onCreated }) {
 
                   {tab === "family" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🏠 Pre-Diksha Family Details</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🏠 Pre-Diksha Family Details")}</h3>
                       
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">👨 Father</span>
-                        <MemberSelect label="Link Father's JiNANAM Member Profile (Optional)" value={form.fatherMemberId} onChange={(val) => setForm({ ...form, fatherMemberId: val })} />
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("👨 Father")}</span>
+                        <MemberSelect label={t("Link Father's JiNANAM Member Profile (Optional)")} value={form.fatherMemberId} onChange={(val) => setForm({ ...form, fatherMemberId: val })} />
                         {!form.fatherMemberId && field("Father's Name (Text Entry)", "fatherNameText")}
                       </div>
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">👩 Mother</span>
-                        <MemberSelect label="Link Mother's JiNANAM Member Profile (Optional)" value={form.motherMemberId} onChange={(val) => setForm({ ...form, motherMemberId: val })} />
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("👩 Mother")}</span>
+                        <MemberSelect label={t("Link Mother's JiNANAM Member Profile (Optional)")} value={form.motherMemberId} onChange={(val) => setForm({ ...form, motherMemberId: val })} />
                         {!form.motherMemberId && field("Mother's Name (Text Entry)", "motherNameText")}
                       </div>
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">👦 Siblings</span>
+                          <span className="text-xs font-bold text-slate-700">{t("👦 Siblings")}</span>
                           <Button type="button" size="sm" onClick={addSibling} className="bg-purple-700 hover:bg-purple-800 text-white font-bold h-8 px-4 text-xs rounded-lg">
-                            + Add Sibling
+                            {t("+ Add Sibling")}
                           </Button>
                         </div>
                         {(form.siblings || []).map((s, idx) => (
@@ -1121,13 +1126,13 @@ function RegisterMonkDialog({ onCreated }) {
                               <div className="col-span-6">
                                 {s.memberId ? (
                                   <div className="space-y-1">
-                                    <Label className="text-[10px] font-bold text-slate-500 block">LINK PROFILE</Label>
+                                    <Label className="text-[10px] font-bold text-slate-500 block">{t("LINK PROFILE")}</Label>
                                     <MemberSelect label="" value={s.memberId} onChange={(val) => updateSibling(idx, "memberId", val)} />
                                   </div>
                                 ) : (
                                   <div className="space-y-1">
-                                    <Label className="text-[10px] font-bold text-slate-500 block">SIBLING NAME</Label>
-                                    <Input className="h-8 mt-0" value={s.name} onChange={(e) => updateSibling(idx, "name", e.target.value)} placeholder="Full Name" />
+                                    <Label className="text-[10px] font-bold text-slate-500 block">{t("SIBLING NAME")}</Label>
+                                    <Input className="h-8 mt-0" value={s.name} onChange={(e) => updateSibling(idx, "name", e.target.value)} placeholder={t("Full Name")} />
                                   </div>
                                 )}
                                 <button
@@ -1135,7 +1140,7 @@ function RegisterMonkDialog({ onCreated }) {
                                   onClick={() => updateSibling(idx, "memberId", s.memberId ? "" : "__search__")}
                                   className="mt-1 text-[10px] text-purple-600 hover:text-purple-800 font-semibold underline underline-offset-1"
                                 >
-                                  {s.memberId ? "Switch to Name Entry" : "Link Platform Profile instead"}
+                                  {s.memberId ? t("Switch to Name Entry") : t("Link Platform Profile instead")}
                                 </button>
                               </div>
                               {/* Column 2: Relationship */}
@@ -1143,8 +1148,8 @@ function RegisterMonkDialog({ onCreated }) {
                                 <Label className="text-[10px] font-bold text-slate-500 block">RELATIONSHIP</Label>
                                 <select className="w-full mt-1 h-8 rounded border bg-white px-2 text-xs focus:outline-none"
                                   value={s.relationship} onChange={(e) => updateSibling(idx, "relationship", e.target.value)}>
-                                  <option value="Brother">Brother</option>
-                                  <option value="Sister">Sister</option>
+                                  <option value="Brother">{t("Brother")}</option>
+                                  <option value="Sister">{t("Sister")}</option>
                                 </select>
                               </div>
                             </div>
@@ -1153,40 +1158,40 @@ function RegisterMonkDialog({ onCreated }) {
                       </div>
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">📍 Family Location Address</span>
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("📍 Family Location Address")}</span>
                         <div className="space-y-3">
                           <div>
-                            <Label className="text-xs font-semibold">Address *</Label>
-                            <Input className="mt-1 bg-white" value={form.preDikshaAddress} onChange={(e) => setForm({ ...form, preDikshaAddress: e.target.value })} placeholder="Full address, House/Flat No, Street" />
+                            <Label className="text-xs font-semibold">{t("Address *")}</Label>
+                            <Input className="mt-1 bg-white" value={form.preDikshaAddress} onChange={(e) => setForm({ ...form, preDikshaAddress: e.target.value })} placeholder={t("Full address, House/Flat No, Street")} />
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <Label className="text-xs font-semibold">Country (default India)</Label>
-                              <Input className="mt-1 bg-white" value={form.preDikshaCountry || "India"} onChange={(e) => setForm({ ...form, preDikshaCountry: e.target.value })} placeholder="India" />
+                              <Label className="text-xs font-semibold">{t("Country (default India)")}</Label>
+                              <Input className="mt-1 bg-white" value={form.preDikshaCountry || "India"} onChange={(e) => setForm({ ...form, preDikshaCountry: e.target.value })} placeholder={t("India")} />
                             </div>
                             <div>
-                              <Label className="text-xs font-semibold">Pincode</Label>
-                              <Input className="mt-1 bg-white" value={form.preDikshaPincode} onChange={(e) => setForm({ ...form, preDikshaPincode: e.target.value })} placeholder="6-digit Pincode" maxLength={6} />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label className="text-xs font-semibold">Area</Label>
-                              <Input className="mt-1 bg-white" value={form.preDikshaArea || ""} onChange={(e) => setForm({ ...form, preDikshaArea: e.target.value })} placeholder="Thane E or Thane W" />
-                            </div>
-                            <div>
-                              <Label className="text-xs font-semibold">City</Label>
-                              <Input className="mt-1 bg-white" value={form.preDikshaCity} onChange={(e) => setForm({ ...form, preDikshaCity: e.target.value })} placeholder="e.g. Thane" />
+                              <Label className="text-xs font-semibold">{t("Pincode")}</Label>
+                              <Input className="mt-1 bg-white" value={form.preDikshaPincode} onChange={(e) => setForm({ ...form, preDikshaPincode: e.target.value })} placeholder={t("6-digit Pincode")} maxLength={6} />
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <Label className="text-xs font-semibold">District</Label>
-                              <Input className="mt-1 bg-white" value={form.preDikshaDistrict || ""} onChange={(e) => setForm({ ...form, preDikshaDistrict: e.target.value })} placeholder="e.g. Thane District" />
+                              <Label className="text-xs font-semibold">{t("Area")}</Label>
+                              <Input className="mt-1 bg-white" value={form.preDikshaArea || ""} onChange={(e) => setForm({ ...form, preDikshaArea: e.target.value })} placeholder={t("Thane E or Thane W")} />
                             </div>
                             <div>
-                              <Label className="text-xs font-semibold">State</Label>
-                              <Input className="mt-1 bg-white" value={form.preDikshaState} onChange={(e) => setForm({ ...form, preDikshaState: e.target.value })} placeholder="e.g. Maharashtra" />
+                              <Label className="text-xs font-semibold">{t("City")}</Label>
+                              <Input className="mt-1 bg-white" value={form.preDikshaCity} onChange={(e) => setForm({ ...form, preDikshaCity: e.target.value })} placeholder={t("e.g. Thane")} />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs font-semibold">{t("District")}</Label>
+                              <Input className="mt-1 bg-white" value={form.preDikshaDistrict || ""} onChange={(e) => setForm({ ...form, preDikshaDistrict: e.target.value })} placeholder={t("e.g. Thane District")} />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-semibold">{t("State")}</Label>
+                              <Input className="mt-1 bg-white" value={form.preDikshaState} onChange={(e) => setForm({ ...form, preDikshaState: e.target.value })} placeholder={t("e.g. Maharashtra")} />
                             </div>
                           </div>
                         </div>
@@ -1197,55 +1202,55 @@ function RegisterMonkDialog({ onCreated }) {
                   {tab === "tapasya" && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center border-b pb-1.5">
-                        <h3 className="text-sm font-bold text-slate-800">Tapasya</h3>
+                        <h3 className="text-sm font-bold text-slate-800">{t("Tapasya")}</h3>
                         <Button type="button" size="sm" onClick={addTapasya} className="bg-purple-700 hover:bg-purple-800 text-white font-bold h-7 text-xs">
-                          + Add Tapasya
+                          {t("+ Add Tapasya")}
                         </Button>
                       </div>
 
                       <div className="space-y-3">
-                        {(form.tapasya || []).map((t, idx) => (
+                        {(form.tapasya || []).map((tItem, idx) => (
                           <div key={idx} className="border p-4 rounded-xl bg-white space-y-3 relative shadow-sm">
                             <button type="button" onClick={() => removeTapasya(idx)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
                               <Trash2 className="h-4 w-4" />
                             </button>
                             <div className="grid grid-cols-3 gap-3">
                               <div>
-                                <Label className="text-xs font-semibold">Tapasya Name</Label>
+                                <Label className="text-xs font-semibold">{t("Tapasya Name")}</Label>
                                 <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
-                                  value={t.name} onChange={(e) => updateTapasya(idx, "name", e.target.value)}>
-                                  <option value="Upvas">Upvas</option>
-                                  <option value="Ayambil">Ayambil</option>
-                                  <option value="Varsitap">Varsitap</option>
-                                  <option value="Other">Other</option>
+                                  value={tItem.name} onChange={(e) => updateTapasya(idx, "name", e.target.value)}>
+                                  <option value="Upvas">{t("Upvas")}</option>
+                                  <option value="Ayambil">{t("Ayambil")}</option>
+                                  <option value="Varsitap">{t("Varsitap")}</option>
+                                  <option value="Other">{t("Other")}</option>
                                 </select>
                               </div>
                               <div>
-                                <Label className="text-xs font-semibold">Number Completed</Label>
-                                <Input type="number" className="mt-1 h-9" value={t.count} onChange={(e) => updateTapasya(idx, "count", e.target.value)} />
+                                <Label className="text-xs font-semibold">{t("Number Completed")}</Label>
+                                <Input type="number" className="mt-1 h-9" value={tItem.count} onChange={(e) => updateTapasya(idx, "count", e.target.value)} />
                               </div>
                               <div>
-                                <Label className="text-xs font-semibold">Status</Label>
+                                <Label className="text-xs font-semibold">{t("Status")}</Label>
                                 <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
-                                  value={t.status} onChange={(e) => updateTapasya(idx, "status", e.target.value)}>
-                                  <option value="Completed">Completed</option>
-                                  <option value="Ongoing">Ongoing</option>
+                                  value={tItem.status} onChange={(e) => updateTapasya(idx, "status", e.target.value)}>
+                                  <option value="Completed">{t("Completed")}</option>
+                                  <option value="Ongoing">{t("Ongoing")}</option>
                                 </select>
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                               <div>
-                                <Label className="text-xs font-semibold">Date Completed / Start Date</Label>
-                                <Input type="date" className="mt-1 h-9" value={t.date} onChange={(e) => updateTapasya(idx, "date", e.target.value)} />
+                                <Label className="text-xs font-semibold">{t("Date Completed / Start Date")}</Label>
+                                <Input type="date" className="mt-1 h-9" value={tItem.date} onChange={(e) => updateTapasya(idx, "date", e.target.value)} />
                               </div>
                               <div>
-                                <Label className="text-xs font-semibold">Place Completed</Label>
-                                <Input className="mt-1 h-9" value={t.place} onChange={(e) => updateTapasya(idx, "place", e.target.value)} />
+                                <Label className="text-xs font-semibold">{t("Place Completed")}</Label>
+                                <Input className="mt-1 h-9" value={tItem.place} onChange={(e) => updateTapasya(idx, "place", e.target.value)} />
                               </div>
                             </div>
                             <div>
-                              <Label className="text-xs font-semibold">Description</Label>
-                              <Input className="mt-1 h-9" value={t.description} onChange={(e) => updateTapasya(idx, "description", e.target.value)} placeholder="Tapasya detail..." />
+                              <Label className="text-xs font-semibold">{t("Description")}</Label>
+                              <Input className="mt-1 h-9" value={tItem.description} onChange={(e) => updateTapasya(idx, "description", e.target.value)} placeholder={t("Tapasya detail...")} />
                             </div>
                           </div>
                         ))}
@@ -1255,11 +1260,11 @@ function RegisterMonkDialog({ onCreated }) {
                       <div className="border-t pt-4">
                         <div className="flex justify-between items-center border-b pb-1.5 mb-2">
                           <div>
-                            <h4 className="text-xs font-bold text-slate-800">📜 Timeline Events</h4>
-                            <p className="text-[10px] text-purple-700 font-medium">📢 Timeline events added here will be automatically published to members in their feed.</p>
+                            <h4 className="text-xs font-bold text-slate-800">{t("📜 Timeline Events")}</h4>
+                            <p className="text-[10px] text-purple-700 font-medium">{t("📢 Timeline events added here will be automatically published to members in their feed.")}</p>
                           </div>
                           <Button type="button" size="sm" variant="outline" onClick={addTimelineEvent} className="h-7 text-xs font-bold border-purple-200 text-purple-700 hover:bg-purple-50">
-                            + Add Event
+                            {t("+ Add Event")}
                           </Button>
                         </div>
                         <div className="space-y-3">
@@ -1270,20 +1275,20 @@ function RegisterMonkDialog({ onCreated }) {
                               </button>
                               <div className="grid grid-cols-3 gap-2">
                                 <div>
-                                  <Label className="text-[10px] font-bold">Event Name</Label>
-                                  <Input className="h-8 mt-0.5 bg-white text-xs" value={e.eventName} onChange={(val) => updateTimelineEvent(idx, "eventName", val.target.value)} placeholder="e.g. Gadi Padvi" />
+                                  <Label className="text-[10px] font-bold">{t("Event Name")}</Label>
+                                  <Input className="h-8 mt-0.5 bg-white text-xs" value={e.eventName} onChange={(val) => updateTimelineEvent(idx, "eventName", val.target.value)} placeholder={t("e.g. Gadi Padvi")} />
                                 </div>
                                 <div>
-                                  <Label className="text-[10px] font-bold">Event Date</Label>
+                                  <Label className="text-[10px] font-bold">{t("Event Date")}</Label>
                                   <Input type="date" className="h-8 mt-0.5 bg-white text-xs" value={e.date} onChange={(val) => updateTimelineEvent(idx, "date", val.target.value)} />
                                 </div>
                                 <div>
-                                  <Label className="text-[10px] font-bold">Place</Label>
+                                  <Label className="text-[10px] font-bold">{t("Place")}</Label>
                                   <Input className="h-8 mt-0.5 bg-white text-xs" value={e.place} onChange={(val) => updateTimelineEvent(idx, "place", val.target.value)} />
                                 </div>
                               </div>
                               <div>
-                                <Label className="text-[10px] font-bold">Description</Label>
+                                <Label className="text-[10px] font-bold">{t("Description")}</Label>
                                 <textarea rows={1} className="w-full mt-0.5 rounded border bg-white px-2 py-1 text-xs focus:outline-none"
                                   value={e.description} onChange={(val) => updateTimelineEvent(idx, "description", val.target.value)} />
                               </div>
@@ -1296,23 +1301,23 @@ function RegisterMonkDialog({ onCreated }) {
 
                   {tab === "movement" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">📍 Current Location & Chaturmas History</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("📍 Current Location & Chaturmas History")}</h3>
                       
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">📍 Live Status Details</span>
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("📍 Live Status Details")}</span>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <Label className="text-xs font-semibold">Current Movement status</Label>
+                            <Label className="text-xs font-semibold">{t("Current Movement status")}</Label>
                             <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
                               value={form.trackingStatus} onChange={(e) => setForm({ ...form, trackingStatus: e.target.value })}>
-                              <option value="Staying">Staying (Sthirata)</option>
-                              <option value="Moving">Moving (Viharing)</option>
-                              <option value="Chaturmas">Chaturmas</option>
+                              <option value="Staying">{t("Staying (Sthirata)")}</option>
+                              <option value="Moving">{t("Moving (Viharing)")}</option>
+                              <option value="Chaturmas">{t("Chaturmas")}</option>
                             </select>
                           </div>
                           {field("Current Location Description", "currentLocation", "text", "Ashram / City name")}
                           <div className="col-span-2">
-                            <Label className="text-xs font-semibold">Current Temple / Jain Centre / Upashray</Label>
+                            <Label className="text-xs font-semibold">{t("Current Temple / Jain Centre / Upashray")}</Label>
                             <SearchableSelect
                               value={form.currentTempleId || ""}
                               onValueChange={(v) => setForm({ ...form, currentTempleId: v })}
@@ -1320,8 +1325,8 @@ function RegisterMonkDialog({ onCreated }) {
                                 value: t.id,
                                 label: `[${t.publicId || t.code || t.id?.slice(0, 8) || "TMP"}] ${t.name}${t.city ? ` (${t.city})` : ""}`
                               }))}
-                              placeholder="Search temple by name or Temple ID…"
-                              searchPlaceholder="Search by name or Temple ID…"
+                              placeholder={t("Search temple by name or Temple ID…")}
+                              searchPlaceholder={t("Search by name or Temple ID…")}
                               className="mt-1"
                             />
                           </div>
@@ -1331,9 +1336,9 @@ function RegisterMonkDialog({ onCreated }) {
                       {/* Vihaar History List */}
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">🚗 Vihar Journey History (Movement Log)</span>
+                          <span className="text-xs font-bold text-slate-700">{t("🚗 Vihar Journey History (Movement Log)")}</span>
                           <Button type="button" size="sm" variant="outline" onClick={addVihaarHistory} className="h-6 text-[10px] font-bold">
-                            + Add Vihar
+                            {t("+ Add Vihar")}
                           </Button>
                         </div>
                         {(form.vihaarHistory || []).map((v, idx) => (
@@ -1342,19 +1347,19 @@ function RegisterMonkDialog({ onCreated }) {
                               <X className="h-4 w-4" />
                             </button>
                             <div className="flex-1">
-                              <Label className="text-[10px] font-bold">From Location</Label>
+                              <Label className="text-[10px] font-bold">{t("From Location")}</Label>
                               <Input className="h-8 mt-1" value={v.from} onChange={(e) => updateVihaarHistory(idx, "from", e.target.value)} />
                             </div>
                             <div className="flex-1">
-                              <Label className="text-[10px] font-bold">To Location</Label>
+                              <Label className="text-[10px] font-bold">{t("To Location")}</Label>
                               <Input className="h-8 mt-1" value={v.to} onChange={(e) => updateVihaarHistory(idx, "to", e.target.value)} />
                             </div>
                             <div className="w-32">
-                              <Label className="text-[10px] font-bold">Start Date</Label>
+                              <Label className="text-[10px] font-bold">{t("Start Date")}</Label>
                               <Input type="date" className="h-8 mt-1" value={v.startDate} onChange={(e) => updateVihaarHistory(idx, "startDate", e.target.value)} />
                             </div>
                             <div className="w-32">
-                              <Label className="text-[10px] font-bold">End Date</Label>
+                              <Label className="text-[10px] font-bold">{t("End Date")}</Label>
                               <Input type="date" className="h-8 mt-1" value={v.endDate} onChange={(e) => updateVihaarHistory(idx, "endDate", e.target.value)} />
                             </div>
                           </div>
@@ -1364,24 +1369,24 @@ function RegisterMonkDialog({ onCreated }) {
                       {/* Chaturmas History List (Read-Only from Activities -> Chaturmas) */}
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">🍁 Chaturmas History (Auto-populated from Activities → Chaturmas)</span>
+                          <span className="text-xs font-bold text-slate-700">{t("🍁 Chaturmas History (Auto-populated from Activities → Chaturmas)")}</span>
                         </div>
                         {(!form.chaturmasHistory || form.chaturmasHistory.length === 0) ? (
                           <div className="text-xs text-slate-500 italic p-3 border border-dashed rounded-lg bg-white text-center leading-relaxed">
-                            No Chaturmas history entries found. Entries created in <strong>Activities → Chaturmas</strong> for this year/location will automatically be linked and shown here.
+                            {t("No Chaturmas history entries found. Entries created in")} <strong>{t("Activities → Chaturmas")}</strong> {t("for this year/location will automatically be linked and shown here.")}
                           </div>
                         ) : (
                           <div className="space-y-2">
                             {form.chaturmasHistory.map((c, idx) => (
                               <div key={idx} className="border p-3 rounded-lg bg-white space-y-1 text-xs relative shadow-sm">
                                 <div className="flex justify-between items-center font-bold text-purple-950">
-                                  <span>📅 Year: {c.year}</span>
+                                  <span>{t("📅 Year:")} {c.year}</span>
                                   <Badge className="bg-purple-100 text-purple-800 border-purple-200">{c.status || "Completed"}</Badge>
                                 </div>
                                 <div className="text-slate-600 mt-1 space-y-0.5">
-                                  <div>📍 Location: <strong>{c.city}, {c.state}</strong></div>
+                                  <div>{t("📍 Location:")} <strong>{c.city}, {c.state}</strong></div>
                                   {c.orgId && (
-                                    <div>🛕 Temple: <strong>{temples.find(t => t.id === c.orgId)?.name || c.orgId}</strong></div>
+                                    <div>{t("🛕 Temple:")} <strong>{temples.find(t => t.id === c.orgId)?.name || c.orgId}</strong></div>
                                   )}
                                 </div>
                               </div>
@@ -1395,13 +1400,13 @@ function RegisterMonkDialog({ onCreated }) {
 
                   {tab === "routine" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🕒 Daily Routine & Maryada Guidelines</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🕒 Daily Routine & Maryada Guidelines")}</h3>
                       
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">🗣 Pravachan Slots</span>
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("🗣 Pravachan Slots")}</span>
                         <div className="grid grid-cols-3 gap-3">
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600">Morning Pravachan</Label>
+                            <Label className="text-xs font-semibold text-slate-600">{t("Morning Pravachan")}</Label>
                             <TimePicker 
                               value={form.pravachanMorning} 
                               onChange={(val) => setForm(prev => ({ ...prev, pravachanMorning: val }))} 
@@ -1409,7 +1414,7 @@ function RegisterMonkDialog({ onCreated }) {
                             />
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600">Afternoon Pravachan</Label>
+                            <Label className="text-xs font-semibold text-slate-600">{t("Afternoon Pravachan")}</Label>
                             <TimePicker 
                               value={form.pravachanAfternoon} 
                               onChange={(val) => setForm(prev => ({ ...prev, pravachanAfternoon: val }))} 
@@ -1417,7 +1422,7 @@ function RegisterMonkDialog({ onCreated }) {
                             />
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600">Evening Pravachan</Label>
+                            <Label className="text-xs font-semibold text-slate-600">{t("Evening Pravachan")}</Label>
                             <TimePicker 
                               value={form.pravachanEvening} 
                               onChange={(val) => setForm(prev => ({ ...prev, pravachanEvening: val }))} 
@@ -1428,10 +1433,10 @@ function RegisterMonkDialog({ onCreated }) {
                       </div>
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">🧘 Darshan & Interaction Slots</span>
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("🧘 Darshan & Interaction Slots")}</span>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">Morning Interaction</Label>
+                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">{t("Morning Interaction")}</Label>
                             {(() => {
                               const range = parseRange(form.darshanMorning);
                               return (
@@ -1445,7 +1450,7 @@ function RegisterMonkDialog({ onCreated }) {
                             })()}
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">Afternoon Interaction</Label>
+                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">{t("Afternoon Interaction")}</Label>
                             {(() => {
                               const range = parseRange(form.darshanAfternoon);
                               return (
@@ -1459,7 +1464,7 @@ function RegisterMonkDialog({ onCreated }) {
                             })()}
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">Evening Interaction</Label>
+                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">{t("Evening Interaction")}</Label>
                             {(() => {
                               const range = parseRange(form.darshanEvening);
                               return (
@@ -1476,15 +1481,15 @@ function RegisterMonkDialog({ onCreated }) {
                       </div>
 
                       <div>
-                        <Label className="text-xs font-semibold">Maryada / Guidelines</Label>
+                        <Label className="text-xs font-semibold">{t("Maryada / Guidelines")}</Label>
                         <textarea rows={3} className="w-full mt-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
                           value={form.maryadaGuidelines} onChange={(e) => setForm({ ...form, maryadaGuidelines: e.target.value })}
-                          placeholder="Guidelines, rules for visiting, dietary controls, photography restricts..." />
+                          placeholder={t("Guidelines, rules for visiting, dietary controls, photography restricts...")} />
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 border-t pt-3">
                         <div className="col-span-2">
-                          <Label className="text-xs font-semibold block mb-1.5">Languages Spoken (Select Multiple Indian Languages)</Label>
+                          <Label className="text-xs font-semibold block mb-1.5">{t("Languages Spoken (Select Multiple Indian Languages)")}</Label>
                           <div className="grid grid-cols-4 gap-2 p-3 border rounded-lg bg-white">
                             {[
                               "Hindi", "Gujarati", "Marwari", "Sanskrit", "Prakrit", "English",
@@ -1513,13 +1518,13 @@ function RegisterMonkDialog({ onCreated }) {
                           </div>
                         </div>
                         <div>
-                          <Label className="text-xs font-semibold">Health & Darshan status</Label>
+                          <Label className="text-xs font-semibold">{t("Health & Darshan status")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-250 bg-white px-3 text-sm focus:outline-none"
                             value={form.healthStatus} onChange={(e) => setForm({ ...form, healthStatus: e.target.value })}>
-                            <option value="Stable">Stable</option>
-                            <option value="Under Care">Under Care</option>
-                            <option value="Travel Restricted">Travel Restricted</option>
-                            <option value="Not Available for Darshan">Not Available for Darshan</option>
+                            <option value="Stable">{t("Stable")}</option>
+                            <option value="Under Care">{t("Under Care")}</option>
+                            <option value="Travel Restricted">{t("Travel Restricted")}</option>
+                            <option value="Not Available for Darshan">{t("Not Available for Darshan")}</option>
                           </select>
                         </div>
                       </div>
@@ -1528,13 +1533,13 @@ function RegisterMonkDialog({ onCreated }) {
 
                   {tab === "contacts" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">👥 Sangh Contact Representatives</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("👥 Sangh Contact Representatives")}</h3>
                       
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">👳 Jain Sangh Representatives</span>
+                          <span className="text-xs font-bold text-slate-700">{t("👳 Jain Sangh Representatives")}</span>
                           <Button type="button" size="sm" variant="outline" onClick={addJainContact} className="h-6 text-[10px] font-bold">
-                            + Add Representative
+                            {t("+ Add Representative")}
                           </Button>
                         </div>
                         {(form.jainContacts || []).map((jc, idx) => (
@@ -1543,10 +1548,10 @@ function RegisterMonkDialog({ onCreated }) {
                               <X className="h-4 w-4" />
                             </button>
                             <div className="flex-1">
-                              <MemberSelect label="Link Jain Member Profile" category="JAIN" value={jc.memberId} onChange={(val) => updateJainContact(idx, "memberId", val)} />
+                              <MemberSelect label={t("Link Jain Member Profile")} category="JAIN" value={jc.memberId} onChange={(val) => updateJainContact(idx, "memberId", val)} />
                             </div>
                             <div className="w-48">
-                              <Label className="text-[10px] font-bold">Designation</Label>
+                              <Label className="text-[10px] font-bold">{t("Designation")}</Label>
                               <Input className="h-8 mt-1" value={jc.designation} onChange={(e) => updateJainContact(idx, "designation", e.target.value)} />
                             </div>
                           </div>
@@ -1555,9 +1560,9 @@ function RegisterMonkDialog({ onCreated }) {
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">👥 Non-Jain Representatives / Coordinators</span>
+                          <span className="text-xs font-bold text-slate-700">{t("👥 Non-Jain Representatives / Coordinators")}</span>
                           <Button type="button" size="sm" variant="outline" onClick={addNonJainContact} className="h-6 text-[10px] font-bold">
-                            + Add Representative
+                            {t("+ Add Representative")}
                           </Button>
                         </div>
                         {(form.nonJainContacts || []).map((nj, idx) => (
@@ -1566,10 +1571,10 @@ function RegisterMonkDialog({ onCreated }) {
                               <X className="h-4 w-4" />
                             </button>
                             <div className="flex-1">
-                              <MemberSelect label="Link Non-Jain Member Profile" category="NON_JAIN" value={nj.memberId} onChange={(val) => updateNonJainContact(idx, "memberId", val)} />
+                              <MemberSelect label={t("Link Non-Jain Member Profile")} category="NON_JAIN" value={nj.memberId} onChange={(val) => updateNonJainContact(idx, "memberId", val)} />
                             </div>
                             <div className="w-48">
-                              <Label className="text-[10px] font-bold">Designation</Label>
+                              <Label className="text-[10px] font-bold">{t("Designation")}</Label>
                               <Input className="h-8 mt-1" value={nj.designation} onChange={(e) => updateNonJainContact(idx, "designation", e.target.value)} />
                             </div>
                           </div>
@@ -1585,7 +1590,7 @@ function RegisterMonkDialog({ onCreated }) {
 
                   {tab === "media" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🔗 Media, Biography & Social Links</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🔗 Media, Biography & Social Links")}</h3>
                       
                       <div className="grid grid-cols-2 gap-3">
                         {field("Official Website Link", "website", "url", "https://...")}
@@ -1596,10 +1601,10 @@ function RegisterMonkDialog({ onCreated }) {
                       </div>
 
                       <div>
-                        <Label className="text-xs font-semibold">Detailed Life Biography Story (No character limit)</Label>
+                        <Label className="text-xs font-semibold">{t("Detailed Life Biography Story (No character limit)")}</Label>
                         <textarea rows={4} className="w-full mt-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
                           value={form.lifeStory} onChange={(e) => setForm({ ...form, lifeStory: e.target.value })}
-                          placeholder="Tell the complete life journey of Maharaj Saheb..." />
+                          placeholder={t("Tell the complete life journey of Maharaj Saheb...")} />
                       </div>
                     </div>
                   )}
@@ -1607,9 +1612,9 @@ function RegisterMonkDialog({ onCreated }) {
                 </div>
 
                 <div className="p-4 bg-white border-t border-slate-200 flex justify-end gap-2 shrink-0 absolute bottom-0 left-56 right-0">
-                  <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button variant="outline" type="button" onClick={() => setOpen(false)}>{t("Cancel")}</Button>
                   <Button type="submit" disabled={saving || !form.dikshaName} className="bg-purple-700 hover:bg-purple-800 text-white font-bold px-6">
-                    {saving ? "Registering..." : "Register MS Profile"}
+                    {saving ? t("Registering...") : t("Register MS Profile")}
                   </Button>
                 </div>
               </form>
@@ -1623,6 +1628,7 @@ function RegisterMonkDialog({ onCreated }) {
 
 /* ─── Bulk Import Dialog ───────────────────────────────────────── */
 function MonkBulkImportDialog({ onImported }) {
+  const { t } = useLanguage();
   const [open, setOpen]     = useState(false);
   const [file, setFile]     = useState(null);
   const [dragging, setDragging] = useState(false);
@@ -1634,7 +1640,7 @@ function MonkBulkImportDialog({ onImported }) {
 
   const pickFile = (f) => {
     if (!f) return;
-    if (!f.name.match(/\.xlsx?$/i)) { toast.error("Only .xlsx files are accepted."); return; }
+    if (!f.name.match(/\.xlsx?$/i)) { toast.error(t("Only .xlsx files are accepted.")); return; }
     setFile(f); setResult(null);
   };
 
@@ -1649,7 +1655,7 @@ function MonkBulkImportDialog({ onImported }) {
   };
 
   const doUpload = async () => {
-    if (!file) { toast.error("Select a file first."); return; }
+    if (!file) { toast.error(t("Select a file first.")); return; }
     setUploading(true);
     try {
       const fd = new FormData(); fd.append("file", file);
@@ -1664,22 +1670,22 @@ function MonkBulkImportDialog({ onImported }) {
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
       <Button variant="outline" onClick={() => setOpen(true)}>
-        <Upload className="h-4 w-4 mr-2" /> Bulk Import
+        <Upload className="h-4 w-4 mr-2" /> {t("Bulk Import")}
       </Button>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-purple-600" /> Bulk Import Monks
+            <FileSpreadsheet className="h-5 w-5 text-purple-600" /> {t("Bulk Import Monks")}
           </DialogTitle>
         </DialogHeader>
 
         {/* Format desc */}
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 space-y-2">
           <div className="flex items-center gap-1.5 text-red-700 font-semibold text-xs uppercase tracking-wide">
-            <AlertCircle className="h-3.5 w-3.5" /> Required Excel Format
+            <AlertCircle className="h-3.5 w-3.5" /> {t("Required Excel Format")}
           </div>
           <p className="text-xs text-red-600">
-            Upload <strong>.xlsx</strong> with a <strong>header row</strong> (case-insensitive). Column marked <strong>*</strong> is required.
+            {t("Upload")} <strong>{t(".xlsx")}</strong> {t("with a")} <strong>{t("header row")}</strong> {t("(case-insensitive). Column marked")} <strong>*</strong> {t("is required.")}
           </p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
             {[
@@ -1703,7 +1709,7 @@ function MonkBulkImportDialog({ onImported }) {
           </div>
           <button onClick={downloadTemplate}
             className="text-[11px] font-semibold text-red-700 underline underline-offset-2 flex items-center gap-1">
-            <Download className="h-3 w-3" /> Download blank template
+            <Download className="h-3 w-3" /> {t("Download blank template")}
           </button>
         </div>
 
@@ -1722,13 +1728,13 @@ function MonkBulkImportDialog({ onImported }) {
               <>
                 <FileSpreadsheet className="h-8 w-8 text-green-500" />
                 <div className="text-sm font-semibold text-green-700">{file.name}</div>
-                <div className="text-xs text-green-500">{(file.size / 1024).toFixed(1)} KB</div>
+                <div className="text-xs text-green-500">{(file.size / 1024).toFixed(1)} {t("KB")}</div>
               </>
             ) : (
               <>
                 <Upload className="h-8 w-8 text-slate-300" />
-                <div className="text-sm font-medium text-slate-500">Drag & drop or click to browse</div>
-                <div className="text-xs text-slate-400">.xlsx only · Max 10 MB</div>
+                <div className="text-sm font-medium text-slate-500">{t("Drag & drop or click to browse")}</div>
+                <div className="text-xs text-slate-400">{t(".xlsx only · Max 10 MB")}</div>
               </>
             )}
           </div>
@@ -1738,7 +1744,7 @@ function MonkBulkImportDialog({ onImported }) {
         {result && (
           <div className="rounded-xl border p-4 space-y-2">
             <div className="font-semibold text-sm flex items-center gap-2 text-green-700">
-              <CheckCircle2 className="h-4 w-4" /> Import complete
+              <CheckCircle2 className="h-4 w-4" /> {t("Import complete")}
             </div>
             <div className="grid grid-cols-3 gap-3 text-center">
               {[["Created", result.created ?? 0, "text-green-600", "bg-green-50 border-green-200"],
@@ -1755,21 +1761,21 @@ function MonkBulkImportDialog({ onImported }) {
                 {result.errors.slice(0, 8).map((e, i) => (
                   <div key={i} className="text-[11px] text-red-600 flex gap-1">
                     <XCircle className="h-3 w-3 shrink-0 mt-0.5" />
-                    <span>Row {e.row}: {e.message}</span>
+                    <span>{t("Row")} {e.row}: {e.message}</span>
                   </div>
                 ))}
               </div>
             )}
-            <Button variant="outline" size="sm" onClick={reset} className="w-full">Import Another</Button>
+            <Button variant="outline" size="sm" onClick={reset} className="w-full">{t("Import Another")}</Button>
           </div>
         )}
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => { setOpen(false); reset(); }}>Cancel</Button>
+          <Button variant="ghost" onClick={() => { setOpen(false); reset(); }}>{t("Cancel")}</Button>
           {!result && (
             <Button onClick={doUpload} disabled={!file || uploading}
               className="bg-purple-700 hover:bg-purple-800 text-white">
-              {uploading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Importing…</> : "Import Monks"}
+              {uploading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("Importing…")}</> : t("Import Monks")}
             </Button>
           )}
         </DialogFooter>
@@ -1780,6 +1786,7 @@ function MonkBulkImportDialog({ onImported }) {
 
 /* ─── Export Button ────────────────────────────────────────────── */
 function ExportButton() {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const doExport = async () => {
     setLoading(true);
@@ -1792,21 +1799,24 @@ function ExportButton() {
       a.href     = URL.createObjectURL(blob);
       a.download = `jinanam-monks-${new Date().toISOString().slice(0, 10)}.xlsx`;
       a.click();
-      toast.success("Monks exported.");
-    } catch { toast.error("Export failed."); }
+      toast.success(t("Monks exported."));
+    } catch { toast.error(t("Export failed.")); }
     finally { setLoading(false); }
   };
   return (
     <Button variant="outline" onClick={doExport} disabled={loading}>
       {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-      Export
+      {t("Export")}
     </Button>
   );
 }
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 /* ─── Main Page ────────────────────────────────────────────────── */
 export default function MonksPage() {
   const { isSuperAdmin } = useAuth();
+  const { t } = useLanguage();
   const [monks, setMonks]         = useState([]);
   const [loading, setLoading]     = useState(true);
   const [q, setQ]                 = useState("");
@@ -1868,33 +1878,33 @@ export default function MonksPage() {
       ),
     },
     {
-      key: "publicId", header: "ID", width: 110,
+      key: "publicId", header: t("ID"), width: 110,
       render: (r) => <Badge variant="outline" className="font-mono text-[10px]">{r.publicId}</Badge>,
     },
     {
-      key: "dikshaName", header: "Diksha Name",
+      key: "dikshaName", header: t("Diksha Name"),
       render: (r) => (
         <div>
           <div className="font-semibold">{r.dikshaName}</div>
           <div className="text-xs text-muted-foreground">
-            {r.gender === "SADHVI" ? "🌸 Sadhvi" : "🧘 Sadhu"}
+            {r.gender === "SADHVI" ? t("🌸 Sadhvi") : t("🧘 Sadhu")}
             {r.nameBeforeDiksha && ` · ${r.nameBeforeDiksha}`}
           </div>
         </div>
       ),
     },
     {
-      key: "dikshaDate", header: "Diksha Date",
+      key: "dikshaDate", header: t("Diksha Date"),
       render: (r) => r.dikshaDate ? fmtDate(r.dikshaDate) : "—",
     },
     {
-      key: "currentTemple", header: "Current Temple",
+      key: "currentTemple", header: t("Current Temple"),
       render: (r) => r.currentTemple?.name
         ? <span>{r.currentTemple.name}{r.currentTemple.city ? <span className="text-muted-foreground text-xs"> · {r.currentTemple.city}</span> : null}</span>
         : "—",
     },
     {
-      key: "status", header: "Status",
+      key: "status", header: t("Status"),
       render: (r) => (
         <Badge className={`text-[10px] border-0 ${r.status === "ACTIVE" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
           {r.status || "ACTIVE"}
@@ -1902,7 +1912,7 @@ export default function MonksPage() {
       ),
     },
     {
-      key: "followers", header: "Followers", width: 100,
+      key: "followers", header: t("Followers"), width: 100,
       render: (r) => (
         <div className="flex items-center gap-1 text-sm">
           <Users className="h-3.5 w-3.5 text-purple-400" />
@@ -1915,8 +1925,8 @@ export default function MonksPage() {
   return (
     <div data-testid="monks-page">
       <PageHeader
-        title="Monks (MS Profiles)"
-        subtitle="Sadhus & Sadhvis registered on the platform."
+        title={t("Monks (MS Profiles)")}
+        subtitle={t("Sadhus & Sadhvis registered on the platform.")}
         actions={
           <>
             <MonkBulkImportDialog onImported={() => setReload((k) => k + 1)} />
@@ -1930,7 +1940,7 @@ export default function MonksPage() {
       <div className="mb-4 flex gap-3 flex-wrap">
         <div className="relative max-w-xs flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search monks…" className="pl-9 bg-white" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("action.search", "Search monks…")} className="pl-9 bg-white" />
         </div>
         <div className="flex gap-1 rounded-lg border border-border bg-white p-1">
           {["ALL", "SADHU", "SADHVI"].map((g) => (
@@ -1938,7 +1948,7 @@ export default function MonksPage() {
               className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
                 genderFilter === g ? "bg-purple-700 text-white" : "text-slate-500 hover:text-purple-700"
               }`}>
-              {g === "ALL" ? "All" : g === "SADHU" ? "🧘 Sadhu" : "🌸 Sadhvi"}
+              {g === "ALL" ? t("All") : g === "SADHU" ? t("🧘 Sadhu") : t("🌸 Sadhvi")}
             </button>
           ))}
         </div>
@@ -1949,8 +1959,8 @@ export default function MonksPage() {
         rows={monks}
         loading={loading}
         testId="monks-table"
-        emptyTitle="No monk profiles yet"
-        emptyDescription="Create a new monk profile or bulk import from Excel."
+        emptyTitle={t("No monk profiles yet")}
+        emptyDescription={t("Create a new monk profile or bulk import from Excel.")}
         onRowClick={openCard}
         rowClassName="cursor-pointer hover:bg-purple-50/40 transition-colors"
       />

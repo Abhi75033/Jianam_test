@@ -15,11 +15,13 @@ import {
 import { CreditCard, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const DURATIONS = ["Monthly", "Annual", "Lifetime"];
 const EMPTY_FORM = { name: "", price: "", currency: "INR", duration: "Monthly", features: "" };
 
 export default function SubscriptionPlansPage() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
@@ -57,7 +59,7 @@ export default function SubscriptionPlansPage() {
 
   const handleSave = async () => {
     if (!form.name || !form.price) {
-      toast.error("Plan Name and Price are required.");
+      toast.error(t("Plan Name and Price are required."));
       return;
     }
     setSaving(true);
@@ -76,16 +78,16 @@ export default function SubscriptionPlansPage() {
       if (editing) {
         await api.patch(`/subscription-plans/${editing.id}`, payload).catch(() => null);
         setRows((prev) => prev.map((r) => (r.id === editing.id ? { ...r, ...payload } : r)));
-        toast.success("Plan updated successfully.");
+        toast.success(t("Plan updated successfully."));
       } else {
         const createdPlan = await api.post("/subscription-plans", payload).then(r => r.data?.data).catch(() => null);
         const newRecord = createdPlan || { id: `plan_${Date.now()}`, ...payload, isActive: true, createdAt: new Date().toISOString() };
         setRows((prev) => [newRecord, ...prev]);
-        toast.success("Subscription plan created successfully.");
+        toast.success(t("Subscription plan created successfully."));
       }
       setOpenDialog(false);
     } catch (e) {
-      toast.error("Subscription plan created successfully.");
+      toast.error(t("Subscription plan created successfully."));
       setOpenDialog(false);
     } finally {
       setSaving(false);
@@ -96,7 +98,7 @@ export default function SubscriptionPlansPage() {
     setDeletingId(id);
     try {
       await api.delete(`/subscription-plans/${id}`);
-      toast.success("Plan removed.");
+      toast.success(t("Plan removed."));
       load();
     } catch (e) {
       toast.error(extractErrorMessage(e));
@@ -117,7 +119,7 @@ export default function SubscriptionPlansPage() {
 
   const columns = [
     {
-      key: "name", header: "Plan Name",
+      key: "name", header: t("Plan Name"),
       render: (r) => (
         <div>
           <div className="font-semibold text-slate-800">{r.name}</div>
@@ -126,7 +128,7 @@ export default function SubscriptionPlansPage() {
       ),
     },
     {
-      key: "price", header: "Pricing",
+      key: "price", header: t("Pricing"),
       render: (r) => (
         <span className="font-mono font-bold text-slate-900">
           {formatCurrency(r.price)} / {r.duration?.toLowerCase()}
@@ -134,19 +136,19 @@ export default function SubscriptionPlansPage() {
       ),
     },
     {
-      key: "features", header: "Features Included",
+      key: "features", header: t("Features Included"),
       render: (r) => <span className="text-slate-500 text-xs block max-w-sm">{Array.isArray(r.features) ? r.features.join(", ") : r.features}</span>,
     },
     {
-      key: "status", header: "Status",
+      key: "status", header: t("Status"),
       render: (r) => (
         <Badge className={r.isActive ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600"}>
-          {r.isActive ? "Active" : "Inactive"}
+          {r.isActive ? t("Active") : t("Inactive")}
         </Badge>
       ),
     },
     {
-      key: "active", header: "Toggle",
+      key: "active", header: t("Toggle"),
       render: (r) => <Switch checked={r.isActive} onCheckedChange={() => toggleActive(r)} />,
     },
     {
@@ -171,11 +173,11 @@ export default function SubscriptionPlansPage() {
   return (
     <div data-testid="subscription-plans-page">
       <PageHeader
-        title="Subscription Plans"
-        subtitle="Configure billing packages, premium feature limits, and subscription periods for partner organizations."
+        title={t("Subscription Plans")}
+        subtitle={t("Configure billing packages, premium feature limits, and subscription periods for partner organizations.")}
         actions={
           <Button onClick={openCreate} data-testid="plans-create-btn">
-            <Plus className="h-4 w-4 mr-2" /> Add Package Plan
+            <Plus className="h-4 w-4 mr-2" /> {t("Add Package Plan")}
           </Button>
         }
       />
@@ -185,9 +187,9 @@ export default function SubscriptionPlansPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           icon={CreditCard}
-          title="No subscription plans"
-          description="Create your first plan to offer to partner temples and organizations."
-          action={<Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Add Plan</Button>}
+          title={t("No subscription plans")}
+          description={t("Create your first plan to offer to partner temples and organizations.")}
+          action={<Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />{t("Add Plan")}</Button>}
         />
       ) : (
         <DataTable columns={columns} rows={rows} loading={false} testId="subscription-plans-table" />
@@ -197,21 +199,21 @@ export default function SubscriptionPlansPage() {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Subscription Plan" : "Add Subscription Plan"}</DialogTitle>
+            <DialogTitle>{editing ? t("Edit Subscription Plan") : t("Add Subscription Plan")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div>
-              <Label className="text-xs">Plan Name *</Label>
+              <Label className="text-xs">{t("Plan Name *")}</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Temple Gold Annual"
+                placeholder={t("e.g. Temple Gold Annual")}
                 data-testid="plan-name-input"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Price ({form.currency}) *</Label>
+                <Label className="text-xs">{t("Price (")}{form.currency}) *</Label>
                 <Input
                   type="number"
                   value={form.price}
@@ -221,7 +223,7 @@ export default function SubscriptionPlansPage() {
                 />
               </div>
               <div>
-                <Label className="text-xs">Duration Period</Label>
+                <Label className="text-xs">{t("Duration Period")}</Label>
                 <select
                   className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
                   value={form.duration}
@@ -229,25 +231,25 @@ export default function SubscriptionPlansPage() {
                   data-testid="plan-duration-select"
                 >
                   {DURATIONS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
+                    <option key={d} value={d}>{t(d)}</option>
                   ))}
                 </select>
               </div>
             </div>
             <div>
-              <Label className="text-xs">Features List</Label>
+              <Label className="text-xs">{t("Features List")}</Label>
               <Input
                 value={form.features}
                 onChange={(e) => setForm({ ...form, features: e.target.value })}
-                placeholder="e.g. Seating control, premium reports..."
+                placeholder={t("e.g. Seating control, premium reports...")}
                 data-testid="plan-features-input"
               />
             </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>{t("Cancel")}</Button>
             <Button onClick={handleSave} disabled={saving} data-testid="plan-save-btn">
-              {saving ? "Saving…" : editing ? "Update Plan" : "Save Package"}
+              {saving ? t("Saving…") : editing ? t("Update Plan") : t("Save Package")}
             </Button>
           </DialogFooter>
         </DialogContent>

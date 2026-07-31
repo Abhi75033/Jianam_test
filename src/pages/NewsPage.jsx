@@ -43,6 +43,7 @@ import { useOrgs } from "@/hooks/useOrgs";
 import { OrgSelect } from "@/components/common/OrgSelect";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { NEWS_CATEGORY_OPTIONS } from "@/constants/dropdownOptions";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // NEWS_CATEGORIES imported from @/constants/dropdownOptions
 
@@ -62,6 +63,7 @@ const getBottomUrl = (url) => {
 };
 
 export default function NewsPage() {
+  const { t } = useLanguage();
   const { canDo, user, isSuperAdmin } = useAuth();
   const { orgs } = useOrgs();
   const [selectedOrg, setSelectedOrg] = useState("");
@@ -118,7 +120,7 @@ export default function NewsPage() {
       const bookRes = await api.get("/news/bookmarks/my").catch(() => ({ data: { data: [] } }));
       setBookmarks(bookRes.data?.data || []);
     } catch (e) {
-      toast.error("Failed to load news feed board");
+      toast.error(t("Failed to load news feed board"));
     } finally {
       setLoading(false);
     }
@@ -132,7 +134,7 @@ export default function NewsPage() {
   const handleCreateNews = async (e) => {
     e.preventDefault();
     if (!title || !desc) {
-      toast.error("News headline and description body are required.");
+      toast.error(t("News headline and description body are required."));
       return;
     }
     setSavingNews(true);
@@ -150,7 +152,7 @@ export default function NewsPage() {
       };
 
       await api.post("/news", payload);
-      toast.success("News article published successfully! Global notification broadcasted.");
+      toast.success(t("News article published successfully! Global notification broadcasted."));
       setCreateOpen(false);
       setReloadKey(k => k + 1);
       resetNewsForm();
@@ -177,7 +179,7 @@ export default function NewsPage() {
       };
 
       await api.patch(`/news/${editingNewsItem.id}`, payload);
-      toast.success("News article details updated.");
+      toast.success(t("News article details updated."));
       setEditOpen(false);
       setEditingNewsItem(null);
       setReloadKey(k => k + 1);
@@ -210,28 +212,28 @@ export default function NewsPage() {
     try {
       if (isBookmarked) {
         await api.post(`/news/${news.id}/unbookmark`);
-        toast.success("Article removed from bookmarks.");
+        toast.success(t("Article removed from bookmarks."));
       } else {
         await api.post(`/news/${news.id}/bookmark`);
-        toast.success("Article bookmarked!");
+        toast.success(t("Article bookmarked!"));
       }
       setReloadKey(k => k + 1);
     } catch (e) {
-      toast.error("Failed to update bookmark state");
+      toast.error(t("Failed to update bookmark state"));
     }
   };
 
   const handleShareNews = (news) => {
     const link = `https://jinanam.org/news/${news.publicId || news.id}`;
     navigator.clipboard.writeText(link);
-    toast.success("JiNANAM Deep Link copied to clipboard!");
+    toast.success(t("JiNANAM Deep Link copied to clipboard!"));
   };
 
   const handlePermanentDelete = async (newsId) => {
     if (!confirm("Are you sure you want to permanently delete this news?")) return;
     try {
       await api.delete(`/news/${newsId}`);
-      toast.success("News article permanently removed.");
+      toast.success(t("News article permanently removed."));
       setReloadKey(k => k + 1);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -241,7 +243,7 @@ export default function NewsPage() {
   const handleRestoreArchive = async (newsId) => {
     try {
       await api.post(`/news/${newsId}/restore`);
-      toast.success("News article restored to active timeline.");
+      toast.success(t("News article restored to active timeline."));
       setReloadKey(k => k + 1);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -277,9 +279,9 @@ export default function NewsPage() {
       a.href = URL.createObjectURL(blob);
       a.download = `news-registry-${new Date().toISOString().slice(0, 10)}.${format === "xlsx" ? "xlsx" : "csv"}`;
       a.click();
-      toast.success("Report downloaded.");
+      toast.success(t("Report downloaded."));
     } catch (e) {
-      toast.error("Export failed");
+      toast.error(t("Export failed"));
     }
   };
 
@@ -289,10 +291,10 @@ export default function NewsPage() {
         <div>
           <div className="flex items-center gap-2">
             <Newspaper className="h-6 w-6 text-emerald-200" />
-            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">JiNANAM Newsroom</h1>
+            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">{t("JiNANAM Newsroom")}</h1>
           </div>
           <p className="text-emerald-100 text-xs mt-1 max-w-lg">
-            Swipe-based, short format community updates. Auto-archives news articles after 7 days.
+            {t("Swipe-based, short format community updates. Auto-archives news articles after 7 days.")}
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 flex-wrap">
@@ -301,7 +303,7 @@ export default function NewsPage() {
               onClick={() => { resetNewsForm(); setCreateOpen(true); }}
               className="bg-white hover:bg-emerald-50 text-emerald-800 font-bold h-10 px-5 shadow-md border border-white"
             >
-              <Plus className="h-4 w-4 mr-2" /> Write News Article
+              <Plus className="h-4 w-4 mr-2" /> {t("Write News Article")}
             </Button>
           )}
         </div>
@@ -309,8 +311,8 @@ export default function NewsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4 bg-slate-100 p-1 rounded-xl">
-          <TabsTrigger value="admin_news" className="px-5 py-2 font-bold text-xs rounded-lg">🛡️ Newsroom Control Ledger ({newsList.length})</TabsTrigger>
-          <TabsTrigger value="swipe_simulator" className="px-5 py-2 font-bold text-xs rounded-lg">📱 Mobile Swipe Simulator</TabsTrigger>
+          <TabsTrigger value="admin_news" className="px-5 py-2 font-bold text-xs rounded-lg">{t("🛡️ Newsroom Control Ledger (")}{newsList.length})</TabsTrigger>
+          <TabsTrigger value="swipe_simulator" className="px-5 py-2 font-bold text-xs rounded-lg">{t("📱 Mobile Swipe Simulator")}</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Control Ledger */}
@@ -319,30 +321,30 @@ export default function NewsPage() {
             <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
               <div className="p-3 bg-emerald-50 text-emerald-700 rounded-lg"><Newspaper className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Total Active Articles</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Total Active Articles")}</div>
                 <div className="text-xl font-black text-slate-805">{newsList.filter(n => !n.isArchived).length}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
               <div className="p-3 bg-rose-50 text-rose-700 rounded-lg"><Sparkles className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Breaking news</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Breaking news")}</div>
                 <div className="text-xl font-black text-rose-750">{newsList.filter(n => n.isBreaking).length}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
               <div className="p-3 bg-slate-50 text-slate-600 rounded-lg"><Calendar className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Archived (&gt; 7 Days)</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Archived (> 7 Days)")}ys)</div>
                 <div className="text-xl font-black text-slate-500">{newsList.filter(n => n.isArchived).length}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
               <div className="p-3 bg-indigo-50 text-indigo-700 rounded-lg"><Download className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Reports Exports</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Reports Exports")}</div>
                 <div className="flex gap-1.5 mt-1">
-                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleExportReports("xlsx")}>Excel</Button>
+                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleExportReports("xlsx")}>{t("Excel")}</Button>
                   <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleExportReports("csv")}>CSV</Button>
                 </div>
               </div>
@@ -352,36 +354,36 @@ export default function NewsPage() {
           <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <div>
-                <h3 className="font-bold text-sm text-slate-800">Newsroom Ledger</h3>
-                <p className="text-[11px] text-slate-400">Audit news categories, restore expired archives, and monitor article performance statistics.</p>
+                <h3 className="font-bold text-sm text-slate-800">{t("Newsroom Ledger")}</h3>
+                <p className="text-[11px] text-slate-400">{t("Audit news categories, restore expired archives, and monitor article performance statistics.")}</p>
               </div>
               <div className="flex gap-2">
                 <SearchableSelect
                   className="h-8 text-xs bg-slate-50 w-44"
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
-                  options={[{ value: "all", label: "All Categories" }, ...NEWS_CATEGORY_OPTIONS]}
-                  placeholder="All Categories"
+                  options={[{ value: "all", label: t("All Categories") }, ...NEWS_CATEGORY_OPTIONS]}
+                  placeholder={t("All Categories")}
                 />
                 <div className="flex items-center gap-1">
                   <label className="text-[11px] font-bold text-slate-500 cursor-pointer flex items-center gap-1.5">
                     <input type="checkbox" checked={filterArchived} onChange={(e) => setFilterArchived(e.target.checked)} className="rounded border-slate-300" />
-                    Show Archived
+                    {t("Show Archived")}
                   </label>
                 </div>
                 <div className="relative max-w-xs">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search news headlines..." className="pl-8 text-xs h-8" />
+                  <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Search news headlines...")} className="pl-8 text-xs h-8" />
                 </div>
               </div>
             </div>
 
             <DataTable
               columns={[
-                { key: "publicId", header: "News ID", render: (r) => <Badge variant="outline" className="font-mono text-[9px]">{r.publicId}</Badge> },
+                { key: "publicId", header: t("News ID"), render: (r) => <Badge variant="outline" className="font-mono text-[9px]">{r.publicId}</Badge> },
                 {
                   key: "title",
-                  header: "Headline / Category",
+                  header: t("Headline / Category"),
                   render: (r) => (
                     <div>
                       <div className="font-bold text-slate-805 text-xs">{r.title}</div>
@@ -391,31 +393,31 @@ export default function NewsPage() {
                 },
                 {
                   key: "tags",
-                  header: "Tags",
+                  header: t("Tags"),
                   render: (r) => (
                     <div className="flex gap-1">
-                      {r.isBreaking && <Badge variant="destructive" className="text-[9px] uppercase tracking-wider">Breaking</Badge>}
-                      {r.isFeatured && <Badge className="bg-amber-500 text-white text-[9px] uppercase tracking-wider">Featured</Badge>}
+                      {r.isBreaking && <Badge variant="destructive" className="text-[9px] uppercase tracking-wider">{t("Breaking")}</Badge>}
+                      {r.isFeatured && <Badge className="bg-amber-500 text-white text-[9px] uppercase tracking-wider">{t("Featured")}</Badge>}
                     </div>
                   )
                 },
-                { key: "published", header: "Published At", render: (r) => <span className="text-slate-500 font-mono text-xs">{formatDateTime(r.publishedAt || r.createdAt)}</span> },
+                { key: "published", header: t("Published At"), render: (r) => <span className="text-slate-500 font-mono text-xs">{formatDateTime(r.publishedAt || r.createdAt)}</span> },
                 {
                   key: "actions",
-                  header: "Actions",
+                  header: t("Actions"),
                   render: (r) => (
                     <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => openEditModal(r)}>
-                        <Edit className="h-3 w-3 mr-1" /> Edit
+                        <Edit className="h-3 w-3 mr-1" /> {t("Edit")}
                       </Button>
                       {r.isArchived && isSuperAdmin && (
                         <Button size="sm" variant="outline" className="h-7 text-[10px] bg-slate-50 text-slate-700" onClick={() => handleRestoreArchive(r.id)}>
-                          <RotateCcw className="h-3 w-3 mr-1" /> Restore
+                          <RotateCcw className="h-3 w-3 mr-1" /> {t("Restore")}
                         </Button>
                       )}
                       {isSuperAdmin && (
                         <Button size="sm" variant="outline" className="h-7 text-[10px] text-red-650 hover:bg-red-50" onClick={() => handlePermanentDelete(r.id)}>
-                          <Trash2 className="h-3 w-3 mr-1" /> Delete
+                          <Trash2 className="h-3 w-3 mr-1" /> {t("Delete")}
                         </Button>
                       )}
                     </div>
@@ -425,8 +427,8 @@ export default function NewsPage() {
               rows={filteredNews}
               loading={loading}
               testId="news-table"
-              emptyTitle="No news articles found"
-              emptyDescription="Onboard new articles using Write News Article button above."
+              emptyTitle={t("No news articles found")}
+              emptyDescription={t("Onboard new articles using Write News Article button above.")}
             />
           </Card>
         </TabsContent>
@@ -436,7 +438,7 @@ export default function NewsPage() {
           <div className="flex justify-center items-center py-6">
             {filteredNews.length === 0 ? (
               <div className="p-10 text-center bg-white border border-dashed rounded-2xl text-slate-400 max-w-sm w-full">
-                No active news articles configured to simulate swipe feed.
+                {t("No active news articles configured to simulate swipe feed.")}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-4">
@@ -448,10 +450,10 @@ export default function NewsPage() {
                     {/* Floating tags */}
                     <div className="absolute top-4 left-4 flex gap-1">
                       {filteredNews[simIndex]?.isBreaking && (
-                        <Badge variant="destructive" className="text-[8px] uppercase font-black tracking-widest bg-red-600 border-0">Breaking</Badge>
+                        <Badge variant="destructive" className="text-[8px] uppercase font-black tracking-widest bg-red-600 border-0">{t("Breaking")}</Badge>
                       )}
                       {filteredNews[simIndex]?.isFeatured && (
-                        <Badge className="bg-amber-500 text-white text-[8px] uppercase font-black tracking-widest border-0">Featured</Badge>
+                        <Badge className="bg-amber-500 text-white text-[8px] uppercase font-black tracking-widest border-0">{t("Featured")}</Badge>
                       )}
                     </div>
                   </div>
@@ -498,7 +500,7 @@ export default function NewsPage() {
                   </div>
                 </div>
 
-                <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Swipe / click arrows to navigate ({simIndex + 1} of {filteredNews.length})</p>
+                <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">{t("Swipe / click arrows to navigate (")}{simIndex + 1} of {filteredNews.length})</p>
               </div>
             )}
           </div>
@@ -510,21 +512,21 @@ export default function NewsPage() {
         <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto bg-white rounded-2xl text-xs">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-heading font-black text-slate-850">
-              <Newspaper className="h-5 w-5 text-emerald-650" /> Publish News Article
+              <Newspaper className="h-5 w-5 text-emerald-650" /> {t("Publish News Article")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateNews} className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Headline Title *</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Paryushan Parva Commences Tomorrow" required className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Headline Title *")}</Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("e.g. Paryushan Parva Commences Tomorrow")} required className="h-9 mt-1" />
               </div>
               <div>
                 <SearchableSelect
                   value={categoryName}
                   onValueChange={setCategoryName}
                   options={NEWS_CATEGORY_OPTIONS}
-                  placeholder="Select Category"
+                  placeholder={t("Select Category")}
                   className="mt-1.5"
                 />
               </div>
@@ -532,47 +534,47 @@ export default function NewsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Cover Image URL *</Label>
-                <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="/static/news/cover1.png" required className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Cover Image URL *")}</Label>
+                <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder={t("/static/news/cover1.png")} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Bottom Image URL (Optional)</Label>
-                <Input value={bottomImageUrl} onChange={(e) => setBottomImageUrl(e.target.value)} placeholder="/static/news/bottom1.png" className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Bottom Image URL (Optional)")}</Label>
+                <Input value={bottomImageUrl} onChange={(e) => setBottomImageUrl(e.target.value)} placeholder={t("/static/news/bottom1.png")} className="h-9 mt-1" />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">News Description Body *</Label>
-              <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Provide short, informative updates in Inshorts style..." required className="mt-1" />
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("News Description Body *")}</Label>
+              <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={t("Provide short, informative updates in Inshorts style...")} required className="mt-1" />
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg">
-                <span className="font-semibold text-slate-700">Mark as Breaking News</span>
+                <span className="font-semibold text-slate-700">{t("Mark as Breaking News")}</span>
                 <Switch checked={isBreaking} onCheckedChange={setIsBreaking} />
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg">
-                <span className="font-semibold text-slate-700">Mark as Featured News</span>
+                <span className="font-semibold text-slate-700">{t("Mark as Featured News")}</span>
                 <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">External Web Redirect Link (Optional)</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("External Web Redirect Link (Optional)")}</Label>
               <Input value={externalLinks} onChange={(e) => setExternalLinks(e.target.value)} placeholder="https://website.com/news-detail" className="h-9 mt-1" />
             </div>
 
             <div className="p-3 bg-emerald-50/50 rounded-lg border text-emerald-800 text-[10px] leading-normal flex items-start gap-2">
               <Info className="h-4 w-4 shrink-0 text-emerald-700" />
               <span>
-                By publishing, this news article will be distributed to **all active Jain members** without community hierarchies, and will automatically archive after **7 days**.
+                {t("By publishing, this news article will be distributed to **all active Jain members** without community hierarchies, and will automatically archive after **7 days**.")}
               </span>
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>{t("Cancel")}</Button>
               <Button type="submit" disabled={savingNews} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">
-                {savingNews ? "Publishing..." : "Publish News Article"}
+                {savingNews ? t("Publishing...") : t("Publish News Article")}
               </Button>
             </DialogFooter>
           </form>
@@ -583,12 +585,12 @@ export default function NewsPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto bg-white rounded-2xl text-xs">
           <DialogHeader>
-            <DialogTitle className="font-heading font-black text-slate-805">Modify News Article</DialogTitle>
+            <DialogTitle className="font-heading font-black text-slate-805">{t("Modify News Article")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditNews} className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Headline Title *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Headline Title *")}</Label>
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="h-9 mt-1" />
               </div>
               <div>
@@ -596,7 +598,7 @@ export default function NewsPage() {
                   value={categoryName}
                   onValueChange={setCategoryName}
                   options={NEWS_CATEGORY_OPTIONS}
-                  placeholder="Select Category"
+                  placeholder={t("Select Category")}
                   className="mt-1.5"
                 />
               </div>
@@ -604,34 +606,34 @@ export default function NewsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Cover Image URL *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Cover Image URL *")}</Label>
                 <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Bottom Image URL (Optional)</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Bottom Image URL (Optional)")}</Label>
                 <Input value={bottomImageUrl} onChange={(e) => setBottomImageUrl(e.target.value)} className="h-9 mt-1" />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">News Description Body *</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("News Description Body *")}</Label>
               <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} required className="mt-1" />
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg">
-                <span className="font-semibold text-slate-700">Mark as Breaking News</span>
+                <span className="font-semibold text-slate-700">{t("Mark as Breaking News")}</span>
                 <Switch checked={isBreaking} onCheckedChange={setIsBreaking} />
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg">
-                <span className="font-semibold text-slate-700">Mark as Featured News</span>
+                <span className="font-semibold text-slate-700">{t("Mark as Featured News")}</span>
                 <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
               </div>
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => { setEditOpen(false); setEditingNewsItem(null); }}>Cancel</Button>
-              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">Save News Changes</Button>
+              <Button type="button" variant="ghost" onClick={() => { setEditOpen(false); setEditingNewsItem(null); }}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9">{t("Save News Changes")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

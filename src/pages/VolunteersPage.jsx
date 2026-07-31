@@ -28,6 +28,7 @@ import {
   Check, X, Briefcase, Trash2, MapPin, Calendar,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useOrgs, orgOptions } from "@/hooks/useOrgs";
 import { OrgSelect } from "@/components/common/OrgSelect";
 import MemberLinkSelect from "@/components/common/MemberLinkSelect";
@@ -65,6 +66,7 @@ const VOLUNTEER_AREAS_PRESETS = [
 ];
 
 function RoleRow({ role, idx, onChange, onRemove, canRemove }) {
+  const { t } = useLanguage();
   return (
     <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -80,9 +82,9 @@ function RoleRow({ role, idx, onChange, onRemove, canRemove }) {
             }}
             className="w-full h-8 text-xs font-medium rounded border border-slate-200 bg-white px-2 focus:outline-none"
           >
-            <option value="">Select Volunteer Area...</option>
+            <option value="">{t("Select Volunteer Area...")}</option>
             {VOLUNTEER_AREAS_PRESETS.map((area) => (
-              <option key={area} value={area}>{area}</option>
+              <option key={area} value={area}>{t(area)}</option>
             ))}
           </select>
         </div>
@@ -90,7 +92,7 @@ function RoleRow({ role, idx, onChange, onRemove, canRemove }) {
           <Input
             value={role.title}
             onChange={(e) => onChange(idx, "title", e.target.value)}
-            placeholder="Area / Role Title (e.g. Cleanliness)"
+            placeholder={t("Area / Role Title (e.g. Cleanliness)")}
             className="h-8 text-xs bg-white"
           />
         </div>
@@ -100,7 +102,7 @@ function RoleRow({ role, idx, onChange, onRemove, canRemove }) {
           type="number"
           value={role.count}
           onChange={(e) => onChange(idx, "count", e.target.value)}
-          placeholder="Count Needed"
+          placeholder={t("Count Needed")}
           className="h-8 text-xs font-bold bg-white"
           min={1}
         />
@@ -120,6 +122,7 @@ function RoleRow({ role, idx, onChange, onRemove, canRemove }) {
 
 export default function VolunteersPage() {
   const { user, canDo, isSuperAdmin } = useAuth();
+  const { t } = useLanguage();
   const { orgs } = useOrgs();
   const [selectedOrg, setSelectedOrg] = useState("");
   const orgId = user?.organizationIds?.[0] || selectedOrg || (isSuperAdmin ? orgs[0]?.id : undefined);
@@ -173,8 +176,8 @@ export default function VolunteersPage() {
   };
 
   const handleSave = async () => {
-    if (!form.eventName.trim()) { toast.error("Event name is required."); return; }
-    if (form.roles.some((r) => !r.title.trim())) { toast.error("All role titles must be filled in."); return; }
+    if (!form.eventName.trim()) { toast.error(t("Event name is required.")); return; }
+    if (form.roles.some((r) => !r.title.trim())) { toast.error(t("All role titles must be filled in.")); return; }
 
     setSaving(true);
     try {
@@ -205,7 +208,7 @@ export default function VolunteersPage() {
         organizationId: orgId,
       });
 
-      toast.success("Opportunity created successfully!");
+      toast.success(t("Opportunity created successfully!"));
       setOpenCreate(false);
       setForm(EMPTY_OPP);
       setReloadKey((k) => k + 1);
@@ -224,60 +227,60 @@ export default function VolunteersPage() {
   return (
     <div data-testid="volunteers-page">
       <PageHeader
-        title="Volunteer Management"
-        subtitle="Manage and coordinate volunteers across temples, events and yatras."
+        title={t("volunteers.title", "Volunteer Management")}
+        subtitle={t("volunteers.subtitle", "Manage and coordinate volunteers across temples, events and yatras.")}
         actions={
           <Button
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="bg-emerald-600 hover:bg-emerald-700 font-bold"
             onClick={() => { setForm(EMPTY_OPP); setOpenCreate(true); }}
             data-testid="volunteers-add-btn"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Create Opportunity
+            {t("volunteers.createOpportunity", "Create Opportunity")}
           </Button>
         }
       />
 
       {isSuperAdmin && (
         <div className="mb-4">
-          <OrgSelect value={orgId} onChange={setSelectedOrg} label="Viewing applications for" testId="volunteers-org-select" />
+          <OrgSelect value={orgId} onChange={setSelectedOrg} label={t("volunteers.viewingFor", "Viewing applications for")} testId="volunteers-org-select" />
         </div>
       )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3 md:gap-4 mb-6">
-        <StatCard label="Opportunity Count" value={opportunities.length} delta="Total active drives" icon={Briefcase} tone="purple" />
-        <StatCard label="Total Volunteers Participated" value={apps.length} delta="Volunteers registered" icon={Users} tone="teal" />
-        <StatCard label="Active Volunteers" value={active} delta="Approved profiles" icon={CheckCircle2} tone="green" />
-        <StatCard label="On Duty" value={onDuty} delta="Currently assigned" icon={UserCircle2} tone="orange" />
-        <StatCard label="Available" value={available} delta="Awaiting assignment" icon={UserCheck} tone="blue" />
-        <StatCard label="Total Volunteers" value={total || opportunities.length} delta="All signups" icon={Users} tone="blue" />
+        <StatCard label={t("volunteers.opportunityCount", "Opportunity Count")} value={opportunities.length} delta={t("volunteers.totalActiveDrives", "Total active drives")} icon={Briefcase} tone="purple" />
+        <StatCard label={t("volunteers.totalVolunteersParticipated", "Total Volunteers Participated")} value={apps.length} delta={t("volunteers.volunteersRegistered", "Volunteers registered")} icon={Users} tone="teal" />
+        <StatCard label={t("volunteers.activeVolunteers", "Active Volunteers")} value={active} delta={t("volunteers.approvedProfiles", "Approved profiles")} icon={CheckCircle2} tone="green" />
+        <StatCard label={t("volunteers.onDuty", "On Duty")} value={onDuty} delta={t("volunteers.currentlyAssigned", "Currently assigned")} icon={UserCircle2} tone="orange" />
+        <StatCard label={t("volunteers.available", "Available")} value={available} delta={t("volunteers.awaitingAssignment", "Awaiting assignment")} icon={UserCheck} tone="blue" />
+        <StatCard label={t("volunteers.totalVolunteers", "Total Volunteers")} value={total || opportunities.length} delta={t("volunteers.allSignups", "All signups")} icon={Users} tone="blue" />
       </div>
 
       {/* Main table */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
         <Card className="xl:col-span-2 p-5 rounded-xl border-border">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <h2 className="font-heading text-base font-semibold">Volunteer List</h2>
+            <h2 className="font-heading text-base font-semibold">{t("volunteers.volunteerList", "Volunteer List")}</h2>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm"><Filter className="h-3.5 w-3.5 mr-1.5" /> Filters</Button>
+              <Button variant="outline" size="sm"><Filter className="h-3.5 w-3.5 mr-1.5" /> {t("action.filters", "Filters")}</Button>
             </div>
           </div>
           {loading ? (
             <div className="space-y-2">{[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
           ) : apps.length === 0 && opportunities.length === 0 ? (
-            <EmptyState title="No volunteers yet" description="Add your first volunteer to start coordinating seva activities." icon={Users} className="border-0" />
+            <EmptyState title={t("volunteers.noVolunteersYet", "No volunteers yet")} description={t("volunteers.addFirstVolunteer", "Add your first volunteer to start coordinating seva activities.")} icon={Users} className="border-0" />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="text-left font-semibold py-2">Name</th>
-                    <th className="text-left font-semibold">Phone</th>
-                    <th className="text-left font-semibold">Assigned</th>
-                    <th className="text-left font-semibold">Role</th>
-                    <th className="text-center font-semibold">Status</th>
-                    <th className="text-right font-semibold">Actions</th>
+                    <th className="text-left font-semibold py-2">{t("field.name", "Name")}</th>
+                    <th className="text-left font-semibold">{t("field.phone", "Phone")}</th>
+                    <th className="text-left font-semibold">{t("field.assigned", "Assigned")}</th>
+                    <th className="text-left font-semibold">{t("field.role", "Role")}</th>
+                    <th className="text-center font-semibold">{t("field.status", "Status")}</th>
+                    <th className="text-right font-semibold">{t("field.actions", "Actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -294,14 +297,14 @@ export default function VolunteersPage() {
                         </td>
                         <td className="text-xs font-mono-num">{v.mobile || v.member?.mobile || "—"}</td>
                         <td className="text-xs">{v.organization?.name || v.opportunity?.title || "—"}</td>
-                        <td className="text-xs">{v.role || v.area?.name || "Volunteer"}</td>
+                        <td className="text-xs">{v.role || v.area?.name || t("volunteers.volunteerRole", "Volunteer")}</td>
                         <td className="text-center"><span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${STATUS_TONE[status] || STATUS_TONE.ACTIVE}`}>{status.replace("_", " ")}</span></td>
                         <td className="text-right">
                           <div className="inline-flex gap-1.5">
                             <button
                               onClick={() => decide(v.id, true)}
                               className="p-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 transition-all shadow-xs"
-                              title="Approve Volunteer & Assign On-Duty Seva"
+                              title={t("Approve Volunteer & Assign On-Duty Seva")}
                               data-testid={`vol-approve-${v.id}`}
                             >
                               <Check className="h-3.5 w-3.5 font-bold text-emerald-600" />
@@ -309,7 +312,7 @@ export default function VolunteersPage() {
                             <button
                               onClick={() => decide(v.id, false)}
                               className="p-1.5 rounded-md bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 transition-all shadow-xs"
-                              title="Decline / Release Duty"
+                              title={t("Decline / Release Duty")}
                               data-testid={`vol-reject-${v.id}`}
                             >
                               <X className="h-3.5 w-3.5 font-bold text-rose-600" />
@@ -327,7 +330,7 @@ export default function VolunteersPage() {
 
         {/* Attendance donut */}
         <Card className="p-5 rounded-xl border-border">
-          <h2 className="font-heading text-base font-semibold mb-3">Attendance Overview</h2>
+          <h2 className="font-heading text-base font-semibold mb-3">{t("volunteers.attendanceOverview", "Attendance Overview")}</h2>
           <div className="relative h-40 flex items-center justify-center">
             <svg className="w-40 h-40 -rotate-90">
               <circle cx="80" cy="80" r="64" strokeWidth="14" stroke="hsl(var(--border))" fill="none" />
@@ -336,13 +339,13 @@ export default function VolunteersPage() {
             </svg>
             <div className="absolute text-center">
               <div className="text-2xl font-bold">{active}</div>
-              <div className="text-[10px] text-muted-foreground">Present</div>
+              <div className="text-[10px] text-muted-foreground">{t("status.present", "Present")}</div>
             </div>
           </div>
           <div className="mt-4 space-y-2 text-sm">
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Present</span><span className="font-mono-num font-semibold">{active} ({total > 0 ? Math.round((active / total) * 100) : 0}%)</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> On Duty</span><span className="font-mono-num font-semibold">{onDuty} ({total > 0 ? Math.round((onDuty / total) * 100) : 0}%)</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Available</span><span className="font-mono-num font-semibold">{available} ({total > 0 ? Math.round((available / total) * 100) : 0}%)</span></div>
+            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> {t("status.present", "Present")}</span><span className="font-mono-num font-semibold">{active} ({total > 0 ? Math.round((active / total) * 100) : 0}%)</span></div>
+            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> {t("status.onDuty", "On Duty")}</span><span className="font-mono-num font-semibold">{onDuty} ({total > 0 ? Math.round((onDuty / total) * 100) : 0}%)</span></div>
+            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> {t("status.available", "Available")}</span><span className="font-mono-num font-semibold">{available} ({total > 0 ? Math.round((available / total) * 100) : 0}%)</span></div>
           </div>
         </Card>
       </div>
@@ -351,27 +354,27 @@ export default function VolunteersPage() {
       <Dialog open={openCreate} onOpenChange={setOpenCreate}>
         <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Volunteer Opportunity</DialogTitle>
+            <DialogTitle>{t("Create Volunteer Opportunity")}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             {/* Organisation Name & Event Name */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">Organisation Name</Label>
+                <Label className="text-xs font-semibold">{t("Organisation Name")}</Label>
                 <Input
                   value={form.organisationName}
                   onChange={(e) => setForm({ ...form, organisationName: e.target.value })}
-                  placeholder="e.g. Shree Shantinath Jain Derasar"
+                  placeholder={t("e.g. Shree Shantinath Jain Derasar")}
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label className="text-xs font-semibold">Event Name *</Label>
+                <Label className="text-xs font-semibold">{t("Event Name *")}</Label>
                 <Input
                   value={form.eventName}
                   onChange={(e) => setForm({ ...form, eventName: e.target.value })}
-                  placeholder="e.g. Paryushan Seva 2025"
+                  placeholder={t("e.g. Paryushan Seva 2025")}
                   className="mt-1"
                   required
                 />
@@ -380,11 +383,11 @@ export default function VolunteersPage() {
 
             {/* Description of Event */}
             <div>
-              <Label className="text-xs font-semibold">Description of Event</Label>
+              <Label className="text-xs font-semibold">{t("Description of Event")}</Label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Describe the volunteer opportunity…"
+                placeholder={t("Describe the volunteer opportunity…")}
                 rows={3}
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               />
@@ -393,9 +396,9 @@ export default function VolunteersPage() {
             {/* Role Title and Number of Volunteers Required */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-xs font-semibold">Role Title & Number of Volunteers Required</Label>
+                <Label className="text-xs font-semibold">{t("Role Title & Number of Volunteers Required")}</Label>
                 <Button type="button" size="sm" variant="outline" onClick={addRole} className="h-7 text-xs gap-1">
-                  <Plus className="w-3 h-3" /> Add Role Title
+                  <Plus className="w-3 h-3" /> {t("Add Role Title")}
                 </Button>
               </div>
               <div className="space-y-2">
@@ -411,14 +414,14 @@ export default function VolunteersPage() {
                 ))}
               </div>
               <p className="text-[11px] text-slate-400 mt-1">
-                e.g. Cleanliness — 20 volunteers, Event Support — 10 volunteers
+                {t("e.g. Cleanliness — 20 volunteers, Event Support — 10 volunteers")}
               </p>
             </div>
 
             {/* Date & Time */}
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label className="text-xs font-semibold">Date</Label>
+                <Label className="text-xs font-semibold">{t("Date")}</Label>
                 <div className="relative mt-1">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
@@ -430,7 +433,7 @@ export default function VolunteersPage() {
                 </div>
               </div>
               <div>
-                <Label className="text-xs font-semibold">Start Time</Label>
+                <Label className="text-xs font-semibold">{t("Start Time")}</Label>
                 <TimePicker
                   value={form.startTime}
                   onChange={(t) => setForm({ ...form, startTime: t })}
@@ -438,7 +441,7 @@ export default function VolunteersPage() {
                 />
               </div>
               <div>
-                <Label className="text-xs font-semibold">End Time</Label>
+                <Label className="text-xs font-semibold">{t("End Time")}</Label>
                 <TimePicker
                   value={form.endTime}
                   onChange={(t) => setForm({ ...form, endTime: t })}
@@ -449,11 +452,11 @@ export default function VolunteersPage() {
 
             {/* Location */}
             <div>
-              <Label className="text-xs font-semibold">Location (Type like inside temple, ground and address)</Label>
+              <Label className="text-xs font-semibold">{t("Location (Type like inside temple, ground and address)")}</Label>
               <div className="flex gap-3 mt-2">
                 {[
-                  { value: "inside_temple", label: "Inside Temple" },
-                  { value: "ground", label: "Ground / Outdoor" },
+                  { value: "inside_temple", label: t("Inside Temple") },
+                  { value: "ground", label: t("Ground / Outdoor") },
                 ].map((opt) => (
                   <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -463,7 +466,7 @@ export default function VolunteersPage() {
                       checked={form.locationType === opt.value}
                       onChange={() => setForm({ ...form, locationType: opt.value })}
                     />
-                    <span className="text-sm">{opt.label}</span>
+                    <span className="text-sm">{t(opt.label)}</span>
                   </label>
                 ))}
               </div>
@@ -474,7 +477,7 @@ export default function VolunteersPage() {
                     <Input
                       value={form.locationAddress}
                       onChange={(e) => setForm({ ...form, locationAddress: e.target.value })}
-                      placeholder="Enter venue / address"
+                      placeholder={t("Enter venue / address")}
                       className="pl-9"
                     />
                   </div>
@@ -484,11 +487,11 @@ export default function VolunteersPage() {
 
             {/* Instructions if any */}
             <div>
-              <Label className="text-xs font-semibold">Instructions if any</Label>
+              <Label className="text-xs font-semibold">{t("Instructions if any")}</Label>
               <textarea
                 value={form.instructions}
                 onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-                placeholder="Special instructions for volunteers (dress code, entry point, tools to bring, etc.)"
+                placeholder={t("Special instructions for volunteers (dress code, entry point, tools to bring, etc.)")}
                 rows={2}
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               />
@@ -497,13 +500,13 @@ export default function VolunteersPage() {
             {/* Contact Person (link member) */}
             <div>
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold">Contact Person (link member)</Label>
-                <span className="text-[10px] text-emerald-600 font-medium">Phone number will be visible to all members</span>
+                <Label className="text-xs font-semibold">{t("Contact Person (link member)")}</Label>
+                <span className="text-[10px] text-emerald-600 font-medium">{t("Phone number will be visible to all members")}</span>
               </div>
               <MemberLinkSelect
                 value={form.contactPersonId}
                 onChange={(v) => setForm({ ...form, contactPersonId: v })}
-                placeholder="Search member by name or ID…"
+                placeholder={t("Search member by name or ID…")}
                 showPhone
                 className="mt-1"
               />
@@ -511,13 +514,13 @@ export default function VolunteersPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenCreate(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpenCreate(false)}>{t("Cancel")}</Button>
             <Button
               onClick={handleSave}
               disabled={saving}
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              {saving ? "Saving…" : "Create Opportunity"}
+              {saving ? t("Saving…") : t("Create Opportunity")}
             </Button>
           </DialogFooter>
         </DialogContent>

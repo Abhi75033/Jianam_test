@@ -8,8 +8,10 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { LiveBadge } from "@/components/common/LiveBadge";
 import { Activity, ShieldCheck, HeartHandshake, Eye } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function MSTrackingPage() {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const { connected } = useSocket("/tracking");
@@ -25,24 +27,24 @@ export default function MSTrackingPage() {
   }, []);
 
   const columns = [
-    { key: "ms", header: "MS Name", render: (r) => <span className="font-semibold text-slate-800">{r.monk?.dikshaName || "Pujya MS"}</span> },
-    { key: "id", header: "Public ID", render: (r) => <Badge variant="secondary">{r.monk?.publicId || "JFMS108"}</Badge> },
-    { key: "currentLocation", header: "Current Location", render: (r) => <span className="text-slate-600">Thane West, Mumbai</span> },
-    { key: "status", header: "Vihar Status", render: (r) => <StatusBadge status={r.status || "ACTIVE"} /> },
+    { key: "ms", header: t("MS Name"), render: (r) => <span className="font-semibold text-slate-800">{r.monk?.dikshaName || "Pujya MS"}</span> },
+    { key: "id", header: t("Public ID"), render: (r) => <Badge variant="secondary">{r.monk?.publicId || "JFMS108"}</Badge> },
+    { key: "currentLocation", header: t("Current Location"), render: (r) => <span className="text-slate-600">{t("Thane West, Mumbai")}</span> },
+    { key: "status", header: t("Vihar Status"), render: (r) => <StatusBadge status={r.status || "ACTIVE"} /> },
   ];
 
   return (
     <div data-testid="ms-tracking-page">
       <PageHeader
-        title="MS (Monk & Sadhvi) Tracking"
-        subtitle="Real-time supervision of holy Monk & Sadhvi Vihar stays and geolocated progress."
+        title={t("MS (Monk & Sadhvi) Tracking")}
+        subtitle={t("Real-time supervision of holy Monk & Sadhvi Vihar stays and geolocated progress.")}
         actions={<LiveBadge connected={connected} />}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-        <StatCard label="Active MS Monitored" value={rows.length || 3} icon={Activity} tone="warning" />
-        <StatCard label="Completed Journeys" value="24" icon={ShieldCheck} tone="default" />
-        <StatCard label="Safety Incidents" value="0" icon={HeartHandshake} tone="info" />
+        <StatCard label={t("Active MS Monitored")} value={rows.length || 3} icon={Activity} tone="warning" />
+        <StatCard label={t("Completed Journeys")} value="24" icon={ShieldCheck} tone="default" />
+        <StatCard label={t("Safety Incidents")} value="0" icon={HeartHandshake} tone="info" />
       </div>
 
       <DataTable

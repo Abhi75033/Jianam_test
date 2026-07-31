@@ -147,6 +147,86 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const requestEmailOtp = async (email) => {
+    const { data } = await api.post("/auth/email/otp/request", { email });
+    return data.data;
+  };
+
+  const verifyEmailOtp = async ({ email, otp }) => {
+    setLoading(true);
+    try {
+      const { data } = await api.post("/auth/email/otp/verify", {
+        email,
+        otp,
+        deviceId: getDeviceId(),
+        deviceType: "WEB",
+      });
+      const d = data.data;
+      const userObj = d.user ?? {
+        id: d.userId,
+        publicId: d.publicId,
+        primaryRoleKey: d.role,
+        email,
+      };
+      persist(userObj, d.accessToken, d.refreshToken);
+      await refreshMe();
+      return d;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithEmailPassword = async ({ email, password }) => {
+    setLoading(true);
+    try {
+      const { data } = await api.post("/auth/login/email", {
+        email,
+        password,
+        deviceId: getDeviceId(),
+        deviceType: "WEB",
+      });
+      const d = data.data;
+      const userObj = d.user ?? {
+        id: d.userId,
+        publicId: d.publicId,
+        primaryRoleKey: d.role,
+        email,
+      };
+      persist(userObj, d.accessToken, d.refreshToken);
+      await refreshMe();
+      return d;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async ({ email, googleId, firstName, lastName, photoUrl }) => {
+    setLoading(true);
+    try {
+      const { data } = await api.post("/auth/google", {
+        email,
+        googleId,
+        firstName,
+        lastName,
+        photoUrl,
+        deviceId: getDeviceId(),
+        deviceType: "WEB",
+      });
+      const d = data.data;
+      const userObj = d.user ?? {
+        id: d.userId,
+        publicId: d.publicId,
+        primaryRoleKey: d.role,
+        email,
+      };
+      persist(userObj, d.accessToken, d.refreshToken);
+      await refreshMe();
+      return d;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const canDo = (module, action) => {
     if (!user) return false;
     if (user.primaryRoleKey === "SUPER_ADMIN") return true;
@@ -168,6 +248,10 @@ export function AuthProvider({ children }) {
         loginWithPassword,
         requestOtp,
         verifyOtp,
+        requestEmailOtp,
+        verifyEmailOtp,
+        loginWithEmailPassword,
+        loginWithGoogle,
         logout,
         canDo,
         refreshMe,

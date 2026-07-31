@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { formatDateTime } from "@/lib/utils";
 import { ALL_MODULES, ALL_ACTIONS } from "@/constants/modules";
 import { Filter } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const renderDiffViewer = (log) => {
   const diff = log.diff;
@@ -52,6 +53,7 @@ const renderDiffViewer = (log) => {
 };
 
 export default function AuditLogsPage() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detailLog, setDetailLog] = useState(null);
@@ -77,67 +79,67 @@ export default function AuditLogsPage() {
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
   const columns = [
-    { key: "at", header: "Timestamp", render: (r) => <span className="text-xs font-mono-num">{formatDateTime(r.createdAt || r.at)}</span> },
-    { key: "actor", header: "Actor", render: (r) => r.actor?.mobile || r.actorId || "system" },
-    { key: "module", header: "Module", render: (r) => <Badge variant="outline" className="text-[10px]">{r.module}</Badge> },
-    { key: "action", header: "Action", render: (r) => <Badge variant="outline" className="text-[10px]">{r.action}</Badge> },
-    { key: "entity", header: "Entity", render: (r) => <span className="text-xs">{r.entityType} · {r.entityId?.slice(0, 12)}</span> },
-    { key: "critical", header: "Critical", render: (r) => r.isCritical ? <Badge variant="destructive">Critical</Badge> : <span className="text-muted-foreground text-xs">—</span> },
+    { key: "at", header: t("Timestamp"), render: (r) => <span className="text-xs font-mono-num">{formatDateTime(r.createdAt || r.at)}</span> },
+    { key: "actor", header: t("Actor"), render: (r) => r.actor?.mobile || r.actorId || "system" },
+    { key: "module", header: t("Module"), render: (r) => <Badge variant="outline" className="text-[10px]">{r.module}</Badge> },
+    { key: "action", header: t("Action"), render: (r) => <Badge variant="outline" className="text-[10px]">{r.action}</Badge> },
+    { key: "entity", header: t("Entity"), render: (r) => <span className="text-xs">{r.entityType} · {r.entityId?.slice(0, 12)}</span> },
+    { key: "critical", header: t("Critical"), render: (r) => r.isCritical ? <Badge variant="destructive">{t("Critical")}</Badge> : <span className="text-muted-foreground text-xs">—</span> },
   ];
 
   return (
     <div data-testid="audit-logs-page">
       <PageHeader
-        title="Audit Logs"
-        subtitle="Immutable, read-only trail of all critical actions on the platform."
+        title={t("audit.title", "Audit Logs")}
+        subtitle={t("Immutable, read-only trail of all critical actions on the platform.")}
       />
 
       <Card className="p-4 rounded-md border-border mb-4">
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
           <div>
-            <Label className="text-xs">Module</Label>
+            <Label className="text-xs">{t("Module")}</Label>
             <SearchableSelect
               value={filters.module}
               onValueChange={(v) => setFilters({ ...filters, module: v })}
-              options={[{ value: "ALL", label: "All Modules" }, ...ALL_MODULES.map(m => ({ value: m, label: m }))]}
-              placeholder="All Modules"
-              searchPlaceholder="Search module…"
+              options={[{ value: "ALL", label: t("All Modules") }, ...ALL_MODULES.map(m => ({ value: m, label: m }))]}
+              placeholder={t("All Modules")}
+              searchPlaceholder={t("Search module…")}
             />
           </div>
           <div>
-            <Label className="text-xs">Action</Label>
+            <Label className="text-xs">{t("Action")}</Label>
             <SearchableSelect
               value={filters.action}
               onValueChange={(v) => setFilters({ ...filters, action: v })}
-              options={[{ value: "ALL", label: "All Actions" }, ...ALL_ACTIONS.map(a => ({ value: a, label: a }))]}
-              placeholder="All Actions"
-              searchPlaceholder="Search action…"
+              options={[{ value: "ALL", label: t("All Actions") }, ...ALL_ACTIONS.map(a => ({ value: a, label: a }))]}
+              placeholder={t("All Actions")}
+              searchPlaceholder={t("Search action…")}
             />
           </div>
           <div>
-            <Label className="text-xs">From</Label>
+            <Label className="text-xs">{t("From")}</Label>
             <Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
           </div>
           <div>
-            <Label className="text-xs">To</Label>
+            <Label className="text-xs">{t("To")}</Label>
             <Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
           </div>
           <div>
-            <Label className="text-xs">Critical</Label>
+            <Label className="text-xs">{t("Critical")}</Label>
             <SearchableSelect
               value={filters.isCritical}
               onValueChange={(v) => setFilters({ ...filters, isCritical: v })}
               options={[
-                { value: "ALL", label: "All Logs" },
-                { value: "YES", label: "Critical only" },
-                { value: "NO", label: "Non-critical" },
+                { value: "ALL", label: t("All Logs") },
+                { value: "YES", label: t("Critical only") },
+                { value: "NO", label: t("Non-critical") },
               ]}
-              placeholder="All Logs"
+              placeholder={t("All Logs")}
             />
           </div>
           <div className="flex items-end">
             <Button onClick={fetchLogs} className="w-full" data-testid="audit-apply-button">
-              <Filter className="h-4 w-4 mr-2" /> Apply
+              <Filter className="h-4 w-4 mr-2" /> {t("Apply")}
             </Button>
           </div>
         </div>
@@ -148,39 +150,39 @@ export default function AuditLogsPage() {
         rows={rows}
         loading={loading}
         testId="audit-logs-table"
-        emptyTitle="No audit logs"
-        emptyDescription="Actions performed by users will appear here."
+        emptyTitle={t("No audit logs")}
+        emptyDescription={t("Actions performed by users will appear here.")}
         onRowClick={setDetailLog}
       />
 
       <Dialog open={Boolean(detailLog)} onOpenChange={() => setDetailLog(null)}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" data-testid="audit-diff-dialog">
           <DialogHeader>
-            <DialogTitle className="font-heading">Audit Log · <span className="font-mono text-sm">{detailLog?.id?.slice(0, 12)}</span></DialogTitle>
+            <DialogTitle className="font-heading">{t("Audit Log ·")} <span className="font-mono text-sm">{detailLog?.id?.slice(0, 12)}</span></DialogTitle>
           </DialogHeader>
           {detailLog && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <div><div className="text-muted-foreground font-semibold">Actor</div><div className="font-medium mt-0.5">{detailLog.actor?.mobile || detailLog.actorId || "system"}</div></div>
-                <div><div className="text-muted-foreground font-semibold">IP Address</div><div className="font-mono mt-0.5">{detailLog.ipAddress || detailLog.ip || "—"}</div></div>
-                <div><div className="text-muted-foreground font-semibold">User Agent</div><div className="font-medium truncate max-w-[150px] mt-0.5" title={detailLog.userAgent || detailLog.deviceInfo?.userAgent}>{detailLog.userAgent || detailLog.deviceInfo?.userAgent || "—"}</div></div>
-                <div><div className="text-muted-foreground font-semibold">Critical Action</div><div className="font-medium mt-0.5">{detailLog.isCritical ? <Badge variant="destructive">YES</Badge> : "NO"}</div></div>
+                <div><div className="text-muted-foreground font-semibold">{t("Actor")}</div><div className="font-medium mt-0.5">{detailLog.actor?.mobile || detailLog.actorId || "system"}</div></div>
+                <div><div className="text-muted-foreground font-semibold">{t("IP Address")}</div><div className="font-mono mt-0.5">{detailLog.ipAddress || detailLog.ip || "—"}</div></div>
+                <div><div className="text-muted-foreground font-semibold">{t("User Agent")}</div><div className="font-medium truncate max-w-[150px] mt-0.5" title={detailLog.userAgent || detailLog.deviceInfo?.userAgent}>{detailLog.userAgent || detailLog.deviceInfo?.userAgent || "—"}</div></div>
+                <div><div className="text-muted-foreground font-semibold">{t("Critical Action")}</div><div className="font-medium mt-0.5">{detailLog.isCritical ? <Badge variant="destructive">YES</Badge> : t("NO")}</div></div>
               </div>
 
               <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">Visual Difference View</div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">{t("Visual Difference View")}</div>
                 {renderDiffViewer(detailLog)}
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">Before Structure</div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">{t("Before Structure")}</div>
                   <pre className="text-[11px] p-3 bg-red-50 border border-red-100 rounded-lg max-h-48 overflow-y-auto whitespace-pre-wrap break-all font-mono">
                     {detailLog.before ? JSON.stringify(detailLog.before, null, 2) : "—"}
                   </pre>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">After Structure</div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">{t("After Structure")}</div>
                   <pre className="text-[11px] p-3 bg-emerald-50 border border-emerald-100 rounded-lg max-h-48 overflow-y-auto whitespace-pre-wrap break-all font-mono">
                     {detailLog.after ? JSON.stringify(detailLog.after, null, 2) : "—"}
                   </pre>

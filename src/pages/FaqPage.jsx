@@ -11,8 +11,10 @@ import { HelpCircle, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function FaqPage() {
+  const { t } = useLanguage();
   const { user, isSuperAdmin } = useAuth();
   const orgId = user?.organizationIds?.[0];
 
@@ -30,7 +32,7 @@ export default function FaqPage() {
       const res = await api.get(`/faqs/org/${orgId}`);
       setRows(res.data.data || []);
     } catch (e) {
-      toast.error("Failed to load FAQs.");
+      toast.error(t("Failed to load FAQs."));
     } finally {
       setLoading(false);
     }
@@ -55,17 +57,17 @@ export default function FaqPage() {
 
   const handleSave = async () => {
     if (!form.question || !form.answer) {
-      toast.error("Please fill in both Question and Answer fields.");
+      toast.error(t("Please fill in both Question and Answer fields."));
       return;
     }
     setSaving(true);
     try {
       if (editing) {
         await api.patch(`/faqs/${editing.id}`, form);
-        toast.success("FAQ updated successfully.");
+        toast.success(t("FAQ updated successfully."));
       } else {
         await api.post("/faqs", { ...form, organizationId: orgId });
-        toast.success("FAQ added successfully.");
+        toast.success(t("FAQ added successfully."));
       }
       setOpen(false);
       loadFaqs();
@@ -80,18 +82,18 @@ export default function FaqPage() {
     if (!confirm(`Delete FAQ: "${row.question}"?`)) return;
     try {
       await api.delete(`/faqs/${row.id}`);
-      toast.success("FAQ deleted.");
+      toast.success(t("FAQ deleted."));
       loadFaqs();
     } catch (e) {
-      toast.error("Failed to delete FAQ.");
+      toast.error(t("Failed to delete FAQ."));
     }
   };
 
   const columns = [
-    { key: "question", header: "Question", render: (r) => <span className="font-semibold text-slate-800">{r.question}</span> },
-    { key: "answer", header: "Answer", render: (r) => <span className="text-slate-600 text-xs block max-w-lg truncate">{r.answer}</span> },
-    { key: "category", header: "Category", render: (r) => <Badge variant="secondary">{r.category}</Badge> },
-    { key: "isActive", header: "Status", render: (r) => <Badge variant={r.isActive ? "default" : "outline"}>{r.isActive ? "Active" : "Inactive"}</Badge> },
+    { key: "question", header: t("Question"), render: (r) => <span className="font-semibold text-slate-800">{r.question}</span> },
+    { key: "answer", header: t("Answer"), render: (r) => <span className="text-slate-600 text-xs block max-w-lg truncate">{r.answer}</span> },
+    { key: "category", header: t("Category"), render: (r) => <Badge variant="secondary">{r.category}</Badge> },
+    { key: "isActive", header: t("Status"), render: (r) => <Badge variant={r.isActive ? "default" : "outline"}>{r.isActive ? t("Active") : t("Inactive")}</Badge> },
     {
       key: "actions", header: "", render: (r) => (
         <div className="flex gap-2">
@@ -105,10 +107,10 @@ export default function FaqPage() {
   return (
     <div data-testid="faq-page">
       <PageHeader
-        title="FAQ Management"
-        subtitle="Manage frequently asked questions displayed in the mobile and portal guides."
+        title={t("FAQ Management")}
+        subtitle={t("Manage frequently asked questions displayed in the mobile and portal guides.")}
         actions={
-          <Button onClick={openAdd}><Plus className="h-4 w-4 mr-2" /> Add FAQ</Button>
+          <Button onClick={openAdd}><Plus className="h-4 w-4 mr-2" /> {t("Add FAQ")}</Button>
         }
       />
 
@@ -117,17 +119,17 @@ export default function FaqPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit FAQ" : "Add FAQ"}</DialogTitle>
+            <DialogTitle>{editing ? t("Edit FAQ") : t("Add FAQ")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 pt-2">
-            <div><Label className="text-xs">Category</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="General / Tracking / Donations" /></div>
-            <div><Label className="text-xs">Question *</Label><Input value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} placeholder="e.g. How do I request a receipt?" /></div>
-            <div><Label className="text-xs">Answer *</Label><Textarea rows={4} value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} placeholder="Type the answer here..." /></div>
-            <div><Label className="text-xs">Display Order</Label><Input type="number" value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: parseInt(e.target.value) || 0 })} /></div>
+            <div><Label className="text-xs">{t("Category")}</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder={t("General / Tracking / Donations")} /></div>
+            <div><Label className="text-xs">{t("Question *")}</Label><Input value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} placeholder={t("e.g. How do I request a receipt?")} /></div>
+            <div><Label className="text-xs">{t("Answer *")}</Label><Textarea rows={4} value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} placeholder={t("Type the answer here...")} /></div>
+            <div><Label className="text-xs">{t("Display Order")}</Label><Input type="number" value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: parseInt(e.target.value) || 0 })} /></div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : editing ? "Update FAQ" : "Save FAQ"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("Cancel")}</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? t("Saving...") : editing ? t("Update FAQ") : t("Save FAQ")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

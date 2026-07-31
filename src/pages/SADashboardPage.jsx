@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
-import { StatCard } from "@/components/common/StatCard";
 import { cn } from "@/lib/utils";
 
 function MetricCard({ label, value, delta, icon: Icon, tone = "blue", loading }) {
@@ -50,6 +50,7 @@ function MetricCard({ label, value, delta, icon: Icon, tone = "blue", loading })
 
 export default function SADashboardPage() {
   const { isSuperAdmin } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -95,57 +96,57 @@ export default function SADashboardPage() {
       {/* Page header */}
       <div>
         <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-          Super Admin View
+          {t("saDashboard.superAdminView", "Super Admin View")}
         </p>
-        <h1 className="text-2xl font-black text-slate-800 mt-0.5">SA Dashboard</h1>
+        <h1 className="text-2xl font-black text-slate-800 mt-0.5">{t("nav.saDashboard", "SA Dashboard")}</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Platform-wide statistics across all organizations and members.
+          {t("saDashboard.subtitle", "Platform-wide statistics across all organizations and members.")}
         </p>
       </div>
 
       {/* ─── Platform Overview ─────────────────────────────────────────── */}
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-          Platform Overview
+          {t("saDashboard.platformOverview", "Platform Overview")}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          <MetricCard label="Total Members" value={totalMembers} delta="Jain + Non-Jain" icon={Users} tone="blue" loading={loading} />
-          <MetricCard label="Active Members" value={activeMembers} delta="Verified profiles" icon={UserCheck} tone="green" loading={loading} />
-          <MetricCard label="Total Temples" value={totalTemples} delta="Registered orgs" icon={Landmark} tone="orange" loading={loading} />
-          <MetricCard label="Dharamshalas" value={totalDharamshalas} delta="Active listings" icon={Hotel} tone="teal" loading={loading} />
-          <MetricCard label="Jain Centres" value={totalJainCenters} delta="Registered" icon={Building2} tone="purple" loading={loading} />
-          <MetricCard label="MS Profiles" value={totalMonks} delta="Onboarded MS" icon={HandHeart} tone="orange" loading={loading} />
-          <MetricCard label="Staff" value={totalStaff} delta="All organizations" icon={Briefcase} tone="blue" loading={loading} />
-          <MetricCard label="Volunteers" value={totalVolunteers} delta="Active volunteers" icon={UserCheck} tone="green" loading={loading} />
+          <MetricCard label={t("saDashboard.totalMembers", "Total Members")} value={totalMembers} delta={t("saDashboard.jainNonJain", "Jain + Non-Jain")} icon={Users} tone="blue" loading={loading} />
+          <MetricCard label={t("saDashboard.activeMembers", "Active Members")} value={activeMembers} delta={t("saDashboard.verifiedProfiles", "Verified profiles")} icon={UserCheck} tone="green" loading={loading} />
+          <MetricCard label={t("saDashboard.totalTemples", "Total Temples")} value={totalTemples} delta={t("saDashboard.registeredOrgs", "Registered orgs")} icon={Landmark} tone="orange" loading={loading} />
+          <MetricCard label={t("saDashboard.dharamshalas", "Dharamshalas")} value={totalDharamshalas} delta={t("saDashboard.activeListings", "Active listings")} icon={Hotel} tone="teal" loading={loading} />
+          <MetricCard label={t("saDashboard.jainCentres", "Jain Centres")} value={totalJainCenters} delta={t("saDashboard.registered", "Registered")} icon={Building2} tone="purple" loading={loading} />
+          <MetricCard label={t("saDashboard.msProfiles", "MS Profiles")} value={totalMonks} delta={t("saDashboard.onboardedMs", "Onboarded MS")} icon={HandHeart} tone="orange" loading={loading} />
+          <MetricCard label={t("saDashboard.staff", "Staff")} value={totalStaff} delta={t("saDashboard.allOrgs", "All organizations")} icon={Briefcase} tone="blue" loading={loading} />
+          <MetricCard label={t("saDashboard.volunteers", "Volunteers")} value={totalVolunteers} delta={t("saDashboard.activeVolunteers", "Active volunteers")} icon={UserCheck} tone="green" loading={loading} />
         </div>
       </section>
 
       {/* ─── Activity ─────────────────────────────────────────────────── */}
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-          Community Activity
+          {t("saDashboard.communityActivity", "Community Activity")}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          <MetricCard label="Events This Month" value={eventsThisMonth} icon={PartyPopper} tone="purple" loading={loading} />
-          <MetricCard label="Donations This Month" value={donationsThisMonth} delta="Across all orgs" icon={HeartHandshake} tone="green" loading={loading} />
-          <MetricCard label="Bookings Pending" value={pendingBookings} delta="Awaiting approval" icon={CalendarCheck} tone="orange" loading={loading} />
-          <MetricCard label="Active Ads" value={activeAds} delta="Live campaigns" icon={TrendingUp} tone="teal" loading={loading} />
-          <MetricCard label="Open Tickets" value={openTickets} delta="Needs attention" icon={AlertTriangle} tone="red" loading={loading} />
-          <MetricCard label="Community Pages" value={communityPages} delta="Active pages" icon={Globe} tone="pink" loading={loading} />
-          <MetricCard label="Total Revenue" value={`₹${Number(totalRevenue).toLocaleString("en-IN")}`} delta="All donations" icon={BadgeIndianRupee} tone="green" loading={loading} />
-          <MetricCard label="Active Sessions" value={activeSessions} delta="Admins online" icon={Activity} tone="blue" loading={loading} />
+          <MetricCard label={t("saDashboard.eventsThisMonth", "Events This Month")} value={eventsThisMonth} icon={PartyPopper} tone="purple" loading={loading} />
+          <MetricCard label={t("saDashboard.donationsThisMonth", "Donations This Month")} value={donationsThisMonth} delta={t("saDashboard.acrossOrgs", "Across all orgs")} icon={HeartHandshake} tone="green" loading={loading} />
+          <MetricCard label={t("saDashboard.bookingsPending", "Bookings Pending")} value={pendingBookings} delta={t("saDashboard.awaitingApproval", "Awaiting approval")} icon={CalendarCheck} tone="orange" loading={loading} />
+          <MetricCard label={t("saDashboard.activeAds", "Active Ads")} value={activeAds} delta={t("saDashboard.liveCampaigns", "Live campaigns")} icon={TrendingUp} tone="teal" loading={loading} />
+          <MetricCard label={t("saDashboard.openTickets", "Open Tickets")} value={openTickets} delta={t("saDashboard.needsAttention", "Needs attention")} icon={AlertTriangle} tone="red" loading={loading} />
+          <MetricCard label={t("saDashboard.communityPages", "Community Pages")} value={communityPages} delta={t("saDashboard.activePages", "Active pages")} icon={Globe} tone="pink" loading={loading} />
+          <MetricCard label={t("saDashboard.totalRevenue", "Total Revenue")} value={`₹${Number(totalRevenue).toLocaleString("en-IN")}`} delta={t("saDashboard.allDonations", "All donations")} icon={BadgeIndianRupee} tone="green" loading={loading} />
+          <MetricCard label={t("saDashboard.activeSessions", "Active Sessions")} value={activeSessions} delta={t("saDashboard.adminsOnline", "Admins online")} icon={Activity} tone="blue" loading={loading} />
         </div>
       </section>
 
       {/* ─── Security Alerts ──────────────────────────────────────────── */}
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-          Security & Compliance
+          {t("saDashboard.securityCompliance", "Security & Compliance")}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          <MetricCard label="Failed Logins Today" value={failedLoginsToday} delta="Across all admins" icon={ShieldAlert} tone="red" loading={loading} />
-          <MetricCard label="Locked Accounts" value={lockedAccounts} delta="Awaiting unlock" icon={AlertTriangle} tone="red" loading={loading} />
-          <MetricCard label="Audit Events Today" value={auditEventsToday} delta="Mutations logged" icon={Activity} tone="purple" loading={loading} />
+          <MetricCard label={t("saDashboard.failedLoginsToday", "Failed Logins Today")} value={failedLoginsToday} delta={t("saDashboard.acrossAdmins", "Across all admins")} icon={ShieldAlert} tone="red" loading={loading} />
+          <MetricCard label={t("saDashboard.lockedAccounts", "Locked Accounts")} value={lockedAccounts} delta={t("saDashboard.awaitingUnlock", "Awaiting unlock")} icon={AlertTriangle} tone="red" loading={loading} />
+          <MetricCard label={t("saDashboard.auditEventsToday", "Audit Events Today")} value={auditEventsToday} delta={t("saDashboard.mutationsLogged", "Mutations logged")} icon={Activity} tone="purple" loading={loading} />
         </div>
       </section>
     </div>

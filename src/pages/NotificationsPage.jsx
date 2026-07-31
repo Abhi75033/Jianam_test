@@ -7,8 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Bell } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function NotificationsPage() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,11 +28,11 @@ export default function NotificationsPage() {
 
   return (
     <div data-testid="notifications-page">
-      <PageHeader title="Notifications" subtitle="In-app notification inbox." />
+      <PageHeader title={t("Notifications")} subtitle={t("In-app notification inbox.")} />
       {loading ? (
         <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>
       ) : rows.length === 0 ? (
-        <EmptyState title="You're all caught up" icon={Bell} />
+        <EmptyState title={t("You're all caught up")} icon={Bell} />
       ) : (
         <div className="space-y-2 max-w-3xl">
           {rows.map((n) => (

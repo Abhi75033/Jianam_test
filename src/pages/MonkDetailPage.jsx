@@ -23,6 +23,7 @@ import { toOptions } from "@/constants/dropdownOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import TimePicker, { TimeRangePicker } from "@/components/common/TimePicker";
 import MemberLinkSelect from "@/components/common/MemberLinkSelect";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Constant arrays for community subsects and gacchas
 const DIGAMBAR_SUB = [
@@ -38,7 +39,8 @@ const DIGAMBAR_SUB = [
 const SHWETAMBAR_SUB = [
   "Murtipujak (Deravasi/Mandirmargi)",
   "Sthanakvasi",
-  "Terapanth"
+  "Terapanth",
+  "Other"
 ];
 
 const MURTIPUJAK_GACCHAS = [
@@ -72,6 +74,7 @@ const MemberSelect = ({ label, value, onChange, placeholder = "Select Member..."
 };
 
 const MonkSelect = ({ label, value, onChange, placeholder = "Select Sadhuji / Sadhviji..." }) => {
+  const { t } = useLanguage();
   const [monks, setMonks] = useState([]);
   useEffect(() => {
     api.get("/monks")
@@ -90,7 +93,7 @@ const MonkSelect = ({ label, value, onChange, placeholder = "Select Sadhuji / Sa
           label: `${m.dikshaName} (${m.publicId || "No ID"})`
         }))}
         placeholder={placeholder}
-        searchPlaceholder="Search MS by name/ID…"
+        searchPlaceholder={t("Search MS by name/ID…")}
       />
     </div>
   );
@@ -105,6 +108,7 @@ function ini(name = "") {
  * Monk ID Card Visual Component
  * ───────────────────────────────────────────────────────────────────── */
 function MonkIdCardVisual({ monk }) {
+  const { t } = useLanguage();
   const isSadhvi = monk?.gender === "SADHVI";
   const accent = isSadhvi ? "#9B2D7F" : "#4A1D6B";
   const light = isSadhvi ? "#F5E6FF" : "#EDE0FF";
@@ -129,7 +133,7 @@ function MonkIdCardVisual({ monk }) {
           </div>
           <div className="relative flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-black tracking-widest text-white/90">JiNANAM</span>
+              <span className="text-[10px] font-black tracking-widest text-white/90">{t("JiNANAM")}</span>
             </div>
             <Badge className="bg-white/20 text-white border-0 text-[8px]">{monk?.status || "ACTIVE"}</Badge>
           </div>
@@ -150,7 +154,7 @@ function MonkIdCardVisual({ monk }) {
           <div className="text-center mt-3">
             <div className="font-bold text-white text-sm leading-tight line-clamp-1">{monk?.dikshaName || "—"}</div>
             <div className="text-[9px] text-white/80 mt-0.5 font-semibold">
-              {monk?.gender === "SADHVI" ? "🌸 Sadhvi" : "🧘 Sadhu"} {monk?.gacchaName && `· ${monk.gacchaName}`}
+              {monk?.gender === "SADHVI" ? t("🌸 Sadhvi") : t("🧘 Sadhu")} {monk?.gacchaName && `· ${monk.gacchaName}`}
             </div>
           </div>
         </div>
@@ -158,22 +162,22 @@ function MonkIdCardVisual({ monk }) {
         <div className="px-4 pb-3 pt-3 space-y-1.5 bg-white text-slate-700">
           <div className="flex items-center gap-2 text-[10px]">
             <CalendarDays className="h-3.5 w-3.5 text-purple-600 shrink-0" />
-            <span>Diksha: <strong>{monk?.dikshaDate ? new Date(monk.dikshaDate).toLocaleDateString() : "—"}</strong></span>
+            <span>{t("Diksha:")} <strong>{monk?.dikshaDate ? new Date(monk.dikshaDate).toLocaleDateString() : "—"}</strong></span>
           </div>
           {monk?.dikshaPlace && (
             <div className="flex items-center gap-2 text-[10px]">
               <MapPin className="h-3.5 w-3.5 text-purple-600 shrink-0" />
-              <span className="truncate">Place: <strong>{monk.dikshaPlace}</strong></span>
+              <span className="truncate">{t("Place:")} <strong>{monk.dikshaPlace}</strong></span>
             </div>
           )}
           <div className="flex items-center gap-2 text-[10px]">
             <Compass className="h-3.5 w-3.5 text-purple-600 shrink-0" />
-            <span>Sect: <strong>{monk?.sect || "Shwetambar"}</strong></span>
+            <span>{t("Sect:")} <strong>{monk?.sect || "Shwetambar"}</strong></span>
           </div>
         </div>
 
         <div className="px-4 py-1.5 flex items-center justify-between text-white" style={{ background: accent }}>
-          <span className="text-[9px] text-white/80">FOLLOWERS: {monk?._count?.follows || 0}</span>
+          <span className="text-[9px] text-white/80">{t("FOLLOWERS:")} {monk?._count?.follows || 0}</span>
           <span className="text-[10px] font-black font-mono tracking-widest">{monk?.publicId}</span>
         </div>
       </div>
@@ -185,6 +189,7 @@ function MonkIdCardVisual({ monk }) {
  * Main MonkDetailPage Component
  * ───────────────────────────────────────────────────────────────────── */
 export default function MonkDetailPage() {
+  const { t } = useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const { isSuperAdmin } = useAuth();
@@ -230,7 +235,7 @@ export default function MonkDetailPage() {
         setFollowing(r.data?.data?.follows?.length > 0 || false);
       })
       .catch((e) => {
-        toast.error("Failed to load Maharaj Saheb profile.");
+        toast.error(t("Failed to load Maharaj Saheb profile."));
       })
       .finally(() => setLoading(false));
   };
@@ -245,11 +250,11 @@ export default function MonkDetailPage() {
     try {
       if (following) {
         await api.post(`/monks/${id}/unfollow`);
-        toast.success("Unfollowed Maharaj Saheb.");
+        toast.success(t("Unfollowed Maharaj Saheb."));
         setFollowing(false);
       } else {
         await api.post(`/monks/${id}/follow`);
-        toast.success("Following Maharaj Saheb!");
+        toast.success(t("Following Maharaj Saheb!"));
         setFollowing(true);
       }
       loadMonk();
@@ -260,7 +265,7 @@ export default function MonkDetailPage() {
 
   const handleCreateSupportTicket = async () => {
     if (!ticketDescription) {
-      toast.error("Please describe the incorrect information.");
+      toast.error(t("Please describe the incorrect information."));
       return;
     }
     setTicketSaving(true);
@@ -271,11 +276,11 @@ export default function MonkDetailPage() {
         category: "MONK_PROFILE",
         priority: "MEDIUM",
       });
-      toast.success("Support ticket created. Admin will review the corrections.");
+      toast.success(t("Support ticket created. Admin will review the corrections."));
       setReportOpen(false);
       setTicketDescription("");
     } catch (e) {
-      toast.error("Failed to submit support ticket.");
+      toast.error(t("Failed to submit support ticket."));
     } finally {
       setTicketSaving(false);
     }
@@ -450,7 +455,7 @@ export default function MonkDetailPage() {
       };
 
       await api.post(`/monks/${id}`, payload);
-      toast.success("MS Profile updated successfully.");
+      toast.success(t("MS Profile updated successfully."));
       setEditOpen(false);
       loadMonk();
     } catch (e) {
@@ -530,16 +535,16 @@ export default function MonkDetailPage() {
       {/* Top action bar */}
       <div className="flex justify-between items-center bg-white p-4 rounded-2xl border shadow-sm">
         <Button variant="ghost" onClick={() => navigate("/monks")} className="text-slate-600">
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Maharaj Saheb List
+          <ArrowLeft className="h-4 w-4 mr-2" /> {t("Back to Maharaj Saheb List")}
         </Button>
         <div className="flex items-center gap-2">
           {isSuperAdmin && (
             <Button onClick={openEditDialog} className="bg-purple-700 hover:bg-purple-800 text-white font-bold">
-              <Pencil className="h-4 w-4 mr-2" /> Edit MS Profile
+              <Pencil className="h-4 w-4 mr-2" /> {t("Edit MS Profile")}
             </Button>
           )}
           <Button variant="outline" onClick={() => setIdCardOpen(true)} className="border-purple-200 text-purple-700 hover:bg-purple-50">
-            🪷 View ID Card
+            {t("🪷 View ID Card")}
           </Button>
         </div>
       </div>
@@ -567,26 +572,26 @@ export default function MonkDetailPage() {
           <div className="flex-1 space-y-2 mt-2 md:mt-14">
             <div className="flex items-center flex-wrap gap-2">
               <h1 className="text-2xl font-bold font-heading text-slate-800">{monk.dikshaName}</h1>
-              {monk.verified && <Badge className="bg-emerald-500 text-white border-0"><Check className="h-3 w-3 mr-1" /> Verified Profile</Badge>}
-              <Badge className="bg-purple-100 text-purple-800 border-purple-200">{monk.gender === "SADHVI" ? "🌸 Sadhvi" : "🧘 Sadhu"}</Badge>
+              {monk.verified && <Badge className="bg-emerald-500 text-white border-0"><Check className="h-3 w-3 mr-1" /> {t("Verified Profile")}</Badge>}
+              <Badge className="bg-purple-100 text-purple-800 border-purple-200">{monk.gender === "SADHVI" ? t("🌸 Sadhvi") : t("🧘 Sadhu")}</Badge>
               <Badge className="bg-slate-100 text-slate-600 border-slate-200">{monk.status}</Badge>
             </div>
 
             <div className="text-sm font-semibold text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
-              {monk.shortName && <span>🌟 Popular: {monk.shortName}</span>}
-              <span>🔢 ID: <strong>{monk.publicId}</strong></span>
-              <span>🪷 Sect: {monk.sect || "Shwetambar"}</span>
-              {monk.gacchaName && <span>📍 Gaccha: {monk.gacchaName}</span>}
+              {monk.shortName && <span>{t("🌟 Popular:")} {monk.shortName}</span>}
+              <span>{t("🔢 ID:")} <strong>{monk.publicId}</strong></span>
+              <span>{t("🪷 Sect:")} {monk.sect || "Shwetambar"}</span>
+              {monk.gacchaName && <span>{t("📍 Gaccha:")} {monk.gacchaName}</span>}
             </div>
 
             <div className="flex items-center gap-4 flex-wrap pt-2">
               <Button onClick={handleFollow} variant={following ? "outline" : "default"}
                 className={following ? "border-purple-300 text-purple-700" : "bg-purple-700 hover:bg-purple-800 text-white font-bold"}>
                 <Heart className={`h-4 w-4 mr-2 ${following ? "fill-purple-600 text-purple-600" : ""}`} />
-                {following ? "Following" : "Follow MS"}
+                {following ? t("Following") : t("Follow MS")}
               </Button>
               <Button variant="ghost" onClick={() => setReportOpen(true)} className="text-amber-600 hover:text-amber-800">
-                <AlertTriangle className="h-4 w-4 mr-2" /> Report Incorrect Information
+                <AlertTriangle className="h-4 w-4 mr-2" /> {t("Report Incorrect Information")}
               </Button>
             </div>
           </div>
@@ -594,15 +599,15 @@ export default function MonkDetailPage() {
           <div className="md:mt-14 shrink-0 flex gap-4 text-center text-xs bg-purple-50/60 p-4 border border-purple-100 rounded-2xl">
             <div>
               <div className="text-lg font-bold text-purple-950">{monk._count?.follows || 0}</div>
-              <div className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Followers</div>
+              <div className="text-[10px] text-slate-500 uppercase font-black tracking-wider">{t("Followers")}</div>
             </div>
             <div className="border-l border-purple-200 pl-4">
               <div className="text-lg font-bold text-purple-950">{monk.chaturmasHistory?.length || 0}</div>
-              <div className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Chaturmas</div>
+              <div className="text-[10px] text-slate-500 uppercase font-black tracking-wider">{t("Chaturmas")}</div>
             </div>
             <div className="border-l border-purple-200 pl-4">
               <div className="text-lg font-bold text-purple-950">{monk.tapasya?.length || 0}</div>
-              <div className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Tapasyas</div>
+              <div className="text-[10px] text-slate-500 uppercase font-black tracking-wider">{t("Tapasyas")}</div>
             </div>
           </div>
         </div>
@@ -615,13 +620,13 @@ export default function MonkDetailPage() {
         <div className="space-y-6">
           
           <Card className="p-6 rounded-2xl border-purple-100 shadow-sm bg-white space-y-4">
-            <h3 className="text-sm font-bold text-slate-800 border-b pb-2 flex items-center gap-2">🪷 Biography & Summary</h3>
+            <h3 className="text-sm font-bold text-slate-800 border-b pb-2 flex items-center gap-2">{t("🪷 Biography & Summary")}</h3>
             <p className="text-xs text-slate-600 italic leading-relaxed">
               "{monk.bio || "No summary biography defined yet."}"
             </p>
             {monk.recognitions?.titlesHonors?.length > 0 && (
               <div className="space-y-1.5 pt-2 border-t">
-                <span className="text-[10px] uppercase font-black text-slate-400">Honors & Titles</span>
+                <span className="text-[10px] uppercase font-black text-slate-400">{t("Honors & Titles")}</span>
                 <div className="flex flex-wrap gap-1">
                   {monk.recognitions.titlesHonors.map((t) => (
                     <Badge key={t} className="bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold">{t}</Badge>
@@ -631,7 +636,7 @@ export default function MonkDetailPage() {
             )}
             {monk.recognitions?.tags?.length > 0 && (
               <div className="space-y-1.5 pt-2">
-                <span className="text-[10px] uppercase font-black text-slate-400">Spiritual Tags</span>
+                <span className="text-[10px] uppercase font-black text-slate-400">{t("Spiritual Tags")}</span>
                 <div className="flex flex-wrap gap-1">
                   {monk.recognitions.tags.map((tag) => (
                     <Badge key={tag} className="bg-purple-100 text-purple-800 border border-purple-200 text-[10px] font-semibold">{tag}</Badge>
@@ -642,10 +647,10 @@ export default function MonkDetailPage() {
           </Card>
 
           <Card className="p-6 rounded-2xl border-purple-100 shadow-sm bg-white space-y-4">
-            <h3 className="text-sm font-bold text-slate-800 border-b pb-2 flex items-center gap-2">📍 Live Tracking</h3>
+            <h3 className="text-sm font-bold text-slate-800 border-b pb-2 flex items-center gap-2">{t("📍 Live Tracking")}</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Active status</span>
+                <span className="text-xs font-semibold text-slate-500">{t("Active status")}</span>
                 <Badge className={
                   monk.tracking?.trackingStatus === "Moving"
                     ? "bg-blue-100 text-blue-800 border border-blue-200"
@@ -658,13 +663,13 @@ export default function MonkDetailPage() {
               </div>
               
               <div>
-                <span className="text-[10px] uppercase font-black text-slate-400">Current Location Description</span>
+                <span className="text-[10px] uppercase font-black text-slate-400">{t("Current Location Description")}</span>
                 <span className="text-xs font-bold text-slate-800 block mt-0.5">{monk.tracking?.currentLocation || "Not Configured"}</span>
               </div>
 
               {monk.currentTemple && (
                 <div>
-                  <span className="text-[10px] uppercase font-black text-slate-400">Staying Organization / Temple</span>
+                  <span className="text-[10px] uppercase font-black text-slate-400">{t("Staying Organization / Temple")}</span>
                   <span className="text-xs font-bold text-purple-700 block mt-0.5">{monk.currentTemple.name} ({monk.currentTemple.city})</span>
                 </div>
               )}
@@ -678,12 +683,12 @@ export default function MonkDetailPage() {
           <Card className="rounded-2xl border-purple-100 bg-white shadow-sm overflow-hidden min-h-[500px]">
             <Tabs defaultValue="journey" className="w-full">
               <TabsList className="bg-slate-50 p-2 w-full justify-start overflow-x-auto h-auto rounded-none border-b flex gap-1">
-                <TabsTrigger value="journey" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">🧘 Spiritual Journey</TabsTrigger>
-                <TabsTrigger value="vihaar" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">🚶 Movement & Group</TabsTrigger>
-                <TabsTrigger value="tapasya" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">🪷 Tapasya</TabsTrigger>
-                <TabsTrigger value="family" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">🏠 Pre-Diksha Family</TabsTrigger>
-                <TabsTrigger value="routine" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">🕒 Daily Routine</TabsTrigger>
-                <TabsTrigger value="contacts" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">📞 Contacts & Links</TabsTrigger>
+                <TabsTrigger value="journey" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">{t("🧘 Spiritual Journey")}</TabsTrigger>
+                <TabsTrigger value="vihaar" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">{t("🚶 Movement & Group")}</TabsTrigger>
+                <TabsTrigger value="tapasya" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">{t("🪷 Tapasya")}</TabsTrigger>
+                <TabsTrigger value="family" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">{t("🏠 Pre-Diksha Family")}</TabsTrigger>
+                <TabsTrigger value="routine" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">{t("🕒 Daily Routine")}</TabsTrigger>
+                <TabsTrigger value="contacts" className="text-xs font-bold px-4 py-2 rounded-lg data-[state=active]:bg-purple-700 data-[state=active]:text-white">{t("📞 Contacts & Links")}</TabsTrigger>
               </TabsList>
 
               {/* TABS CONTENT */}
@@ -693,20 +698,20 @@ export default function MonkDetailPage() {
                 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">🧘 Diksha Details</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("🧘 Diksha Details")}</h4>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Diksha Date:</span><strong className="text-slate-800">{monk.dikshaDate ? new Date(monk.dikshaDate).toLocaleDateString() : "—"}</strong></div>
-                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Diksha Place:</span><strong className="text-slate-800">{monk.dikshaPlace || "—"}</strong></div>
-                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Diksha Guru:</span><strong className="text-purple-700">{monk.dikshaGuru?.dikshaName || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">{t("Diksha Date:")}</span><strong className="text-slate-800">{monk.dikshaDate ? new Date(monk.dikshaDate).toLocaleDateString() : "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">{t("Diksha Place:")}</span><strong className="text-slate-800">{monk.dikshaPlace || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">{t("Diksha Guru:")}</span><strong className="text-purple-700">{monk.dikshaGuru?.dikshaName || "—"}</strong></div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">🪷 Sect Details</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("🪷 Sect Details")}</h4>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Community:</span><strong className="text-slate-800">{monk.sect || "Shwetambar"}</strong></div>
-                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Sub-Sect / Tradition:</span><strong className="text-slate-800">{monk.subSect || "—"}</strong></div>
-                      {monk.gacchaName && <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Gaccha:</span><strong className="text-slate-800">{monk.gacchaName}</strong></div>}
+                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">{t("Community:")}</span><strong className="text-slate-800">{monk.sect || "Shwetambar"}</strong></div>
+                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">{t("Sub-Sect / Tradition:")}</span><strong className="text-slate-800">{monk.subSect || "—"}</strong></div>
+                      {monk.gacchaName && <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">{t("Gaccha:")}</span><strong className="text-slate-800">{monk.gacchaName}</strong></div>}
                     </div>
                   </div>
                 </div>
@@ -714,14 +719,14 @@ export default function MonkDetailPage() {
                 {/* Guru Parampara visual tree */}
                 <div className="border border-purple-100 bg-purple-50/30 p-5 rounded-2xl space-y-4 mt-4">
                   <h4 className="text-xs font-black text-purple-900 uppercase tracking-widest flex items-center gap-1.5">
-                    <Compass className="h-4 w-4 text-purple-600" /> Guru Parampara (Lineage Tree)
+                    <Compass className="h-4 w-4 text-purple-600" /> {t("Guru Parampara (Lineage Tree)")}
                   </h4>
                   
                   <div className="flex flex-col items-center gap-2 text-center text-xs">
                     {/* Ancestor Guru */}
                     {monk.dikshaGuru && (
                       <div className="bg-purple-100 text-purple-900 font-semibold p-3.5 border border-purple-200 rounded-xl w-60 shadow-sm">
-                        <span className="text-[9px] text-purple-600 uppercase font-black tracking-widest block">Acharya Guru</span>
+                        <span className="text-[9px] text-purple-600 uppercase font-black tracking-widest block">{t("Acharya Guru")}</span>
                         <span className="text-xs mt-0.5 block">{monk.dikshaGuru.dikshaName}</span>
                         <span className="text-[9px] font-mono block opacity-60 mt-0.5">{monk.dikshaGuru.publicId}</span>
                       </div>
@@ -731,7 +736,7 @@ export default function MonkDetailPage() {
 
                     {/* Current Monk */}
                     <div className="bg-purple-700 text-white font-bold p-4 rounded-xl w-64 shadow-md">
-                      <span className="text-[9px] text-purple-200 uppercase font-black tracking-widest block">Current MS Profile</span>
+                      <span className="text-[9px] text-purple-200 uppercase font-black tracking-widest block">{t("Current MS Profile")}</span>
                       <span className="text-sm mt-0.5 block">{monk.dikshaName}</span>
                       <span className="text-[9px] font-mono block opacity-70 mt-0.5">{monk.publicId}</span>
                     </div>
@@ -743,7 +748,7 @@ export default function MonkDetailPage() {
                       <div className="grid grid-cols-2 gap-2 w-full max-w-md">
                         {monk.discipleOf.map((disciple) => (
                           <div key={disciple.id} className="bg-white text-slate-800 font-semibold p-3 border rounded-xl shadow-sm text-center">
-                            <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block">Dikshit Disciple</span>
+                            <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block">{t("Dikshit Disciple")}</span>
                             <span className="text-xs mt-0.5 block truncate">{disciple.dikshaName}</span>
                             <span className="text-[9px] font-mono block text-slate-500 opacity-60">{disciple.publicId}</span>
                           </div>
@@ -756,7 +761,7 @@ export default function MonkDetailPage() {
                 {/* Biography Detailed Text */}
                 {monk.media?.lifeStory && (
                   <div className="space-y-3 mt-4 border-t pt-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">📖 Detailed Spiritual Biography</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">{t("📖 Detailed Spiritual Biography")}</h4>
                     <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 p-4 border rounded-xl">
                       {monk.media.lifeStory}
                     </p>
@@ -773,14 +778,14 @@ export default function MonkDetailPage() {
                   <div className="border border-purple-100 bg-purple-50/20 p-5 rounded-2xl space-y-4">
                     <div className="flex justify-between items-center border-b pb-2">
                       <div className="space-y-0.5">
-                        <span className="text-xs font-bold text-slate-800">👥 Group: {monk.group.name}</span>
-                        <span className="text-[9px] font-mono text-purple-600 block">🔢 Number: {monk.group.groupNumber || "JFMSV108"}</span>
+                        <span className="text-xs font-bold text-slate-800">{t("👥 Group:")} {monk.group.name}</span>
+                        <span className="text-[9px] font-mono text-purple-600 block">{t("🔢 Number:")} {monk.group.groupNumber || "JFMSV108"}</span>
                       </div>
-                      <Badge className="bg-purple-700 text-white font-bold">{monk.group.members?.length || 0} Members</Badge>
+                      <Badge className="bg-purple-700 text-white font-bold">{monk.group.members?.length || 0} {t("Members")}</Badge>
                     </div>
 
                     <div className="space-y-3">
-                      <span className="text-[10px] uppercase font-black text-slate-400">Linked MS Profiles in Group</span>
+                      <span className="text-[10px] uppercase font-black text-slate-400">{t("Linked MS Profiles in Group")}</span>
                       <div className="grid grid-cols-2 gap-3 text-xs">
                         {(monk.group.members || []).map((m) => (
                           <div key={m.id} className="flex items-center gap-2 p-2 border rounded-xl bg-white cursor-pointer hover:bg-slate-50"
@@ -796,7 +801,7 @@ export default function MonkDetailPage() {
 
                     {monk.group.jainMembers?.length > 0 && (
                       <div className="space-y-2 pt-2 border-t">
-                        <span className="text-[10px] uppercase font-black text-slate-400">Jain lay-devotees in Group</span>
+                        <span className="text-[10px] uppercase font-black text-slate-400">{t("Jain lay-devotees in Group")}</span>
                         <div className="flex flex-wrap gap-1">
                           {monk.group.jainMembers.map((jm, i) => (
                             <Badge key={i} className="bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200">
@@ -809,7 +814,7 @@ export default function MonkDetailPage() {
 
                     {monk.group.nonJainMembers?.length > 0 && (
                       <div className="space-y-2 pt-2 border-t">
-                        <span className="text-[10px] uppercase font-black text-slate-400">Non-Jain Helpers</span>
+                        <span className="text-[10px] uppercase font-black text-slate-400">{t("Non-Jain Helpers")}</span>
                         <div className="flex flex-wrap gap-1">
                           {monk.group.nonJainMembers.map((njm, i) => (
                             <Badge key={i} className="bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200">
@@ -824,7 +829,7 @@ export default function MonkDetailPage() {
 
                 {/* Vihar Movement History */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">🚗 Vihar Journey Logs (Past Travels)</h4>
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("🚗 Vihar Journey Logs (Past Travels)")}</h4>
                   
                   {monk.tracking?.vihaarHistory?.length > 0 ? (
                     <div className="space-y-3">
@@ -832,7 +837,7 @@ export default function MonkDetailPage() {
                         <div key={i} className="flex gap-4 items-center bg-slate-55 border p-3.5 rounded-xl text-xs bg-slate-50/50">
                           <div className="flex flex-col text-center bg-purple-100 border border-purple-200 rounded-lg p-2 w-28 text-[10px] font-bold text-purple-900">
                             <span>{v.startDate ? new Date(v.startDate).toLocaleDateString() : "—"}</span>
-                            <span className="text-[8px] font-semibold block text-purple-500 mt-0.5">Start Date</span>
+                            <span className="text-[8px] font-semibold block text-purple-500 mt-0.5">{t("Start Date")}</span>
                           </div>
                           
                           <div className="flex-1 flex items-center justify-between pr-4 font-bold text-slate-800">
@@ -845,7 +850,7 @@ export default function MonkDetailPage() {
                     </div>
                   ) : (
                     <div className="text-center py-6 text-xs text-slate-400 border border-dashed rounded-xl">
-                      No vihaar history logs recorded.
+                      {t("No vihaar history logs recorded.")}
                     </div>
                   )}
                 </div>
@@ -855,28 +860,28 @@ export default function MonkDetailPage() {
               {/* 3. Tapasya Tab */}
               <TabsContent value="tapasya" className="p-6 space-y-6">
                 
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">🪷 Completed Tapasya Milestones</h4>
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("🪷 Completed Tapasya Milestones")}</h4>
                 
                 {monk.tapasya?.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {monk.tapasya.map((t, idx) => (
+                    {monk.tapasya.map((tItem, idx) => (
                       <div key={idx} className="border p-4 rounded-xl bg-slate-50/50 shadow-sm space-y-2 relative overflow-hidden">
                         <div className="absolute top-0 right-0 h-1.5 w-16 bg-purple-500" />
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-bold text-purple-950">{t.name}</span>
-                          <Badge className="bg-purple-100 text-purple-800 border-purple-200 font-black">{t.count} Completed</Badge>
+                          <span className="text-sm font-bold text-purple-950">{tItem.name}</span>
+                          <Badge className="bg-purple-100 text-purple-800 border-purple-200 font-black">{tItem.count} {t("Completed")}</Badge>
                         </div>
                         <div className="text-xs space-y-1 mt-1 text-slate-600">
-                          <div>📍 Place: <strong>{t.place || "—"}</strong></div>
-                          <div>📅 Date: <strong>{t.date ? new Date(t.date).toLocaleDateString() : "—"}</strong></div>
-                          {t.description && <div className="italic text-slate-500 mt-1">"{t.description}"</div>}
+                          <div>{t("📍 Place:")} <strong>{tItem.place || "—"}</strong></div>
+                          <div>{t("📅 Date:")} <strong>{tItem.date ? new Date(tItem.date).toLocaleDateString() : "—"}</strong></div>
+                          {tItem.description && <div className="italic text-slate-500 mt-1">"{tItem.description}"</div>}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-xs text-slate-400 border border-dashed rounded-xl">
-                    No tapasya records linked.
+                    {t("No tapasya records linked.")}
                   </div>
                 )}
 
@@ -888,21 +893,21 @@ export default function MonkDetailPage() {
                 <div className="bg-amber-50 p-4 border border-amber-100 text-xs text-amber-800 rounded-xl flex gap-2">
                   <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>
-                    🔒 Privacy Guard: Pre-diksha family credentials are viewable only by verified community members. Sensitive fields remain protected.
+                    {t("🔒 Privacy Guard: Pre-diksha family credentials are viewable only by verified community members. Sensitive fields remain protected.")}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">👨 Parents</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("👨 Parents")}</h4>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Father:</span><strong className="text-slate-800">{monk.preDikshaFather?.name || "—"}</strong></div>
-                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Mother:</span><strong className="text-slate-800">{monk.preDikshaMother?.name || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">{t("Father:")}</span><strong className="text-slate-800">{monk.preDikshaFather?.name || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">{t("Mother:")}</span><strong className="text-slate-800">{monk.preDikshaMother?.name || "—"}</strong></div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">📍 Family Location Address</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("📍 Family Location Address")}</h4>
                     <div className="space-y-2 text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
                       {monk.preDikshaLocation?.address || "Address not defined."}
                       {(monk.preDikshaLocation?.city || monk.preDikshaLocation?.state) && (
@@ -915,7 +920,7 @@ export default function MonkDetailPage() {
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">👦 Siblings</h4>
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("👦 Siblings")}</h4>
                   {monk.siblings?.length > 0 ? (
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       {monk.siblings.map((s, idx) => (
@@ -926,7 +931,7 @@ export default function MonkDetailPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-xs text-slate-400">No sibling credentials recorded.</div>
+                    <div className="text-center py-4 text-xs text-slate-400">{t("No sibling credentials recorded.")}</div>
                   )}
                 </div>
 
@@ -937,26 +942,26 @@ export default function MonkDetailPage() {
                 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">🗣 Pravachan Timings</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("🗣 Pravachan Timings")}</h4>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Morning Pravachan:</span><strong className="text-slate-800">{monk.routine?.pravachanTimings?.morning || "—"}</strong></div>
-                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Afternoon Pravachan:</span><strong className="text-slate-800">{monk.routine?.pravachanTimings?.afternoon || "—"}</strong></div>
-                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Evening Pravachan:</span><strong className="text-slate-800">{monk.routine?.pravachanTimings?.evening || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">{t("Morning Pravachan:")}</span><strong className="text-slate-800">{monk.routine?.pravachanTimings?.morning || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">{t("Afternoon Pravachan:")}</span><strong className="text-slate-800">{monk.routine?.pravachanTimings?.afternoon || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">{t("Evening Pravachan:")}</span><strong className="text-slate-800">{monk.routine?.pravachanTimings?.evening || "—"}</strong></div>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">🧘 Darshan / Interaction</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("🧘 Darshan / Interaction")}</h4>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Morning Slot:</span><strong className="text-slate-800">{monk.routine?.darshanTimings?.morning || "—"}</strong></div>
-                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Afternoon Slot:</span><strong className="text-slate-800">{monk.routine?.darshanTimings?.afternoon || "—"}</strong></div>
-                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Evening Slot:</span><strong className="text-slate-800">{monk.routine?.darshanTimings?.evening || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">{t("Morning Slot:")}</span><strong className="text-slate-800">{monk.routine?.darshanTimings?.morning || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">{t("Afternoon Slot:")}</span><strong className="text-slate-800">{monk.routine?.darshanTimings?.afternoon || "—"}</strong></div>
+                      <div className="flex justify-between border-b pb-1"><span className="text-slate-500">{t("Evening Slot:")}</span><strong className="text-slate-800">{monk.routine?.darshanTimings?.evening || "—"}</strong></div>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3 mt-4 border-t pt-4">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">🕒 Languages Spoken</h4>
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">{t("🕒 Languages Spoken")}</h4>
                   <div className="flex flex-wrap gap-1">
                     {(monk.languages || ["Hindi", "Gujarati"]).map((l) => (
                       <Badge key={l} className="bg-purple-50 text-purple-700 border border-purple-100 text-xs font-semibold px-3 py-1 rounded-full">{l}</Badge>
@@ -966,7 +971,7 @@ export default function MonkDetailPage() {
 
                 {monk.routine?.maryada && (
                   <div className="space-y-3 mt-4 border-t pt-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">📜 Maryada & Guidelines</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">{t("📜 Maryada & Guidelines")}</h4>
                     <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 p-4 border rounded-xl">
                       {monk.routine.maryada}
                     </p>
@@ -981,7 +986,7 @@ export default function MonkDetailPage() {
                 <div className="grid grid-cols-2 gap-6">
                   {/* Sangh Contact List */}
                   <div className="space-y-3">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">👳 Jain Sangh Representatives</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("👳 Jain Sangh Representatives")}</h4>
                     {monk.sanghContacts?.jainContacts?.length > 0 ? (
                       <div className="space-y-2">
                         {monk.sanghContacts.jainContacts.map((jc, i) => (
@@ -992,13 +997,13 @@ export default function MonkDetailPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-xs text-slate-400">No Sangh representatives linked.</div>
+                      <div className="text-xs text-slate-400">{t("No Sangh representatives linked.")}</div>
                     )}
                   </div>
 
                   {/* Non-Jain Contacts */}
                   <div className="space-y-3">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">👥 Coordinators / Helpers</h4>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">{t("👥 Coordinators / Helpers")}</h4>
                     {monk.sanghContacts?.nonJainContacts?.length > 0 ? (
                       <div className="space-y-2">
                         {monk.sanghContacts.nonJainContacts.map((njc, i) => (
@@ -1009,7 +1014,7 @@ export default function MonkDetailPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-xs text-slate-400">No helpers linked.</div>
+                      <div className="text-xs text-slate-400">{t("No helpers linked.")}</div>
                     )}
                   </div>
                 </div>
@@ -1017,29 +1022,29 @@ export default function MonkDetailPage() {
                 {/* Direct Communications */}
                 <div className="border-t pt-4 grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[10px] uppercase font-black text-slate-400 block">📞 Direct Calling Number</span>
+                    <span className="text-[10px] uppercase font-black text-slate-400 block">{t("📞 Direct Calling Number")}</span>
                     <span className="text-xs font-bold text-slate-800 block mt-1">{monk.sanghContacts?.directCallingNumber || "Not Available"}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-black text-slate-400 block">💬 WhatsApp Direct link</span>
+                    <span className="text-[10px] uppercase font-black text-slate-400 block">{t("💬 WhatsApp Direct link")}</span>
                     {monk.sanghContacts?.directWhatsAppNumber ? (
                       <span className="text-xs font-bold text-purple-700 block mt-1 underline cursor-pointer">
                         {monk.sanghContacts.directWhatsAppNumber}
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-400 block mt-1">Not Available</span>
+                      <span className="text-xs text-slate-400 block mt-1">{t("Not Available")}</span>
                     )}
                   </div>
                 </div>
 
                 {/* Official presence */}
                 <div className="border-t pt-4">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">🔗 Official Digital Presence</h4>
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">{t("🔗 Official Digital Presence")}</h4>
                   <div className="flex gap-4">
-                    {monk.socialLinks?.website && <a href={monk.socialLinks.website} target="_blank" className="text-xs text-purple-700 hover:underline flex items-center gap-1"><Globe className="h-4 w-4" /> Website</a>}
-                    {monk.socialLinks?.facebook && <a href={monk.socialLinks.facebook} target="_blank" className="text-xs text-purple-700 hover:underline flex items-center gap-1"><Info className="h-4 w-4" /> Facebook</a>}
-                    {monk.socialLinks?.instagram && <a href={monk.socialLinks.instagram} target="_blank" className="text-xs text-purple-700 hover:underline flex items-center gap-1"><Info className="h-4 w-4" /> Instagram</a>}
-                    {monk.socialLinks?.youtube && <a href={monk.socialLinks.youtube} target="_blank" className="text-xs text-purple-700 hover:underline flex items-center gap-1"><Video className="h-4 w-4" /> YouTube</a>}
+                    {monk.socialLinks?.website && <a href={monk.socialLinks.website} target="_blank" className="text-xs text-purple-700 hover:underline flex items-center gap-1"><Globe className="h-4 w-4" /> {t("Website")}</a>}
+                    {monk.socialLinks?.facebook && <a href={monk.socialLinks.facebook} target="_blank" className="text-xs text-purple-700 hover:underline flex items-center gap-1"><Info className="h-4 w-4" /> {t("Facebook")}</a>}
+                    {monk.socialLinks?.instagram && <a href={monk.socialLinks.instagram} target="_blank" className="text-xs text-purple-700 hover:underline flex items-center gap-1"><Info className="h-4 w-4" /> {t("Instagram")}</a>}
+                    {monk.socialLinks?.youtube && <a href={monk.socialLinks.youtube} target="_blank" className="text-xs text-purple-700 hover:underline flex items-center gap-1"><Video className="h-4 w-4" /> {t("YouTube")}</a>}
                   </div>
                 </div>
 
@@ -1065,24 +1070,24 @@ export default function MonkDetailPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-800">
-              <AlertTriangle className="h-5 w-5 text-amber-600 animate-bounce" /> Report Incorrect Information
+              <AlertTriangle className="h-5 w-5 text-amber-600 animate-bounce" /> {t("Report Incorrect Information")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 pt-2 text-xs">
             <p className="text-slate-500">
-              Please specify the incorrect information. Submitting this form will automatically register a Support Ticket for verification.
+              {t("Please specify the incorrect information. Submitting this form will automatically register a Support Ticket for verification.")}
             </p>
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Corrections details</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Corrections details")}</Label>
               <textarea rows={4} className="w-full mt-1.5 rounded-lg border bg-white px-3 py-2 text-xs focus:outline-none"
                 value={ticketDescription} onChange={(e) => setTicketDescription(e.target.value)}
-                placeholder="e.g. Sibling names are wrong, Diksha date should be 2018 instead of 2019..." />
+                placeholder={t("e.g. Sibling names are wrong, Diksha date should be 2018 instead of 2019...")} />
             </div>
           </div>
           <DialogFooter className="mt-4 gap-2">
-            <Button variant="ghost" onClick={() => setReportOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setReportOpen(false)}>{t("Cancel")}</Button>
             <Button onClick={handleCreateSupportTicket} disabled={ticketSaving} className="bg-amber-600 hover:bg-amber-700 text-white font-bold">
-              {ticketSaving ? "Submitting..." : "Submit Corrections Report"}
+              {ticketSaving ? t("Submitting...") : t("Submit Corrections Report")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1093,7 +1098,7 @@ export default function MonkDetailPage() {
         <DialogContent className="sm:max-w-4xl max-h-[92vh] p-0 overflow-hidden flex flex-col bg-slate-50 border-0 rounded-2xl shadow-2xl">
           <DialogHeader className="p-4 bg-white border-b shrink-0 flex flex-row items-center justify-between">
             <DialogTitle className="font-heading text-lg text-purple-950 flex items-center gap-2">
-              🧘 Edit Maharaj Saheb Profile - {monk.dikshaName}
+              {t("🧘 Edit Maharaj Saheb Profile -")} {monk.dikshaName}
             </DialogTitle>
           </DialogHeader>
 
@@ -1101,15 +1106,15 @@ export default function MonkDetailPage() {
             {/* Sidebar navigation */}
             <div className="w-56 bg-purple-950/5 border-r border-slate-200 shrink-0 p-3 overflow-y-auto space-y-1">
               {[
-                { id: "basic", label: "👤 Basic Information" },
-                { id: "journey", label: "🧘 Journey & Sect" },
-                { id: "hierarchy", label: "🌳 Guru Parampara" },
-                { id: "family", label: "🏠 Family Details" },
-                { id: "tapasya", label: "🪷 Tapasya" },
-                { id: "movement", label: "📍 Location & Chaturmas" },
-                { id: "routine", label: "🕒 Routine & Guidelines" },
-                { id: "contacts", label: "📞 representatives" },
-                { id: "media", label: "🔗 Media & Links" },
+                { id: "basic", label: t("👤 Basic Information") },
+                { id: "journey", label: t("🧘 Journey & Sect") },
+                { id: "hierarchy", label: t("🌳 Guru Parampara") },
+                { id: "family", label: t("🏠 Family Details") },
+                { id: "tapasya", label: t("🪷 Tapasya") },
+                { id: "movement", label: t("📍 Location & Chaturmas") },
+                { id: "routine", label: t("🕒 Routine & Guidelines") },
+                { id: "contacts", label: t("📞 representatives") },
+                { id: "media", label: t("🔗 Media & Links") },
               ].map(s => {
                 const active = editTab === s.id;
                 return (
@@ -1119,7 +1124,7 @@ export default function MonkDetailPage() {
                         ? "bg-purple-700 text-white shadow-md"
                         : "text-slate-600 hover:bg-slate-200/50"
                     }`}>
-                    {s.label}
+                    {t(s.label)}
                   </button>
                 );
               })}
@@ -1132,27 +1137,27 @@ export default function MonkDetailPage() {
                   
                   {editTab === "basic" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">👤 Personal & Basic Details</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("👤 Personal & Basic Details")}</h3>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="col-span-2">{eField("Full Name (Diksha Name) *", "dikshaName")}</div>
                         {eField("Short / Popular Name (Optional)", "shortName")}
                         <div>
-                          <Label className="text-xs font-semibold">Gender *</Label>
+                          <Label className="text-xs font-semibold">{t("Gender *")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={editForm.gender} onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}>
-                            <option value="SADHU">🧘 Sadhu (Male)</option>
-                            <option value="SADHVI">🌸 Sadhvi (Female)</option>
+                            <option value="SADHU">{t("🧘 Sadhu (Male)")}</option>
+                            <option value="SADHVI">{t("🌸 Sadhvi (Female)")}</option>
                           </select>
                         </div>
                         {eField("Name Before Diksha", "nameBeforeDiksha")}
                         {eField("Date of Birth", "dob", "date")}
                         {eField("Place of Birth", "dobPlace")}
                         <div>
-                          <Label className="text-xs font-semibold">Current Spiritual Status</Label>
+                          <Label className="text-xs font-semibold">{t("Current Spiritual Status")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}>
-                            <option value="ACTIVE">Active (Vihaar / Darshan)</option>
-                            <option value="SAMADHI">Samadhi (Devlok / Nirvana)</option>
+                            <option value="ACTIVE">{t("Active (Vihaar / Darshan)")}</option>
+                            <option value="SAMADHI">{t("Samadhi (Devlok / Nirvana)")}</option>
                           </select>
                         </div>
                       </div>
@@ -1165,7 +1170,7 @@ export default function MonkDetailPage() {
                       )}
 
                       <div>
-                        <Label className="text-xs font-semibold">Short Bio (3-5 Lines Summary)</Label>
+                        <Label className="text-xs font-semibold">{t("Short Bio (3-5 Lines Summary)")}</Label>
                         <textarea rows={3} className="w-full mt-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
                           value={editForm.bio} onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })} />
                       </div>
@@ -1174,32 +1179,32 @@ export default function MonkDetailPage() {
 
                   {editTab === "journey" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🧘 Diksha & Sect Details</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🧘 Diksha & Sect Details")}</h3>
                       <div className="grid grid-cols-2 gap-3">
                         {eField("Diksha Date", "dikshaDate", "date")}
                         {eField("Diksha Place", "dikshaPlace")}
                         <div className="col-span-2">
-                          <MonkSelect label="Diksha Guru" value={editForm.dikshaGuruId} onChange={(val) => setEditForm({ ...editForm, dikshaGuruId: val })} />
+                          <MonkSelect label={t("Diksha Guru")} value={editForm.dikshaGuruId} onChange={(val) => setEditForm({ ...editForm, dikshaGuruId: val })} />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 border-t pt-3">
                         <div>
-                          <Label className="text-xs font-semibold">Community</Label>
+                          <Label className="text-xs font-semibold">{t("Community")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={editForm.sect} onChange={(e) => setEditForm({ ...editForm, sect: e.target.value, subSect: e.target.value === "Digambar" ? "Bisapantha" : "Murtipujak" })}>
-                            <option value="Shwetambar">Shwetambar</option>
-                            <option value="Digambar">Digambar</option>
+                            <option value="Shwetambar">{t("Shwetambar")}</option>
+                            <option value="Digambar">{t("Digambar")}</option>
                           </select>
                         </div>
                         <div>
-                          <Label className="text-xs font-semibold">Sub-Sect / Tradition</Label>
+                          <Label className="text-xs font-semibold">{t("Sub-Sect / Tradition")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={editForm.subSect} onChange={(e) => setEditForm({ ...editForm, subSect: e.target.value })}>
                             {editForm.sect === "Digambar" ? (
-                              DIGAMBAR_SUB.map(s => <option key={s} value={s}>{s}</option>)
+                              DIGAMBAR_SUB.map(s => <option key={s} value={s}>{t(s)}</option>)
                             ) : (
-                              SHWETAMBAR_SUB.map(s => <option key={s} value={s}>{s}</option>)
+                              SHWETAMBAR_SUB.map(s => <option key={s} value={s}>{t(s)}</option>)
                             )}
                           </select>
                         </div>
@@ -1207,11 +1212,11 @@ export default function MonkDetailPage() {
 
                       {editForm.sect === "Shwetambar" && editForm.subSect === "Murtipujak" && (
                         <div>
-                          <Label className="text-xs font-semibold">Gaccha</Label>
+                          <Label className="text-xs font-semibold">{t("Gaccha")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={editForm.gacchaName} onChange={(e) => setEditForm({ ...editForm, gacchaName: e.target.value })}>
-                            <option value="">Select Gaccha...</option>
-                            {MURTIPUJAK_GACCHAS.map(g => <option key={g} value={g}>{g}</option>)}
+                            <option value="">{t("Select Gaccha...")}</option>
+                            {MURTIPUJAK_GACCHAS.map(g => <option key={g} value={g}>{t(g)}</option>)}
                           </select>
                         </div>
                       )}
@@ -1220,9 +1225,9 @@ export default function MonkDetailPage() {
 
                   {editTab === "hierarchy" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🌳 Guru-Disciple Lineage</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🌳 Guru-Disciple Lineage")}</h3>
                       <div className="space-y-3">
-                        <MonkSelect label="Acharya Guru (Parent Guru)" value={editForm.acharyaGuruId} onChange={(val) => setEditForm({ ...editForm, acharyaGuruId: val })} />
+                        <MonkSelect label={t("Acharya Guru (Parent Guru)")} value={editForm.acharyaGuruId} onChange={(val) => setEditForm({ ...editForm, acharyaGuruId: val })} />
                         {eField("Current Sangh / Acharya Name (Optional)", "currentSangh")}
                       </div>
                     </div>
@@ -1230,25 +1235,25 @@ export default function MonkDetailPage() {
 
                   {editTab === "family" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🏠 Pre-Diksha Family Details</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🏠 Pre-Diksha Family Details")}</h3>
                       
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">👨 Father</span>
-                        <MemberSelect label="Link Father's JiNANAM Member Profile" value={editForm.fatherMemberId} onChange={(val) => setEditForm({ ...editForm, fatherMemberId: val })} />
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("👨 Father")}</span>
+                        <MemberSelect label={t("Link Father's JiNANAM Member Profile")} value={editForm.fatherMemberId} onChange={(val) => setEditForm({ ...editForm, fatherMemberId: val })} />
                         {!editForm.fatherMemberId && eField("Father's Name (Text)", "fatherNameText")}
                       </div>
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">👩 Mother</span>
-                        <MemberSelect label="Link Mother's JiNANAM Member Profile" value={editForm.motherMemberId} onChange={(val) => setEditForm({ ...editForm, motherMemberId: val })} />
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("👩 Mother")}</span>
+                        <MemberSelect label={t("Link Mother's JiNANAM Member Profile")} value={editForm.motherMemberId} onChange={(val) => setEditForm({ ...editForm, motherMemberId: val })} />
                         {!editForm.motherMemberId && eField("Mother's Name (Text)", "motherNameText")}
                       </div>
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">👦 Siblings</span>
+                          <span className="text-xs font-bold text-slate-700">{t("👦 Siblings")}</span>
                           <Button type="button" size="sm" variant="outline" onClick={eAddSibling} className="h-6 text-[10px] font-bold">
-                            + Add Sibling
+                            {t("+ Add Sibling")}
                           </Button>
                         </div>
                         {(editForm.siblings || []).map((s, idx) => (
@@ -1257,26 +1262,26 @@ export default function MonkDetailPage() {
                               <X className="h-4 w-4" />
                             </button>
                             <div className="flex-1">
-                              <Label className="text-[10px] font-bold">Sibling Name</Label>
+                              <Label className="text-[10px] font-bold">{t("Sibling Name")}</Label>
                               <Input className="h-8 mt-1" value={s.name} onChange={(e) => eUpdateSibling(idx, "name", e.target.value)} />
                             </div>
                             <div className="w-32">
-                              <Label className="text-[10px] font-bold">Relationship</Label>
+                              <Label className="text-[10px] font-bold">{t("Relationship")}</Label>
                               <select className="w-full mt-1 h-8 rounded border bg-white px-2 text-xs focus:outline-none"
                                 value={s.relationship} onChange={(e) => eUpdateSibling(idx, "relationship", e.target.value)}>
-                                <option value="Brother">Brother</option>
-                                <option value="Sister">Sister</option>
+                                <option value="Brother">{t("Brother")}</option>
+                                <option value="Sister">{t("Sister")}</option>
                               </select>
                             </div>
                             <div className="flex-1">
-                              <MemberSelect label="Link Profile" value={s.memberId} onChange={(val) => eUpdateSibling(idx, "memberId", val)} />
+                              <MemberSelect label={t("Link Profile")} value={s.memberId} onChange={(val) => eUpdateSibling(idx, "memberId", val)} />
                             </div>
                           </div>
                         ))}
                       </div>
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">📍 Family Location Address</span>
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("📍 Family Location Address")}</span>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="col-span-2">{eField("Full Address", "preDikshaAddress")}</div>
                           {eField("City", "preDikshaCity")}
@@ -1291,50 +1296,50 @@ export default function MonkDetailPage() {
                   {editTab === "tapasya" && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center border-b pb-1.5">
-                        <h3 className="text-sm font-bold text-slate-800">🪷 Tapasya & Milestones</h3>
+                        <h3 className="text-sm font-bold text-slate-800">{t("🪷 Tapasya & Milestones")}</h3>
                         <Button type="button" size="sm" onClick={eAddTapasya} className="bg-purple-700 hover:bg-purple-800 text-white font-bold h-7 text-xs">
-                          + Add Tapasya
+                          {t("+ Add Tapasya")}
                         </Button>
                       </div>
 
                       <div className="space-y-3">
-                        {(editForm.tapasya || []).map((t, idx) => (
+                        {(editForm.tapasya || []).map((tItem, idx) => (
                           <div key={idx} className="border p-4 rounded-xl bg-white space-y-3 relative shadow-sm">
                             <button type="button" onClick={() => eRemoveTapasya(idx)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
                               <Trash2 className="h-4 w-4" />
                             </button>
                             <div className="grid grid-cols-3 gap-3">
                               <div>
-                                <Label className="text-xs font-semibold">Tapasya Name</Label>
+                                <Label className="text-xs font-semibold">{t("Tapasya Name")}</Label>
                                 <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
-                                  value={t.name} onChange={(e) => eUpdateTapasya(idx, "name", e.target.value)}>
-                                  <option value="Upvas">Upvas</option>
-                                  <option value="Ayambil">Ayambil</option>
-                                  <option value="Varsitap">Varsitap</option>
-                                  <option value="Other">Other</option>
+                                  value={tItem.name} onChange={(e) => eUpdateTapasya(idx, "name", e.target.value)}>
+                                  <option value="Upvas">{t("Upvas")}</option>
+                                  <option value="Ayambil">{t("Ayambil")}</option>
+                                  <option value="Varsitap">{t("Varsitap")}</option>
+                                  <option value="Other">{t("Other")}</option>
                                 </select>
                               </div>
                               <div>
-                                <Label className="text-xs font-semibold">Number Completed</Label>
-                                <Input type="number" className="mt-1 h-9" value={t.count} onChange={(e) => eUpdateTapasya(idx, "count", e.target.value)} />
+                                <Label className="text-xs font-semibold">{t("Number Completed")}</Label>
+                                <Input type="number" className="mt-1 h-9" value={tItem.count} onChange={(e) => eUpdateTapasya(idx, "count", e.target.value)} />
                               </div>
                               <div>
-                                <Label className="text-xs font-semibold">Status</Label>
+                                <Label className="text-xs font-semibold">{t("Status")}</Label>
                                 <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
-                                  value={t.status} onChange={(e) => eUpdateTapasya(idx, "status", e.target.value)}>
-                                  <option value="Completed">Completed</option>
-                                  <option value="Ongoing">Ongoing</option>
+                                  value={tItem.status} onChange={(e) => eUpdateTapasya(idx, "status", e.target.value)}>
+                                  <option value="Completed">{t("Completed")}</option>
+                                  <option value="Ongoing">{t("Ongoing")}</option>
                                 </select>
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                               <div>
-                                <Label className="text-xs font-semibold">Date Completed</Label>
-                                <Input type="date" className="mt-1 h-9" value={t.date ? t.date.slice(0,10) : ""} onChange={(e) => eUpdateTapasya(idx, "date", e.target.value)} />
+                                <Label className="text-xs font-semibold">{t("Date Completed")}</Label>
+                                <Input type="date" className="mt-1 h-9" value={tItem.date ? tItem.date.slice(0,10) : ""} onChange={(e) => eUpdateTapasya(idx, "date", e.target.value)} />
                               </div>
                               <div>
-                                <Label className="text-xs font-semibold">Place Completed</Label>
-                                <Input className="mt-1 h-9" value={t.place} onChange={(e) => eUpdateTapasya(idx, "place", e.target.value)} />
+                                <Label className="text-xs font-semibold">{t("Place Completed")}</Label>
+                                <Input className="mt-1 h-9" value={tItem.place} onChange={(e) => eUpdateTapasya(idx, "place", e.target.value)} />
                               </div>
                             </div>
                           </div>
@@ -1344,9 +1349,9 @@ export default function MonkDetailPage() {
                       {/* Timeline Events */}
                       <div className="border-t pt-4">
                         <div className="flex justify-between items-center border-b pb-1.5 mb-3">
-                          <h4 className="text-xs font-bold text-slate-800">📜 Milestones & Timeline Events</h4>
+                          <h4 className="text-xs font-bold text-slate-800">{t("📜 Milestones & Timeline Events")}</h4>
                           <Button type="button" size="sm" variant="outline" onClick={eAddTimeline} className="h-6 text-[10px] font-bold">
-                            + Add Event
+                            {t("+ Add Event")}
                           </Button>
                         </div>
                         <div className="space-y-3">
@@ -1357,15 +1362,15 @@ export default function MonkDetailPage() {
                               </button>
                               <div className="grid grid-cols-3 gap-2">
                                 <div>
-                                  <Label className="text-[10px] font-bold">Event Name</Label>
+                                  <Label className="text-[10px] font-bold">{t("Event Name")}</Label>
                                   <Input className="h-8 mt-0.5 bg-white text-xs" value={e.eventName} onChange={(val) => eUpdateTimeline(idx, "eventName", val.target.value)} />
                                 </div>
                                 <div>
-                                  <Label className="text-[10px] font-bold">Event Date</Label>
+                                  <Label className="text-[10px] font-bold">{t("Event Date")}</Label>
                                   <Input type="date" className="h-8 mt-0.5 bg-white text-xs" value={e.date ? e.date.slice(0,10) : ""} onChange={(val) => eUpdateTimeline(idx, "date", val.target.value)} />
                                 </div>
                                 <div>
-                                  <Label className="text-[10px] font-bold">Place</Label>
+                                  <Label className="text-[10px] font-bold">{t("Place")}</Label>
                                   <Input className="h-8 mt-0.5 bg-white text-xs" value={e.place} onChange={(val) => eUpdateTimeline(idx, "place", val.target.value)} />
                                 </div>
                               </div>
@@ -1378,26 +1383,26 @@ export default function MonkDetailPage() {
 
                   {editTab === "movement" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">📍 Current Location & Chaturmas History</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("📍 Current Location & Chaturmas History")}</h3>
                       
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">📍 Live Status Details</span>
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("📍 Live Status Details")}</span>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <Label className="text-xs font-semibold">Current Movement status</Label>
+                            <Label className="text-xs font-semibold">{t("Current Movement status")}</Label>
                             <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
                               value={editForm.trackingStatus} onChange={(e) => setEditForm({ ...editForm, trackingStatus: e.target.value })}>
-                              <option value="Staying">Staying (Sthirata)</option>
-                              <option value="Moving">Moving (Viharing)</option>
-                              <option value="Chaturmas">Chaturmas</option>
+                              <option value="Staying">{t("Staying (Sthirata)")}</option>
+                              <option value="Moving">{t("Moving (Viharing)")}</option>
+                              <option value="Chaturmas">{t("Chaturmas")}</option>
                             </select>
                           </div>
                           {eField("Current Location Description", "currentLocation")}
                           <div className="col-span-2">
-                            <Label className="text-xs font-semibold">Current Temple / Jain Centre / Upashray</Label>
+                            <Label className="text-xs font-semibold">{t("Current Temple / Jain Centre / Upashray")}</Label>
                             <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                               value={editForm.currentTempleId || ""} onChange={(e) => setEditForm({ ...editForm, currentTempleId: e.target.value })}>
-                              <option value="">Select Temple...</option>
+                              <option value="">{t("Select Temple...")}</option>
                               {temples.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.city})</option>)}
                             </select>
                           </div>
@@ -1407,9 +1412,9 @@ export default function MonkDetailPage() {
                       {/* Vihaar History */}
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">🚗 Vihar Journey History</span>
+                          <span className="text-xs font-bold text-slate-700">{t("🚗 Vihar Journey History")}</span>
                           <Button type="button" size="sm" variant="outline" onClick={eAddVihaar} className="h-6 text-[10px] font-bold">
-                            + Add Vihar
+                            {t("+ Add Vihar")}
                           </Button>
                         </div>
                         {(editForm.vihaarHistory || []).map((v, idx) => (
@@ -1418,15 +1423,15 @@ export default function MonkDetailPage() {
                               <X className="h-4 w-4" />
                             </button>
                             <div className="flex-1">
-                              <Label className="text-[10px] font-bold">From Location</Label>
+                              <Label className="text-[10px] font-bold">{t("From Location")}</Label>
                               <Input className="h-8 mt-1" value={v.from} onChange={(e) => eUpdateVihaar(idx, "from", e.target.value)} />
                             </div>
                             <div className="flex-1">
-                              <Label className="text-[10px] font-bold">To Location</Label>
+                              <Label className="text-[10px] font-bold">{t("To Location")}</Label>
                               <Input className="h-8 mt-1" value={v.to} onChange={(e) => eUpdateVihaar(idx, "to", e.target.value)} />
                             </div>
                             <div className="w-32">
-                              <Label className="text-[10px] font-bold">Start Date</Label>
+                              <Label className="text-[10px] font-bold">{t("Start Date")}</Label>
                               <Input type="date" className="h-8 mt-1" value={v.startDate ? v.startDate.slice(0,10) : ""} onChange={(e) => eUpdateVihaar(idx, "startDate", e.target.value)} />
                             </div>
                           </div>
@@ -1436,24 +1441,24 @@ export default function MonkDetailPage() {
                       {/* Chaturmas History List (Read-Only) */}
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">🍁 Chaturmas History (Auto-populated from Community)</span>
+                          <span className="text-xs font-bold text-slate-700">{t("🍁 Chaturmas History (Auto-populated from Community)")}</span>
                         </div>
                         {(!editForm.chaturmasHistory || editForm.chaturmasHistory.length === 0) ? (
                           <div className="text-xs text-slate-400 italic p-3 border border-dashed rounded-lg bg-white text-center">
-                            No Chaturmas history entries found. These are auto-populated when temples list this monk profile in their Chaturmas schedule.
+                            {t("No Chaturmas history entries found. These are auto-populated when temples list this monk profile in their Chaturmas schedule.")}
                           </div>
                         ) : (
                           <div className="space-y-2">
                             {editForm.chaturmasHistory.map((c, idx) => (
                               <div key={idx} className="border p-3 rounded-lg bg-white space-y-1 text-xs relative shadow-sm">
                                 <div className="flex justify-between items-center font-bold text-purple-950">
-                                  <span>📅 Year: {c.year}</span>
+                                  <span>{t("📅 Year:")} {c.year}</span>
                                   <Badge className="bg-purple-100 text-purple-800 border-purple-200">{c.status || "Completed"}</Badge>
                                 </div>
                                 <div className="text-slate-600 mt-1 space-y-0.5">
-                                  <div>📍 Location: <strong>{c.city}, {c.state}</strong></div>
+                                  <div>{t("📍 Location:")} <strong>{c.city}, {c.state}</strong></div>
                                   {c.orgId && (
-                                    <div>🛕 Temple: <strong>{temples.find(t => t.id === c.orgId)?.name || c.orgId}</strong></div>
+                                    <div>{t("🛕 Temple:")} <strong>{temples.find(t => t.id === c.orgId)?.name || c.orgId}</strong></div>
                                   )}
                                 </div>
                               </div>
@@ -1467,13 +1472,13 @@ export default function MonkDetailPage() {
 
                   {editTab === "routine" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🕒 Daily Routine & Guidelines</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🕒 Daily Routine & Guidelines")}</h3>
                       
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">🗣 Pravachan Timings</span>
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("🗣 Pravachan Timings")}</span>
                         <div className="grid grid-cols-3 gap-3">
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600">Morning Pravachan</Label>
+                            <Label className="text-xs font-semibold text-slate-600">{t("Morning Pravachan")}</Label>
                             <TimePicker 
                               value={editForm.pravachanMorning} 
                               onChange={(val) => setEditForm(prev => ({ ...prev, pravachanMorning: val }))} 
@@ -1481,7 +1486,7 @@ export default function MonkDetailPage() {
                             />
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600">Afternoon Pravachan</Label>
+                            <Label className="text-xs font-semibold text-slate-600">{t("Afternoon Pravachan")}</Label>
                             <TimePicker 
                               value={editForm.pravachanAfternoon} 
                               onChange={(val) => setEditForm(prev => ({ ...prev, pravachanAfternoon: val }))} 
@@ -1489,7 +1494,7 @@ export default function MonkDetailPage() {
                             />
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600">Evening Pravachan</Label>
+                            <Label className="text-xs font-semibold text-slate-600">{t("Evening Pravachan")}</Label>
                             <TimePicker 
                               value={editForm.pravachanEvening} 
                               onChange={(val) => setEditForm(prev => ({ ...prev, pravachanEvening: val }))} 
@@ -1500,10 +1505,10 @@ export default function MonkDetailPage() {
                       </div>
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">🧘 Darshan & Interaction Slots</span>
+                        <span className="text-xs font-bold text-slate-700 block border-b pb-1">{t("🧘 Darshan & Interaction Slots")}</span>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">Morning Interaction</Label>
+                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">{t("Morning Interaction")}</Label>
                             {(() => {
                               const range = parseRange(editForm.darshanMorning);
                               return (
@@ -1517,7 +1522,7 @@ export default function MonkDetailPage() {
                             })()}
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">Afternoon Interaction</Label>
+                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">{t("Afternoon Interaction")}</Label>
                             {(() => {
                               const range = parseRange(editForm.darshanAfternoon);
                               return (
@@ -1531,7 +1536,7 @@ export default function MonkDetailPage() {
                             })()}
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">Evening Interaction</Label>
+                            <Label className="text-xs font-semibold text-slate-600 mb-1 block">{t("Evening Interaction")}</Label>
                             {(() => {
                               const range = parseRange(editForm.darshanEvening);
                               return (
@@ -1548,14 +1553,14 @@ export default function MonkDetailPage() {
                       </div>
 
                       <div>
-                        <Label className="text-xs font-semibold">Maryada / Guidelines</Label>
+                        <Label className="text-xs font-semibold">{t("Maryada / Guidelines")}</Label>
                         <textarea rows={3} className="w-full mt-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
                           value={editForm.maryadaGuidelines} onChange={(e) => setEditForm({ ...editForm, maryadaGuidelines: e.target.value })} />
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 border-t pt-3">
                         <div>
-                          <Label className="text-xs font-semibold block mb-1.5">Languages Spoken</Label>
+                          <Label className="text-xs font-semibold block mb-1.5">{t("Languages Spoken")}</Label>
                           <div className="grid grid-cols-3 gap-2 p-2 border rounded-lg bg-white">
                             {["Hindi", "Gujarati", "Marwari", "Sanskrit", "Prakrit", "English", "Marathi", "Kannada", "Tamil", "Telugu", "Bengali", "Punjabi", "Odia", "Malayalam", "Urdu", "Kutchi"].map((lang) => {
                               const checked = (editForm.languagesSpoken || []).includes(lang);
@@ -1581,13 +1586,13 @@ export default function MonkDetailPage() {
                         </div>
 
                         <div>
-                          <Label className="text-xs font-semibold">Health Status</Label>
+                          <Label className="text-xs font-semibold">{t("Health Status")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-250 bg-white px-3 text-sm focus:outline-none"
                             value={editForm.healthStatus} onChange={(e) => setEditForm({ ...editForm, healthStatus: e.target.value })}>
-                            <option value="Stable">Stable</option>
-                            <option value="Under Care">Under Care</option>
-                            <option value="Travel Restricted">Travel Restricted</option>
-                            <option value="Not Available for Darshan">Not Available for Darshan</option>
+                            <option value="Stable">{t("Stable")}</option>
+                            <option value="Under Care">{t("Under Care")}</option>
+                            <option value="Travel Restricted">{t("Travel Restricted")}</option>
+                            <option value="Not Available for Darshan">{t("Not Available for Darshan")}</option>
                           </select>
                         </div>
                       </div>
@@ -1596,13 +1601,13 @@ export default function MonkDetailPage() {
 
                   {editTab === "contacts" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">👥 Sangh Contact Representatives</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("👥 Sangh Contact Representatives")}</h3>
                       
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">👳 Jain Sangh Representatives</span>
+                          <span className="text-xs font-bold text-slate-700">{t("👳 Jain Sangh Representatives")}</span>
                           <Button type="button" size="sm" variant="outline" onClick={eAddJainContact} className="h-6 text-[10px] font-bold">
-                            + Add Representative
+                            {t("+ Add Representative")}
                           </Button>
                         </div>
                         {(editForm.jainContacts || []).map((jc, idx) => (
@@ -1611,10 +1616,10 @@ export default function MonkDetailPage() {
                               <X className="h-4 w-4" />
                             </button>
                             <div className="flex-1">
-                              <MemberSelect label="Link Jain Member Profile" value={jc.memberId} onChange={(val) => eUpdateJainContact(idx, "memberId", val)} />
+                              <MemberSelect label={t("Link Jain Member Profile")} value={jc.memberId} onChange={(val) => eUpdateJainContact(idx, "memberId", val)} />
                             </div>
                             <div className="w-48">
-                              <Label className="text-[10px] font-bold">Designation</Label>
+                              <Label className="text-[10px] font-bold">{t("Designation")}</Label>
                               <Input className="h-8 mt-1" value={jc.designation} onChange={(e) => eUpdateJainContact(idx, "designation", e.target.value)} />
                             </div>
                           </div>
@@ -1623,9 +1628,9 @@ export default function MonkDetailPage() {
 
                       <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-xs font-bold text-slate-700">👥 Non-Jain Representatives</span>
+                          <span className="text-xs font-bold text-slate-700">{t("👥 Non-Jain Representatives")}</span>
                           <Button type="button" size="sm" variant="outline" onClick={eAddNonJainContact} className="h-6 text-[10px] font-bold">
-                            + Add Representative
+                            {t("+ Add Representative")}
                           </Button>
                         </div>
                         {(editForm.nonJainContacts || []).map((nj, idx) => (
@@ -1634,10 +1639,10 @@ export default function MonkDetailPage() {
                               <X className="h-4 w-4" />
                             </button>
                             <div className="flex-1">
-                              <MemberSelect label="Link Non-Jain Member Profile" value={nj.memberId} onChange={(val) => eUpdateNonJainContact(idx, "memberId", val)} />
+                              <MemberSelect label={t("Link Non-Jain Member Profile")} value={nj.memberId} onChange={(val) => eUpdateNonJainContact(idx, "memberId", val)} />
                             </div>
                             <div className="w-48">
-                              <Label className="text-[10px] font-bold">Designation</Label>
+                              <Label className="text-[10px] font-bold">{t("Designation")}</Label>
                               <Input className="h-8 mt-1" value={nj.designation} onChange={(e) => eUpdateNonJainContact(idx, "designation", e.target.value)} />
                             </div>
                           </div>
@@ -1653,7 +1658,7 @@ export default function MonkDetailPage() {
 
                   {editTab === "media" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🔗 Media & Biography</h3>
+                      <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🔗 Media & Biography")}</h3>
                       
                       <div className="grid grid-cols-2 gap-3">
                         {eField("Website Link", "website")}
@@ -1664,7 +1669,7 @@ export default function MonkDetailPage() {
                       </div>
 
                       <div>
-                        <Label className="text-xs font-semibold">Detailed Life Biography Story</Label>
+                        <Label className="text-xs font-semibold">{t("Detailed Life Biography Story")}</Label>
                         <textarea rows={4} className="w-full mt-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
                           value={editForm.lifeStory} onChange={(e) => setEditForm({ ...editForm, lifeStory: e.target.value })} />
                       </div>
@@ -1674,9 +1679,9 @@ export default function MonkDetailPage() {
                 </div>
 
                 <div className="p-4 bg-white border-t border-slate-200 flex justify-end gap-2 shrink-0 absolute bottom-0 left-56 right-0">
-                  <Button variant="outline" type="button" onClick={() => setEditOpen(false)}>Cancel</Button>
+                  <Button variant="outline" type="button" onClick={() => setEditOpen(false)}>{t("Cancel")}</Button>
                   <Button type="submit" disabled={saving} className="bg-purple-700 hover:bg-purple-800 text-white font-bold px-6">
-                    {saving ? "Saving Changes..." : "Save Changes"}
+                    {saving ? t("Saving Changes...") : t("Save Changes")}
                   </Button>
                 </div>
               </form>

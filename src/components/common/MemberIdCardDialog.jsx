@@ -25,6 +25,7 @@ import {
   BLOOD_GROUP_OPTIONS, COMMUNICATION_METHOD_OPTIONS, VOLUNTEER_AVAILABILITY_OPTIONS,
   toOptions,
 } from "@/constants/dropdownOptions";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /* ─── Helpers & Constants ─────────────────────────────────────── */
 function initials(name = "") {
@@ -89,6 +90,7 @@ function calculateAge(dobString) {
 
 /* ─── Physical ID Card visual ─────────────────────────────────── */
 function IdCardVisual({ member, relation }) {
+  const { t } = useLanguage();
   const isActive = member?.status === "ACTIVE";
   const city = member?.currentAddress?.city || member?.city || member?.community?.name;
   const age = calculateAge(member?.dob);
@@ -115,9 +117,9 @@ function IdCardVisual({ member, relation }) {
         <div className="px-4 pt-3.5 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <div className="h-6 w-6 rounded-lg bg-white flex items-center justify-center shadow-lg overflow-hidden p-0.5">
-              <img src="/logo.png" alt="JiNANAM Logo" className="w-full h-full object-contain" />
+              <img src="/logo.png" alt={t("JiNANAM Logo")} className="w-full h-full object-contain" />
             </div>
-            <span className="text-[10px] font-black tracking-[0.2em] text-orange-400 uppercase">JiNANAM</span>
+            <span className="text-[10px] font-black tracking-[0.2em] text-orange-400 uppercase">{t("JiNANAM")}</span>
           </div>
           <span className={`text-[8px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${STATUS_COLORS[member?.status] || STATUS_COLORS.INACTIVE}`}>
             {member?.status || "INACTIVE"}
@@ -178,17 +180,17 @@ function IdCardVisual({ member, relation }) {
           <div className="flex flex-wrap gap-1.5 pt-2">
             {isSenior && (
               <Badge className="bg-amber-500/10 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 text-[9px] px-2 py-0.5">
-                👴 Senior Citizen
+                {t("👴 Senior Citizen")}
               </Badge>
             )}
             {isVolunteer && (
               <Badge className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/25 border border-orange-500/30 text-[9px] px-2 py-0.5">
-                🤝 Volunteer
+                {t("🤝 Volunteer")}
               </Badge>
             )}
             {isActive && (
               <Badge className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/30 text-[9px] px-2 py-0.5">
-                ✓ Verified
+                {t("✓ Verified")}
               </Badge>
             )}
           </div>
@@ -196,7 +198,7 @@ function IdCardVisual({ member, relation }) {
 
         {/* Footer Unique System ID block */}
         <div className="bg-slate-950 px-4 py-2.5 flex items-center justify-between border-t border-slate-800">
-          <span className="text-[8px] text-slate-500 uppercase tracking-widest font-bold">Unique ID</span>
+          <span className="text-[8px] text-slate-500 uppercase tracking-widest font-bold">{t("Unique ID")}</span>
           <span className="text-xs font-extrabold font-mono text-yellow-400 tracking-wider">{member?.publicId || "—"}</span>
         </div>
       </div>
@@ -206,6 +208,7 @@ function IdCardVisual({ member, relation }) {
 
 /* ─── Edit Panel: 21/22 Sections ─── */
 function EditPanel({ member, onSave, onCancel }) {
+  const { t } = useLanguage();
   // A member is Jain only when category === "JAIN" (explicit) OR when category is absent/null (default).
   // When category === "NON_JAIN", isJain must be false so Jain-specific tabs are hidden.
   const isJain = member?.category !== "NON_JAIN";
@@ -341,15 +344,17 @@ function EditPanel({ member, onSave, onCancel }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.firstName) { toast.error("First Name is required."); return; }
-    if (!form.middleName) { toast.error("Middle Name is required."); return; }
-    if (!form.surname) { toast.error("Surname is required."); return; }
-    if (!form.mobile) { toast.error("Mobile Number is required."); return; }
-    if (!form.dob) { toast.error("Date of Birth is required."); return; }
-    if (!form.nationality) { toast.error("Nationality is required."); return; }
-    if (!form.pan) { toast.error("PAN Number is required."); return; }
-    if (!form.aadhaar) { toast.error("Aadhaar Number is required."); return; }
-    if (!form.maritalStatus) { toast.error("Marital Status is required."); return; }
+    if (!form.firstName) { toast.error(t("First Name is required.")); return; }
+    if (!form.middleName) { toast.error(t("Middle Name is required.")); return; }
+    if (!form.surname) { toast.error(t("Surname is required.")); return; }
+    if (!form.mobile) { toast.error(t("Mobile Number is required.")); return; }
+    if (!form.dob) { toast.error(t("Date of Birth is required.")); return; }
+    if (!form.nationality) { toast.error(t("Nationality is required.")); return; }
+    if (!form.pan) { toast.error(t("PAN Number is required.")); return; }
+    if (!isValidPan(form.pan)) { toast.error(t("PAN must be 10 characters in the format ABCDE1234F.")); return; }
+    if (!form.aadhaar) { toast.error(t("Aadhaar Number is required.")); return; }
+    if (!isValidAadhaar(form.aadhaar)) { toast.error(t("Aadhaar Number must be exactly 12 digits.")); return; }
+    if (!form.maritalStatus) { toast.error(t("Marital Status is required.")); return; }
     setSaving(true);
     try {
       const payload = {
@@ -359,7 +364,7 @@ function EditPanel({ member, onSave, onCancel }) {
         profileCompletionPct: calculateCompletion()
       };
       await onSave(payload);
-      toast.success("Profile saved successfully.");
+      toast.success(t("Profile saved successfully."));
       onCancel();
     } catch (e) {
       toast.error(extractErrorMessage(e));
@@ -369,31 +374,31 @@ function EditPanel({ member, onSave, onCancel }) {
   };
 
   const editTabs = isJain ? [
-    { id: "personal", label: "👤 Personal Details" },
-    { id: "community", label: "🛕 Community Details" },
-    { id: "contact", label: "📱 Verification & Contacts" },
-    { id: "address", label: "📍 Addresses" },
-    { id: "preferences", label: "❤️ Preferences" },
-    { id: "health", label: "🏥 Health & Professional" },
-    { id: "volunteer", label: "🙏 Volunteering" },
-    { id: "notifications", label: "🔔 Family & Notifications" },
-    { id: "privacy", label: "🔒 Privacy & Currency" }
+    { id: "personal", label: t("👤 Personal Details") },
+    { id: "community", label: t("🛕 Community Details") },
+    { id: "contact", label: t("📱 Verification & Contacts") },
+    { id: "address", label: t("📍 Addresses") },
+    { id: "preferences", label: t("❤️ Preferences") },
+    { id: "health", label: t("🏥 Health & Professional") },
+    { id: "volunteer", label: t("🙏 Volunteering") },
+    { id: "notifications", label: t("🔔 Family & Notifications") },
+    { id: "privacy", label: t("🔒 Privacy & Currency") }
   ] : [
-    { id: "personal", label: "👤 Personal Details" },
-    { id: "docs", label: "🆔 Identity & Documents" },
-    { id: "contact", label: "📱 Verification & Contacts" },
-    { id: "address", label: "📍 Addresses" },
-    { id: "interests", label: "🛕 Interests & Prefs" },
-    { id: "health", label: "🏥 Health & Professional" },
-    { id: "volunteer", label: "🙏 Volunteering" },
-    { id: "privacy", label: "🔒 Privacy & Currency" }
+    { id: "personal", label: t("👤 Personal Details") },
+    { id: "docs", label: t("🆔 Identity & Documents") },
+    { id: "contact", label: t("📱 Verification & Contacts") },
+    { id: "address", label: t("📍 Addresses") },
+    { id: "interests", label: t("🛕 Interests & Prefs") },
+    { id: "health", label: t("🏥 Health & Professional") },
+    { id: "volunteer", label: t("🙏 Volunteering") },
+    { id: "privacy", label: t("🔒 Privacy & Currency") }
   ];
 
   return (
     <div className="flex flex-col md:flex-row h-[75vh] w-full bg-white rounded-xl overflow-hidden font-sans border border-slate-100">
       {/* Left panel tabs selector */}
       <div className="w-full md:w-60 bg-slate-900 text-slate-300 p-4 flex flex-col gap-1 shrink-0 border-r border-slate-800">
-        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-2">Registration Sections</div>
+        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-2">{t("Registration Sections")}</div>
         
         {/* Profile Completion gauge */}
         <div className="px-2 mb-4 bg-slate-950 p-2.5 rounded-lg border border-slate-850">
@@ -407,17 +412,17 @@ function EditPanel({ member, onSave, onCancel }) {
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-0.5">
-          {editTabs.map((t) => (
+          {editTabs.map((tItem) => (
             <button
-              key={t.id}
-              onClick={() => setSubTab(t.id)}
+              key={tItem.id}
+              onClick={() => setSubTab(tItem.id)}
               className={`w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
-                subTab === t.id
+                subTab === tItem.id
                   ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
               }`}
             >
-              {t.label}
+              {t(tItem.label)}
             </button>
           ))}
         </div>
@@ -430,34 +435,34 @@ function EditPanel({ member, onSave, onCancel }) {
           {/* TAB 1: PERSONAL */}
           {subTab === "personal" && (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">👤 Basic Personal Information</h3>
+              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("👤 Basic Personal Information")}</h3>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">First Name *</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("First Name *")}</Label>
                   <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} className="bg-white mt-1" />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Middle Name *</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Middle Name *")}</Label>
                   <Input value={form.middleName} onChange={(e) => setForm({ ...form, middleName: e.target.value })} className="bg-white mt-1" />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Surname *</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Surname *")}</Label>
                   <Input value={form.surname} onChange={(e) => setForm({ ...form, surname: e.target.value })} className="bg-white mt-1" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Date of Birth *</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Date of Birth *")}</Label>
                   <Input type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} className="bg-white mt-1" />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Gender *</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Gender *")}</Label>
                   <SearchableSelect
                     value={form.gender}
                     onValueChange={(v) => setForm({ ...form, gender: v })}
                     options={GENDER_OPTIONS}
-                    placeholder="Select gender"
+                    placeholder={t("Select gender")}
                     className="mt-1"
                   />
                 </div>
@@ -465,31 +470,31 @@ function EditPanel({ member, onSave, onCancel }) {
 
               {form.dob && (
                 <div className="flex items-center gap-2 p-2 bg-orange-50 border border-orange-100 rounded-lg">
-                  <span className="text-xs text-orange-700 font-semibold">Calculated Age: {calculateAge(form.dob)} Years</span>
+                  <span className="text-xs text-orange-700 font-semibold">{t("Calculated Age:")} {calculateAge(form.dob)} {t("Years")}</span>
                   {calculateAge(form.dob) >= 59 && (
-                    <Badge className="bg-orange-500 text-white text-[9px] hover:bg-orange-600">👴 Senior Citizen Checked</Badge>
+                    <Badge className="bg-orange-500 text-white text-[9px] hover:bg-orange-600">{t("👴 Senior Citizen Checked")}</Badge>
                   )}
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Nationality *</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Nationality *")}</Label>
                   <SearchableSelect
                     value={form.nationality}
                     onValueChange={(v) => setForm({ ...form, nationality: v })}
                     options={NATIONALITY_OPTIONS}
-                    placeholder="Select nationality"
+                    placeholder={t("Select nationality")}
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Preferred Language</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Preferred Language")}</Label>
                   <SearchableSelect
                     value={form.preferredLanguage}
                     onValueChange={(v) => setForm({ ...form, preferredLanguage: v })}
                     options={LANGUAGE_OPTIONS}
-                    placeholder="Select language"
+                    placeholder={t("Select language")}
                     className="mt-1"
                   />
                 </div>
@@ -497,22 +502,22 @@ function EditPanel({ member, onSave, onCancel }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Identity Details: PAN Number *</Label>
-                  <Input value={form.pan} onChange={(e) => setForm({ ...form, pan: e.target.value })} placeholder="ABCDE1234F" className="bg-white mt-1 font-mono uppercase" />
+                  <Label className="text-xs font-semibold text-slate-600">{t("Identity Details: PAN Number *")}</Label>
+                  <Input value={form.pan} onChange={(e) => setForm({ ...form, pan: formatPan(e.target.value) })} placeholder={t("ABCDE1234F")} className="bg-white mt-1 font-mono uppercase" maxLength={10} />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Aadhaar Number * (12 Digits)</Label>
-                  <Input value={form.aadhaar} onChange={(e) => setForm({ ...form, aadhaar: e.target.value })} placeholder="1234 5678 9012" className="bg-white mt-1 font-mono" maxLength={14} />
+                  <Label className="text-xs font-semibold text-slate-600">{t("Aadhaar Number * (12 Digits)")}</Label>
+                  <Input value={form.aadhaar} onChange={(e) => setForm({ ...form, aadhaar: formatAadhaar(e.target.value) })} placeholder="1234 5678 9012" className="bg-white mt-1 font-mono" maxLength={14} inputMode="numeric" />
                 </div>
               </div>
 
               <div>
-                <Label className="text-xs font-semibold text-slate-600">Marital Status *</Label>
+                <Label className="text-xs font-semibold text-slate-600">{t("Marital Status *")}</Label>
                 <SearchableSelect
                   value={form.maritalStatus}
                   onValueChange={(v) => setForm({ ...form, maritalStatus: v })}
                   options={MARITAL_STATUS_OPTIONS}
-                  placeholder="Select status"
+                  placeholder={t("Select status")}
                   className="mt-1"
                 />
               </div>
@@ -522,25 +527,25 @@ function EditPanel({ member, onSave, onCancel }) {
           {/* TAB 2: COMMUNITY */}
           {subTab === "community" && (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🛕 Community Details</h3>
+              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🛕 Community Details")}</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Mother Tongue</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Mother Tongue")}</Label>
                   <SearchableSelect
                     value={form.motherTongue}
                     onValueChange={(v) => setForm({ ...form, motherTongue: v })}
                     options={MOTHER_TONGUE_OPTIONS}
-                    placeholder="Select mother tongue"
+                    placeholder={t("Select mother tongue")}
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Tithi Calendar Type</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Tithi Calendar Type")}</Label>
                   <SearchableSelect
                     value={form.tithiCalendar}
                     onValueChange={(v) => setForm({ ...form, tithiCalendar: v })}
                     options={TITHI_CALENDAR_OPTIONS}
-                    placeholder="Select calendar"
+                    placeholder={t("Select calendar")}
                     className="mt-1"
                   />
                 </div>
@@ -548,22 +553,22 @@ function EditPanel({ member, onSave, onCancel }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Jain Sect</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Jain Sect")}</Label>
                   <SearchableSelect
                     value={form.sect}
                     onValueChange={(v) => setForm({ ...form, sect: v, subCommunity: v === "Digambar" ? "Bisapantha" : "Murtipujak" })}
                     options={JAIN_SECT_OPTIONS}
-                    placeholder="Select sect"
+                    placeholder={t("Select sect")}
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Sub Sect / Community</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Sub Sect / Community")}</Label>
                   <SearchableSelect
                     value={form.subCommunity}
                     onValueChange={(v) => setForm({ ...form, subCommunity: v })}
                     options={toOptions(form.sect === "Digambar" ? DIGAMBAR_SUB_SECTS : SHWETAMBAR_SUB_SECTS)}
-                    placeholder="Select sub-sect"
+                    placeholder={t("Select sub-sect")}
                     className="mt-1"
                   />
                 </div>
@@ -571,13 +576,13 @@ function EditPanel({ member, onSave, onCancel }) {
 
               {form.sect === "Shwetambar" && form.subCommunity === "Murtipujak" && (
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Gaccha Selection</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Gaccha Selection")}</Label>
                   <SearchableSelect
                     value={form.gaccha}
                     onValueChange={(v) => setForm({ ...form, gaccha: v })}
                     options={MURTIPUJAK_GACCHA_OPTIONS}
-                    placeholder="Choose Gaccha…"
-                    searchPlaceholder="Search Gaccha…"
+                    placeholder={t("Choose Gaccha…")}
+                    searchPlaceholder={t("Search Gaccha…")}
                     className="mt-1"
                   />
                 </div>
@@ -588,14 +593,14 @@ function EditPanel({ member, onSave, onCancel }) {
           {/* TAB 2: IDENTITY DOCUMENTS (Non-Jain) */}
           {subTab === "docs" && !isJain && (
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🆔 Government Identity Verification</h3>
-              <p className="text-xs text-slate-400">Please provide details for any two government identity documents.</p>
+              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🆔 Government Identity Verification")}</h3>
+              <p className="text-xs text-slate-400">{t("Please provide details for any two government identity documents.")}</p>
               
               {form.govtDocs.map((doc, idx) => (
                 <div key={idx} className="p-3 bg-white border border-slate-150 rounded-lg space-y-2">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs font-semibold">Document Type</Label>
+                      <Label className="text-xs font-semibold">{t("Document Type")}</Label>
                       <SearchableSelect
                         value={doc.docType}
                         onValueChange={(v) => {
@@ -604,22 +609,22 @@ function EditPanel({ member, onSave, onCancel }) {
                           setForm({ ...form, govtDocs: list });
                         }}
                         options={toOptions(["Aadhaar Card", "PAN Card", "Passport", "Driving Licence", "Voter ID", "Other Government ID"])}
-                        placeholder="Select document type"
+                        placeholder={t("Select document type")}
                       />
                     </div>
                     <div>
-                      <Label className="text-xs font-semibold">Document Number</Label>
+                      <Label className="text-xs font-semibold">{t("Document Number")}</Label>
                       <Input value={doc.docNumber} onChange={(e) => {
                         const list = [...form.govtDocs];
                         list[idx].docNumber = e.target.value;
                         setForm({ ...form, govtDocs: list });
-                      }} placeholder="Number" className="h-8 text-xs font-mono" />
+                      }} placeholder={t("Number")} className="h-8 text-xs font-mono" />
                     </div>
                   </div>
                   <div className="flex justify-between items-center text-[10px] text-slate-400">
-                    <span>Status: <span className="font-semibold text-orange-500">{doc.status}</span></span>
-                    <Button variant="ghost" size="xs" type="button" className="text-xs font-semibold text-orange-500" onClick={() => toast.success("Document photo attached.")}>
-                      Attach Image Upload
+                    <span>{t("Status:")} <span className="font-semibold text-orange-500">{doc.status}</span></span>
+                    <Button variant="ghost" size="xs" type="button" className="text-xs font-semibold text-orange-500" onClick={() => toast.success(t("Document photo attached."))}>
+                      {t("Attach Image Upload")}
                     </Button>
                   </div>
                 </div>
@@ -630,56 +635,56 @@ function EditPanel({ member, onSave, onCancel }) {
           {/* TAB 3: CONTACT */}
           {subTab === "contact" && (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">📱 Contact & Verification Details</h3>
+              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("📱 Contact & Verification Details")}</h3>
               
               <div>
-                <Label className="text-xs font-semibold text-slate-600 font-mono-num">Mobile Number *</Label>
+                <Label className="text-xs font-semibold text-slate-600 font-mono-num">{t("Mobile Number *")}</Label>
                 <div className="flex gap-2 mt-1">
-                  <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="+91XXXXXXXXXX" className="bg-white flex-1" />
+                  <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white flex-1" />
                   <Button size="sm" variant={mobileVerified ? "outline" : "default"} type="button" onClick={() => verifyField("mobile")}>
-                    {mobileVerified ? "✓ Verified" : "Verify Mobile"}
+                    {mobileVerified ? t("✓ Verified") : t("Verify Mobile")}
                   </Button>
                 </div>
               </div>
 
               <div>
-                <Label className="text-xs font-semibold text-slate-600">WhatsApp Number</Label>
+                <Label className="text-xs font-semibold text-slate-600">{t("WhatsApp Number")}</Label>
                 <div className="flex gap-2 mt-1">
-                  <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="+91XXXXXXXXXX" className="bg-white flex-1" />
+                  <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white flex-1" />
                   <Button size="sm" variant={whatsappVerified ? "outline" : "default"} type="button" onClick={() => verifyField("whatsapp")}>
-                    {whatsappVerified ? "✓ Verified" : "Verify WhatsApp"}
+                    {whatsappVerified ? t("✓ Verified") : t("Verify WhatsApp")}
                   </Button>
                 </div>
               </div>
 
               <div>
-                <Label className="text-xs font-semibold text-slate-600">Email Address</Label>
+                <Label className="text-xs font-semibold text-slate-600">{t("Email Address")}</Label>
                 <div className="flex gap-2 mt-1">
                   <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@domain.com" className="bg-white flex-1" />
                   <Button size="sm" variant={emailVerified ? "outline" : "default"} type="button" onClick={() => verifyField("email")}>
-                    {emailVerified ? "✓ Verified" : "Verify Email"}
+                    {emailVerified ? t("✓ Verified") : t("Verify Email")}
                   </Button>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Preferred Contact Method</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Preferred Contact Method")}</Label>
                   <SearchableSelect
                     value={form.preferredCommunicationMethod}
                     onValueChange={(v) => setForm({ ...form, preferredCommunicationMethod: v })}
                     options={[
-                      { value: "Mobile", label: "Mobile / Phone" },
-                      { value: "WhatsApp", label: "WhatsApp" },
-                      { value: "Email", label: "Email" },
+                      { value: "Mobile", label: t("Mobile / Phone") },
+                      { value: "WhatsApp", label: t("WhatsApp") },
+                      { value: "Email", label: t("Email") },
                     ]}
-                    placeholder="Select contact method"
+                    placeholder={t("Select contact method")}
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Alternate Phone Contact</Label>
-                  <Input value={form.alternateContact} onChange={(e) => setForm({ ...form, alternateContact: e.target.value })} placeholder="+91XXXXXXXXXX" className="bg-white mt-1" />
+                  <Label className="text-xs font-semibold text-slate-600">{t("Alternate Phone Contact")}</Label>
+                  <Input value={form.alternateContact} onChange={(e) => setForm({ ...form, alternateContact: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white mt-1" />
                 </div>
               </div>
             </div>
@@ -690,56 +695,56 @@ function EditPanel({ member, onSave, onCancel }) {
             <div className="space-y-4">
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center border-b pb-1">
-                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Current Address</h3>
-                  <Button variant="ghost" size="xs" type="button" className="text-orange-500 font-semibold text-[10px]" onClick={() => toast.success("Latitude/Longitude coordinates detected dynamically.")}>
-                    Auto Detect GPS Location
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t("Current Address")}</h3>
+                  <Button variant="ghost" size="xs" type="button" className="text-orange-500 font-semibold text-[10px]" onClick={() => toast.success(t("Latitude/Longitude coordinates detected dynamically."))}>
+                    {t("Auto Detect GPS Location")}
                   </Button>
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Address</Label>
-                  <Input value={form.currentAddress.line1} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, line1: e.target.value } })} placeholder="Full address, House/Flat No, Street" className="bg-white mt-1" />
+                  <Label className="text-xs font-semibold text-slate-600">{t("Address")}</Label>
+                  <Input value={form.currentAddress.line1} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, line1: e.target.value } })} placeholder={t("Full address, House/Flat No, Street")} className="bg-white mt-1" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">Country (default India)</Label>
+                    <Label className="text-xs font-semibold text-slate-600">{t("Country (default India)")}</Label>
                     <SearchableSelect
                       value={form.currentAddress.country || "India"}
                       onValueChange={(v) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: v } })}
                       options={NATIONALITY_OPTIONS}
-                      placeholder="India"
+                      placeholder={t("India")}
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">Pincode</Label>
-                    <Input value={form.currentAddress.pincode} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, pincode: e.target.value } })} placeholder="6-digit Pincode" className="bg-white mt-1" maxLength={6} />
+                    <Label className="text-xs font-semibold text-slate-600">{t("Pincode")}</Label>
+                    <Input value={form.currentAddress.pincode} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, pincode: e.target.value } })} placeholder={t("6-digit Pincode")} className="bg-white mt-1" maxLength={6} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">Area</Label>
-                    <Input value={form.currentAddress.area || ""} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, area: e.target.value } })} placeholder="Thane E or Thane W" className="bg-white mt-1" />
+                    <Label className="text-xs font-semibold text-slate-600">{t("Area")}</Label>
+                    <Input value={form.currentAddress.area || ""} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, area: e.target.value } })} placeholder={t("Thane E or Thane W")} className="bg-white mt-1" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">City</Label>
-                    <Input value={form.currentAddress.city} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, city: e.target.value } })} placeholder="e.g. Thane" className="bg-white mt-1" />
+                    <Label className="text-xs font-semibold text-slate-600">{t("City")}</Label>
+                    <Input value={form.currentAddress.city} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, city: e.target.value } })} placeholder={t("e.g. Thane")} className="bg-white mt-1" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">District</Label>
-                    <Input value={form.currentAddress.district || ""} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, district: e.target.value } })} placeholder="e.g. Thane District" className="bg-white mt-1" />
+                    <Label className="text-xs font-semibold text-slate-600">{t("District")}</Label>
+                    <Input value={form.currentAddress.district || ""} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, district: e.target.value } })} placeholder={t("e.g. Thane District")} className="bg-white mt-1" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">State</Label>
-                    <Input value={form.currentAddress.state} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, state: e.target.value } })} placeholder="e.g. Maharashtra" className="bg-white mt-1" />
+                    <Label className="text-xs font-semibold text-slate-600">{t("State")}</Label>
+                    <Input value={form.currentAddress.state} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, state: e.target.value } })} placeholder={t("e.g. Maharashtra")} className="bg-white mt-1" />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center border-b pb-1">
-                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Permanent Address</h3>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t("Permanent Address")}</h3>
                   <div className="flex items-center gap-1">
                     <input type="checkbox" id="same" checked={form.sameAsPermanent} onChange={(e) => {
                       const checked = e.target.checked;
@@ -749,22 +754,22 @@ function EditPanel({ member, onSave, onCancel }) {
                         permanentAddress: checked ? { ...form.currentAddress } : { line1: "", city: "", state: "", country: "India", pincode: "" }
                       });
                     }} className="h-3.5 w-3.5 text-orange-500 rounded border-slate-350" />
-                    <label htmlFor="same" className="text-[10px] text-slate-500 font-semibold cursor-pointer">Same as Current</label>
+                    <label htmlFor="same" className="text-[10px] text-slate-500 font-semibold cursor-pointer">{t("Same as Current")}</label>
                   </div>
                 </div>
                 {!form.sameAsPermanent && (
                   <>
                     <div>
-                      <Label className="text-xs font-semibold text-slate-600">Full Address</Label>
+                      <Label className="text-xs font-semibold text-slate-600">{t("Full Address")}</Label>
                       <Input value={form.permanentAddress.line1} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, line1: e.target.value } })} className="bg-white mt-1" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs font-semibold text-slate-600">City</Label>
+                        <Label className="text-xs font-semibold text-slate-600">{t("City")}</Label>
                         <Input value={form.permanentAddress.city} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, city: e.target.value } })} className="bg-white mt-1" />
                       </div>
                       <div>
-                        <Label className="text-xs font-semibold text-slate-600">State</Label>
+                        <Label className="text-xs font-semibold text-slate-600">{t("State")}</Label>
                         <Input value={form.permanentAddress.state} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, state: e.target.value } })} className="bg-white mt-1" />
                       </div>
                     </div>
@@ -777,25 +782,25 @@ function EditPanel({ member, onSave, onCancel }) {
           {/* TAB 5: PREFERENCES */}
           {subTab === "preferences" && (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">❤️ Temple & Dharamshala Preferences</h3>
+              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("❤️ Temple & Dharamshala Preferences")}</h3>
               <div>
-                <Label className="text-xs font-semibold text-slate-600">Favourite Temple</Label>
-                <Input value={form.favouriteTemple} onChange={(e) => setForm({ ...form, favouriteTemple: e.target.value })} placeholder="e.g. Adinath Derasar, Mumbai" className="bg-white mt-1" />
+                <Label className="text-xs font-semibold text-slate-600">{t("Favourite Temple")}</Label>
+                <Input value={form.favouriteTemple} onChange={(e) => setForm({ ...form, favouriteTemple: e.target.value })} placeholder={t("e.g. Adinath Derasar, Mumbai")} className="bg-white mt-1" />
               </div>
 
               <div>
-                <Label className="text-xs font-semibold text-slate-600">Visit Frequency</Label>
+                <Label className="text-xs font-semibold text-slate-600">{t("Visit Frequency")}</Label>
                 <SearchableSelect
                   value={form.visitFrequency}
                   onValueChange={(v) => setForm({ ...form, visitFrequency: v })}
                   options={toOptions(["Daily", "Weekly", "Occasionally"])}
-                  placeholder="Select frequency"
+                  placeholder={t("Select frequency")}
                   className="mt-1"
                 />
               </div>
 
               <div className="p-3 bg-orange-50 border border-orange-100 rounded-lg text-xs text-orange-700 leading-relaxed">
-                Preferred temples list and followed MS updates will receive primary priority in the custom mobile feeds.
+                {t("Preferred temples list and followed MS updates will receive primary priority in the custom mobile feeds.")}
               </div>
             </div>
           )}
@@ -803,9 +808,9 @@ function EditPanel({ member, onSave, onCancel }) {
           {/* TAB 5: INTERESTS (Non-Jain) */}
           {subTab === "interests" && !isJain && (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🛕 Platform Interests & Preferences</h3>
+              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🛕 Platform Interests & Preferences")}</h3>
               <div>
-                <Label className="text-xs block mb-2 font-semibold text-slate-650">Select Interests (Multiple Selection)</Label>
+                <Label className="text-xs block mb-2 font-semibold text-slate-650">{t("Select Interests (Multiple Selection)")}</Label>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
                     "Temple Visits", "Spiritual Learning", "Events", "Tours", 
@@ -827,8 +832,8 @@ function EditPanel({ member, onSave, onCancel }) {
               </div>
 
               <div className="pt-2">
-                <Label className="text-xs">Follow Temples / Favourites</Label>
-                <Input value={form.favouriteTemples} onChange={(e) => setForm({ ...form, favouriteTemples: e.target.value })} placeholder="Search and select temples to follow..." className="bg-white mt-1" />
+                <Label className="text-xs">{t("Follow Temples / Favourites")}</Label>
+                <Input value={form.favouriteTemples} onChange={(e) => setForm({ ...form, favouriteTemples: e.target.value })} placeholder={t("Search and select temples to follow...")} className="bg-white mt-1" />
               </div>
             </div>
           )}
@@ -836,41 +841,41 @@ function EditPanel({ member, onSave, onCancel }) {
           {/* TAB 6: HEALTH */}
           {subTab === "health" && (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🏥 Health & Emergency Details</h3>
+              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🏥 Health & Emergency Details")}</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Blood Group</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Blood Group")}</Label>
                   <SearchableSelect
                     value={form.bloodGroup}
                     onValueChange={(v) => setForm({ ...form, bloodGroup: v })}
                     options={BLOOD_GROUP_OPTIONS}
-                    placeholder="Select blood group"
+                    placeholder={t("Select blood group")}
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Occupation</Label>
-                  <Input value={form.profession} onChange={(e) => setForm({ ...form, profession: e.target.value })} placeholder="e.g. Software Engineer" className="bg-white mt-1" />
+                  <Label className="text-xs font-semibold text-slate-600">{t("Occupation")}</Label>
+                  <Input value={form.profession} onChange={(e) => setForm({ ...form, profession: e.target.value })} placeholder={t("e.g. Software Engineer")} className="bg-white mt-1" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Disability (Yes/No)</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Disability (Yes/No)")}</Label>
                   <SearchableSelect
                     value={form.disability}
                     onValueChange={(v) => setForm({ ...form, disability: v })}
                     options={[
-                      { value: "No", label: "No" },
-                      { value: "Yes", label: "Yes" },
+                      { value: "No", label: t("No") },
+                      { value: "Yes", label: t("Yes") },
                     ]}
-                    placeholder="Select"
+                    placeholder={t("Select")}
                     className="mt-1"
                   />
                 </div>
                 {form.disability === "Yes" && (
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">Details</Label>
+                    <Label className="text-xs font-semibold text-slate-600">{t("Details")}</Label>
                     <Input value={form.disabilityDetails} onChange={(e) => setForm({ ...form, disabilityDetails: e.target.value })} className="bg-white mt-1" />
                   </div>
                 )}
@@ -878,39 +883,39 @@ function EditPanel({ member, onSave, onCancel }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Physically Handicapped (Yes/No)</Label>
+                  <Label className="text-xs font-semibold text-slate-600">{t("Physically Handicapped (Yes/No)")}</Label>
                   <SearchableSelect
                     value={form.physicallyHandicapped}
                     onValueChange={(v) => setForm({ ...form, physicallyHandicapped: v })}
                     options={[
-                      { value: "No", label: "No" },
-                      { value: "Yes", label: "Yes" },
+                      { value: "No", label: t("No") },
+                      { value: "Yes", label: t("Yes") },
                     ]}
-                    placeholder="Select"
+                    placeholder={t("Select")}
                     className="mt-1"
                   />
                 </div>
                 {form.physicallyHandicapped === "Yes" && (
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">Details</Label>
+                    <Label className="text-xs font-semibold text-slate-600">{t("Details")}</Label>
                     <Input value={form.handicapDetails} onChange={(e) => setForm({ ...form, handicapDetails: e.target.value })} className="bg-white mt-1" />
                   </div>
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-3 border-t pt-2 mt-2">
-                <div className="col-span-2 text-xs font-bold text-slate-800 uppercase tracking-wide">Emergency Contact</div>
+                <div className="col-span-2 text-xs font-bold text-slate-800 uppercase tracking-wide">{t("Emergency Contact")}</div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Contact Name</Label>
-                  <Input value={form.emergencyName} onChange={(e) => setForm({ ...form, emergencyName: e.target.value })} placeholder="e.g. Ramesh Shah" className="bg-white mt-1" />
+                  <Label className="text-xs font-semibold text-slate-600">{t("Contact Name")}</Label>
+                  <Input value={form.emergencyName} onChange={(e) => setForm({ ...form, emergencyName: e.target.value })} placeholder={t("e.g. Ramesh Shah")} className="bg-white mt-1" />
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-600">Relationship</Label>
-                  <Input value={form.emergencyRelation} onChange={(e) => setForm({ ...form, emergencyRelation: e.target.value })} placeholder="Father / Spouse" className="bg-white mt-1" />
+                  <Label className="text-xs font-semibold text-slate-600">{t("Relationship")}</Label>
+                  <Input value={form.emergencyRelation} onChange={(e) => setForm({ ...form, emergencyRelation: e.target.value })} placeholder={t("Father / Spouse")} className="bg-white mt-1" />
                 </div>
                 <div className="col-span-2">
-                  <Label className="text-xs font-semibold text-slate-600">Emergency Phone</Label>
-                  <Input value={form.emergencyMobile} onChange={(e) => setForm({ ...form, emergencyMobile: e.target.value })} placeholder="+91XXXXXXXXXX" className="bg-white mt-1" />
+                  <Label className="text-xs font-semibold text-slate-600">{t("Emergency Phone")}</Label>
+                  <Input value={form.emergencyMobile} onChange={(e) => setForm({ ...form, emergencyMobile: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white mt-1" />
                 </div>
               </div>
             </div>
@@ -919,11 +924,11 @@ function EditPanel({ member, onSave, onCancel }) {
           {/* TAB 7: VOLUNTEER */}
           {subTab === "volunteer" && (
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🙏 Volunteering</h3>
+              <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🙏 Volunteering")}</h3>
               <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
                 <div>
-                  <div className="text-xs font-bold text-slate-800">Open for Volunteering Seva</div>
-                  <div className="text-[10px] text-slate-400">If checked, links profile to preferred temples volunteer database.</div>
+                  <div className="text-xs font-bold text-slate-800">{t("Open for Volunteering Seva")}</div>
+                  <div className="text-[10px] text-slate-400">{t("If checked, links profile to preferred temples volunteer database.")}</div>
                 </div>
                 <input type="checkbox" checked={form.isVolunteer} onChange={(e) => setForm({ ...form, isVolunteer: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350" />
               </div>
@@ -931,7 +936,7 @@ function EditPanel({ member, onSave, onCancel }) {
               {form.isVolunteer && (
                 <>
                   <div>
-                    <Label className="text-xs font-semibold text-slate-650 block mb-2">Preferred Volunteering Areas</Label>
+                    <Label className="text-xs font-semibold text-slate-650 block mb-2">{t("Preferred Volunteering Areas")}</Label>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       {["Pooja Seva", "Event Management", "Bhojanshala", "Medical Help", "Admin / Management", "Other"].map(area => {
                         const checked = form.volunteerAreas.includes(area);
@@ -949,12 +954,12 @@ function EditPanel({ member, onSave, onCancel }) {
                   </div>
 
                   <div>
-                    <Label className="text-xs font-semibold text-slate-600">Availability hours</Label>
+                    <Label className="text-xs font-semibold text-slate-600">{t("Availability hours")}</Label>
                     <SearchableSelect
                       value={form.volunteerAvailability}
                       onValueChange={(v) => setForm({ ...form, volunteerAvailability: v })}
                       options={toOptions(["Morning", "Afternoon", "Evening", "Weekend"])}
-                      placeholder="Select availability"
+                      placeholder={t("Select availability")}
                       className="mt-1"
                     />
                   </div>
@@ -969,7 +974,7 @@ function EditPanel({ member, onSave, onCancel }) {
               {/* Family members builder */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center border-b pb-2">
-                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">👨‍👩‍👧‍👦 Family Members</h3>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t("👨‍👩‍👧‍👦 Family Members")}</h3>
                   <Button
                     type="button"
                     className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-md transition-all"
@@ -978,11 +983,11 @@ function EditPanel({ member, onSave, onCancel }) {
                       setForm({ ...form, familyMembers: next });
                     }}
                   >
-                    + Add Member
+                    {t("+ Add Member")}
                   </Button>
                 </div>
                 {form.familyMembers.length === 0 && (
-                  <div className="text-xs text-slate-400 italic">No family members added. Click Add to build linkage.</div>
+                  <div className="text-xs text-slate-400 italic">{t("No family members added. Click Add to build linkage.")}</div>
                 )}
                 <div className="space-y-2">
                   {form.familyMembers.map((m, idx) => (
@@ -992,7 +997,7 @@ function EditPanel({ member, onSave, onCancel }) {
                           const list = [...form.familyMembers];
                           list[idx].fullName = e.target.value;
                           setForm({ ...form, familyMembers: list });
-                        }} placeholder="Full Name" className="h-8 text-xs" />
+                        }} placeholder={t("Full Name")} className="h-8 text-xs" />
                       </div>
                       <div className="col-span-3">
                         <SearchableSelect
@@ -1003,7 +1008,7 @@ function EditPanel({ member, onSave, onCancel }) {
                             setForm({ ...form, familyMembers: list });
                           }}
                           options={toOptions(["Father", "Mother", "Husband", "Wife", "Son", "Daughter", "Brother", "Sister"])}
-                          placeholder="Relationship"
+                          placeholder={t("Relationship")}
                           className="h-8 text-xs"
                         />
                       </div>
@@ -1012,7 +1017,7 @@ function EditPanel({ member, onSave, onCancel }) {
                           const list = [...form.familyMembers];
                           list[idx].mobile = e.target.value;
                           setForm({ ...form, familyMembers: list });
-                        }} placeholder="Mobile Number" className="h-8 text-xs font-mono" />
+                        }} placeholder={t("Mobile Number")} className="h-8 text-xs font-mono" />
                       </div>
                       <div className="col-span-1 text-right">
                         <button type="button" onClick={() => {
@@ -1030,29 +1035,29 @@ function EditPanel({ member, onSave, onCancel }) {
               {/* Siblings builder section */}
               <div className="space-y-2 border-t pt-3">
                 <div className="flex justify-between items-center border-b pb-1">
-                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">👫 Siblings</h3>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t("👫 Siblings")}</h3>
                   <Button type="button" className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-10 px-4 rounded-lg shadow transition-all" onClick={() => {
                     const next = [...(form.siblings || []), { id: Date.now(), linkProfile: false, siblingMemberId: "", fullName: "", relationship: "Brother" }];
                     setForm({ ...form, siblings: next });
                   }}>
-                    + Add Sibling
+                    {t("+ Add Sibling")}
                   </Button>
                 </div>
                 {(!form.siblings || form.siblings.length === 0) && (
-                  <div className="text-xs text-slate-400 italic">No siblings added. Click Add to build linkage.</div>
+                  <div className="text-xs text-slate-400 italic">{t("No siblings added. Click Add to build linkage.")}</div>
                 )}
                 <div className="space-y-2">
                   {(form.siblings || []).map((sib, idx) => (
                     <div key={sib.id || idx} className="space-y-2 bg-white p-3 rounded-lg border border-slate-100">
                       <div className="flex items-center justify-between text-xs pb-1 border-b">
-                        <span className="font-semibold text-slate-600">Sibling #{idx + 1}</span>
+                        <span className="font-semibold text-slate-600">{t("Sibling #")}{idx + 1}</span>
                         <div className="flex items-center gap-1.5">
                           <input type="checkbox" id={`edit-sib-link-${idx}`} checked={sib.linkProfile} onChange={(e) => {
                             const list = [...form.siblings];
                             list[idx].linkProfile = e.target.checked;
                             setForm({ ...form, siblings: list });
                           }} className="h-3.5 w-3.5 text-orange-500 rounded border-slate-350" />
-                          <label htmlFor={`edit-sib-link-${idx}`} className="text-[10px] text-slate-500 font-semibold cursor-pointer">Link Platform Profile</label>
+                          <label htmlFor={`edit-sib-link-${idx}`} className="text-[10px] text-slate-500 font-semibold cursor-pointer">{t("Link Platform Profile")}</label>
                         </div>
                       </div>
                       
@@ -1060,7 +1065,7 @@ function EditPanel({ member, onSave, onCancel }) {
                         <div className="col-span-5">
                           {sib.linkProfile ? (
                             <div className="space-y-1">
-                              <span className="text-[10px] text-slate-400 font-bold block">SELECT PROFILE</span>
+                              <span className="text-[10px] text-slate-400 font-bold block">{t("SELECT PROFILE")}</span>
                               <MemberLinkSelect
                                 value={sib.siblingMemberId}
                                 onValueChange={(val) => {
@@ -1068,17 +1073,17 @@ function EditPanel({ member, onSave, onCancel }) {
                                   list[idx].siblingMemberId = val;
                                   setForm({ ...form, siblings: list });
                                 }}
-                                placeholder="Search sibling by name or ID..."
+                                placeholder={t("Search sibling by name or ID...")}
                               />
                             </div>
                           ) : (
                             <div className="space-y-1">
-                              <span className="text-[10px] text-slate-400 font-bold block">SIBLING NAME</span>
+                              <span className="text-[10px] text-slate-400 font-bold block">{t("SIBLING NAME")}</span>
                               <Input value={sib.fullName} onChange={(e) => {
                                 const list = [...form.siblings];
                                 list[idx].fullName = e.target.value;
                                 setForm({ ...form, siblings: list });
-                              }} placeholder="Sibling Full Name" className="h-8 text-xs bg-white" />
+                              }} placeholder={t("Sibling Full Name")} className="h-8 text-xs bg-white" />
                             </div>
                           )}
                         </div>
@@ -1093,7 +1098,7 @@ function EditPanel({ member, onSave, onCancel }) {
                                 setForm({ ...form, siblings: list });
                               }}
                               options={toOptions(["Brother", "Sister"])}
-                              placeholder="Relationship"
+                              placeholder={t("Relationship")}
                               className="h-8 text-xs bg-white"
                             />
                           </div>
@@ -1103,7 +1108,7 @@ function EditPanel({ member, onSave, onCancel }) {
                             const list = form.siblings.filter((_, i) => i !== idx);
                             setForm({ ...form, siblings: list });
                           }} className="text-slate-400 hover:text-red-500 transition-colors text-xs font-semibold">
-                            <Trash2 className="h-4 w-4 inline mr-1" /> Remove
+                            <Trash2 className="h-4 w-4 inline mr-1" /> {t("Remove")}
                           </button>
                         </div>
                       </div>
@@ -1114,10 +1119,10 @@ function EditPanel({ member, onSave, onCancel }) {
 
               {/* Notification Preferences */}
               <div className="space-y-2 border-t pt-3">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">🔔 Channel Alerts Preferences</h3>
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t("🔔 Channel Alerts Preferences")}</h3>
                 <div className="space-y-2 text-xs">
                   <div className="p-2.5 bg-white rounded-lg border border-slate-100 flex flex-col gap-2">
-                    <span className="font-semibold text-slate-700 block">Service Alerts (Mandatory)</span>
+                    <span className="font-semibold text-slate-700 block">{t("Service Alerts (Mandatory)")}</span>
                     <div className="flex gap-4">
                       {["SMS", "WhatsApp", "Email", "Push"].map(c => (
                         <label key={c} className="flex items-center gap-1.5 cursor-pointer">
@@ -1131,7 +1136,7 @@ function EditPanel({ member, onSave, onCancel }) {
                     </div>
                   </div>
                   <div className="p-2.5 bg-white rounded-lg border border-slate-100 flex flex-col gap-2">
-                    <span className="font-semibold text-slate-700 block">Marketing & Promotional Alerts</span>
+                    <span className="font-semibold text-slate-700 block">{t("Marketing & Promotional Alerts")}</span>
                     <div className="flex gap-4">
                       {["SMS", "WhatsApp", "Email", "Push"].map(c => (
                         <label key={c} className="flex items-center gap-1.5 cursor-pointer">
@@ -1153,26 +1158,26 @@ function EditPanel({ member, onSave, onCancel }) {
           {subTab === "privacy" && (
             <div className="space-y-4">
               <div className="space-y-2.5">
-                <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🔒 Privacy & Visibility Settings</h3>
+                <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🔒 Privacy & Visibility Settings")}</h3>
                 <div className="space-y-2 text-xs">
                   <label className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-100 cursor-pointer">
                     <div>
-                      <span className="font-semibold text-slate-700 block">Show Mobile Number</span>
-                      <span className="text-[10px] text-slate-400">Display phone contact info on membership card search view.</span>
+                      <span className="font-semibold text-slate-700 block">{t("Show Mobile Number")}</span>
+                      <span className="text-[10px] text-slate-400">{t("Display phone contact info on membership card search view.")}</span>
                     </div>
                     <input type="checkbox" checked={form.showMobile} onChange={(e) => setForm({ ...form, showMobile: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350" />
                   </label>
                   <label className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-100 cursor-pointer">
                     <div>
-                      <span className="font-semibold text-slate-700 block">Show Address Info</span>
-                      <span className="text-[10px] text-slate-400">Display current address location in search listings.</span>
+                      <span className="font-semibold text-slate-700 block">{t("Show Address Info")}</span>
+                      <span className="text-[10px] text-slate-400">{t("Display current address location in search listings.")}</span>
                     </div>
                     <input type="checkbox" checked={form.showAddress} onChange={(e) => setForm({ ...form, showAddress: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350" />
                   </label>
                   <label className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-100 cursor-pointer">
                     <div>
-                      <span className="font-semibold text-slate-700 block">Allow Contact Requests</span>
-                      <span className="text-[10px] text-slate-400">Allow other verified members to ping or message for seva.</span>
+                      <span className="font-semibold text-slate-700 block">{t("Allow Contact Requests")}</span>
+                      <span className="text-[10px] text-slate-400">{t("Allow other verified members to ping or message for seva.")}</span>
                     </div>
                     <input type="checkbox" checked={form.allowContact} onChange={(e) => setForm({ ...form, allowContact: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350" />
                   </label>
@@ -1181,27 +1186,27 @@ function EditPanel({ member, onSave, onCancel }) {
 
               {/* Currency Selector */}
               <div className="space-y-2.5 border-t pt-3">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">💰 Preferred Billing Currency</h3>
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t("💰 Preferred Billing Currency")}</h3>
                 <div>
-                  <Label className="text-xs font-semibold text-slate-650">Platform Display Currency</Label>
+                  <Label className="text-xs font-semibold text-slate-650">{t("Platform Display Currency")}</Label>
                   <SearchableSelect
                     value={form.preferredCurrency}
                     onValueChange={(v) => setForm({ ...form, preferredCurrency: v })}
                     options={[
-                      { value: "INR (₹)", label: "INR (₹) — India" },
-                      { value: "GBP (£)", label: "GBP (£) — United Kingdom" },
-                      { value: "USD ($)", label: "USD ($) — United States" },
-                      { value: "CAD (C$)", label: "CAD (C$) — Canada" },
-                      { value: "AUD (A$)", label: "AUD (A$) — Australia" },
-                      { value: "AED (د.إ)", label: "AED (د.إ) — UAE" },
-                      { value: "SGD (S$)", label: "SGD (S$) — Singapore" },
-                      { value: "KES (KSh)", label: "KES (KSh) — Kenya" },
-                      { value: "ZAR (R)", label: "ZAR (R) — South Africa" },
+                      { value: "INR (₹)", label: t("INR (₹) — India") },
+                      { value: "GBP (£)", label: t("GBP (£) — United Kingdom") },
+                      { value: "USD ($)", label: t("USD ($) — United States") },
+                      { value: "CAD (C$)", label: t("CAD (C$) — Canada") },
+                      { value: "AUD (A$)", label: t("AUD (A$) — Australia") },
+                      { value: "AED (د.إ)", label: t("AED (د.إ) — UAE") },
+                      { value: "SGD (S$)", label: t("SGD (S$) — Singapore") },
+                      { value: "KES (KSh)", label: t("KES (KSh) — Kenya") },
+                      { value: "ZAR (R)", label: t("ZAR (R) — South Africa") },
                     ]}
-                    placeholder="Select display currency"
+                    placeholder={t("Select display currency")}
                     className="mt-1"
                   />
-                  <div className="text-[10px] text-slate-400 mt-1">Currency automatically pre-selected based on Address country setting.</div>
+                  <div className="text-[10px] text-slate-400 mt-1">{t("Currency automatically pre-selected based on Address country setting.")}</div>
                 </div>
               </div>
             </div>
@@ -1212,10 +1217,10 @@ function EditPanel({ member, onSave, onCancel }) {
         {/* Action button bar */}
         <div className="flex gap-2 pt-4 mt-6 border-t border-slate-150 justify-end">
           <Button type="button" variant="outline" onClick={onCancel} className="h-9 px-4 text-xs font-bold">
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="button" onClick={submit} disabled={saving} className="h-9 px-5 text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white">
-            {saving ? "Saving…" : "Save Profile Details"}
+            {saving ? t("Saving…") : t("Save Profile Details")}
           </Button>
         </div>
       </div>
@@ -1225,6 +1230,7 @@ function EditPanel({ member, onSave, onCancel }) {
 
 /* ─── Image Upload Panel ───────────────────────────────────────── */
 function ImagePanel({ member, onPhotoSave, onCancel }) {
+  const { t } = useLanguage();
   const fileRef = useRef();
   const [preview, setPreview] = useState(member?.photoUrl || null);
   const [file, setFile] = useState(null);
@@ -1238,14 +1244,14 @@ function ImagePanel({ member, onPhotoSave, onCancel }) {
   };
 
   const save = async () => {
-    if (!file) { toast.error("Please select an image first."); return; }
+    if (!file) { toast.error(t("Please select an image first.")); return; }
     setSaving(true);
     try {
       await onPhotoSave(file);
-      toast.success("Photo updated successfully.");
+      toast.success(t("Photo updated successfully."));
       onCancel();
     } catch {
-      toast.error("Failed to upload photo.");
+      toast.error(t("Failed to upload photo."));
     } finally {
       setSaving(false);
     }
@@ -1258,26 +1264,26 @@ function ImagePanel({ member, onPhotoSave, onCancel }) {
         onClick={() => fileRef.current?.click()}
       >
         {preview ? (
-          <img src={preview} alt="preview" className="h-full w-full object-cover" />
+          <img src={preview} alt={t("preview")} className="h-full w-full object-cover" />
         ) : (
           <div className="text-center p-3">
             <Camera className="h-8 w-8 text-orange-300 mx-auto mb-1" />
-            <div className="text-xs text-orange-400">Click to upload</div>
+            <div className="text-xs text-orange-400">{t("Click to upload")}</div>
           </div>
         )}
       </div>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pick} />
-      <div className="text-xs text-muted-foreground text-center">JPG, PNG or WEBP · Max 5 MB</div>
+      <div className="text-xs text-muted-foreground text-center">{t("JPG, PNG or WEBP · Max 5 MB")}</div>
       <div className="flex gap-2 w-full">
         <Button variant="outline" className="flex-1" onClick={() => fileRef.current?.click()}>
-          <Camera className="h-4 w-4 mr-2" /> Choose Image
+          <Camera className="h-4 w-4 mr-2" /> {t("Choose Image")}
         </Button>
         <Button className="flex-1" onClick={save} disabled={saving || !file}>
-          {saving ? "Uploading…" : "Save Photo"}
+          {saving ? t("Uploading…") : t("Save Photo")}
         </Button>
       </div>
       <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={onCancel}>
-        Cancel
+        {t("Cancel")}
       </Button>
     </div>
   );
@@ -1289,12 +1295,13 @@ export function MemberIdCardDialog({
   onSave, onPhotoSave, isSuperAdmin,
   linkId, onRemoveLink,
 }) {
+  const { t } = useLanguage();
   const [mode, setMode] = useState("preview");
 
   const tabs = [
-    { id: "image",   icon: Camera, label: "Add Image" },
-    { id: "edit",    icon: Pencil, label: "Profile Registration Form" },
-    { id: "preview", icon: Eye,    label: "Preview ID Card" },
+    { id: "image",   icon: Camera, label: t("Add Image") },
+    { id: "edit",    icon: Pencil, label: t("Profile Registration Form") },
+    { id: "preview", icon: Eye,    label: t("Preview ID Card") },
   ];
 
   return (
@@ -1306,13 +1313,13 @@ export function MemberIdCardDialog({
 
           {/* Tab switcher */}
           <div className="flex items-center gap-1 p-3 pb-0">
-            {tabs.map((t) => {
-              const Icon = t.icon;
-              const active = mode === t.id;
+            {tabs.map((tItem) => {
+              const Icon = tItem.icon;
+              const active = mode === tItem.id;
               return (
                 <button
-                  key={t.id}
-                  onClick={() => setMode(t.id)}
+                  key={tItem.id}
+                  onClick={() => setMode(tItem.id)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-200 ${
                     active
                       ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30"
@@ -1320,7 +1327,7 @@ export function MemberIdCardDialog({
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  {t.label}
+                  {t(tItem.label)}
                 </button>
               );
             })}
@@ -1363,12 +1370,12 @@ export function MemberIdCardDialog({
                     className="w-full border-red-850/40 text-red-400 hover:bg-red-950/30 text-xs font-bold"
                     onClick={() => { onRemoveLink?.(linkId); onClose(); }}
                   >
-                    Remove Family Link
+                    {t("Remove Family Link")}
                   </Button>
                 )}
 
                 <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-10 text-xs" onClick={onClose}>
-                  Close Preview
+                  {t("Close Preview")}
                 </Button>
               </div>
             )}
@@ -1388,10 +1395,10 @@ export function MemberIdCardDialog({
             {mode === "image" && (
               <div className="bg-white rounded-xl p-4">
                 <div className="text-sm font-semibold mb-1 flex items-center gap-2">
-                  <Camera className="h-4 w-4 text-orange-500" /> Member Photo
+                  <Camera className="h-4 w-4 text-orange-500" /> {t("Member Photo")}
                 </div>
                 <div className="text-xs text-muted-foreground mb-3">
-                  Upload a clear face photo for the ID card.
+                  {t("Upload a clear face photo for the ID card.")}
                 </div>
                 <ImagePanel
                   member={member}

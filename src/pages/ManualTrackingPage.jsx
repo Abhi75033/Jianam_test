@@ -16,10 +16,12 @@ import { Footprints, Plus, Search, MapPin, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const EMPTY_FORM = { monkPublicId: "", monkName: "", stationName: "", notes: "" };
 
 export default function ManualTrackingPage() {
+  const { t } = useLanguage();
   const { orgId } = useAuth();
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -56,7 +58,7 @@ export default function ManualTrackingPage() {
 
   const handleSubmit = async () => {
     if (!form.monkName || !form.stationName) {
-      toast.error("MS Name and Current Station are required.");
+      toast.error(t("MS Name and Current Station are required."));
       return;
     }
     setSaving(true);
@@ -67,7 +69,7 @@ export default function ManualTrackingPage() {
         stationName: form.stationName,
         notes: form.notes || undefined,
       });
-      toast.success("Manual vihar location logged successfully.");
+      toast.success(t("Manual vihar location logged successfully."));
       setOpenDialog(false);
       setForm(EMPTY_FORM);
       load(q);
@@ -82,7 +84,7 @@ export default function ManualTrackingPage() {
     setDeletingId(id);
     try {
       await api.delete(`/manual-tracking/${id}`);
-      toast.success("Entry deleted.");
+      toast.success(t("Entry deleted."));
       load(q);
     } catch (e) {
       toast.error(extractErrorMessage(e));
@@ -93,7 +95,7 @@ export default function ManualTrackingPage() {
 
   const columns = [
     {
-      key: "monkId", header: "MS ID",
+      key: "monkId", header: t("MS ID"),
       render: (r) => (
         <Badge variant="secondary" className="font-mono text-[10px]">
           {r.monk?.publicId || r.monkPublicId || "—"}
@@ -101,7 +103,7 @@ export default function ManualTrackingPage() {
       ),
     },
     {
-      key: "monkName", header: "MS Name",
+      key: "monkName", header: t("MS Name"),
       render: (r) => (
         <div className="flex items-center gap-2">
           {r.monk?.photoUrl && (
@@ -112,7 +114,7 @@ export default function ManualTrackingPage() {
       ),
     },
     {
-      key: "stationName", header: "Current Station / Checkpoint",
+      key: "stationName", header: t("Current Station / Checkpoint"),
       render: (r) => (
         <span className="flex items-center gap-1 text-sm">
           <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
@@ -121,11 +123,11 @@ export default function ManualTrackingPage() {
       ),
     },
     {
-      key: "loggedAt", header: "Logged At",
+      key: "loggedAt", header: t("Logged At"),
       render: (r) => <span className="text-xs text-muted-foreground">{formatDateTime(r.loggedAt || r.createdAt)}</span>,
     },
     {
-      key: "notes", header: "Notes",
+      key: "notes", header: t("Notes"),
       render: (r) => <span className="text-xs text-muted-foreground">{r.notes || "—"}</span>,
     },
     {
@@ -145,11 +147,11 @@ export default function ManualTrackingPage() {
   return (
     <div data-testid="manual-tracking-page">
       <PageHeader
-        title="Manual Vihar Tracking"
-        subtitle="Log manual location checkpoints for MS members traveling without GPS devices."
+        title={t("Manual Vihar Tracking")}
+        subtitle={t("Log manual location checkpoints for MS members traveling without GPS devices.")}
         actions={
           <Button onClick={() => setOpenDialog(true)} data-testid="manual-tracking-create-btn">
-            <Plus className="h-4 w-4 mr-2" /> Log Location
+            <Plus className="h-4 w-4 mr-2" /> {t("Log Location")}
           </Button>
         }
       />
@@ -160,13 +162,13 @@ export default function ManualTrackingPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search by MS name or station…"
+            placeholder={t("Search by MS name or station…")}
             value={q}
             onChange={handleSearch}
             data-testid="manual-tracking-search"
           />
         </div>
-        <span className="text-xs text-muted-foreground">{total} entries</span>
+        <span className="text-xs text-muted-foreground">{total} {t("entries")}</span>
       </div>
 
       {loading ? (
@@ -174,9 +176,9 @@ export default function ManualTrackingPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           icon={Footprints}
-          title="No manual tracking entries"
-          description="Log a monk's current location checkpoint manually when GPS is unavailable."
-          action={<Button onClick={() => setOpenDialog(true)}><Plus className="h-4 w-4 mr-2" />Log Location</Button>}
+          title={t("No manual tracking entries")}
+          description={t("Log a monk's current location checkpoint manually when GPS is unavailable.")}
+          action={<Button onClick={() => setOpenDialog(true)}><Plus className="h-4 w-4 mr-2" />{t("Log Location")}</Button>}
         />
       ) : (
         <DataTable columns={columns} rows={rows} loading={false} testId="manual-tracking-table" />
@@ -186,51 +188,51 @@ export default function ManualTrackingPage() {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Log Manual Vihar Location</DialogTitle>
+            <DialogTitle>{t("Log Manual Vihar Location")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div>
-              <Label className="text-xs">MS ID (Optional)</Label>
+              <Label className="text-xs">{t("MS ID (Optional)")}</Label>
               <Input
                 value={form.monkPublicId}
                 onChange={(e) => setForm({ ...form, monkPublicId: e.target.value })}
-                placeholder="e.g. JFMS108"
+                placeholder={t("e.g. JFMS108")}
                 data-testid="manual-tracking-monkid-input"
               />
             </div>
             <div>
-              <Label className="text-xs">MS Name *</Label>
+              <Label className="text-xs">{t("MS Name *")}</Label>
               <Input
                 value={form.monkName}
                 onChange={(e) => setForm({ ...form, monkName: e.target.value })}
-                placeholder="e.g. Pujya Naypadmasagarji MS"
+                placeholder={t("e.g. Pujya Naypadmasagarji MS")}
                 data-testid="manual-tracking-monkname-input"
               />
             </div>
             <div>
-              <Label className="text-xs">Current Station / Checkpoint *</Label>
+              <Label className="text-xs">{t("Current Station / Checkpoint *")}</Label>
               <Input
                 value={form.stationName}
                 onChange={(e) => setForm({ ...form, stationName: e.target.value })}
-                placeholder="e.g. Dahisar Toll Plaza"
+                placeholder={t("e.g. Dahisar Toll Plaza")}
                 data-testid="manual-tracking-station-input"
               />
             </div>
             <div>
-              <Label className="text-xs">Notes (Optional)</Label>
+              <Label className="text-xs">{t("Notes (Optional)")}</Label>
               <Textarea
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="e.g. Taking morning rest break, vihar proceeding smoothly"
+                placeholder={t("e.g. Taking morning rest break, vihar proceeding smoothly")}
                 rows={3}
                 data-testid="manual-tracking-notes-input"
               />
             </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>{t("Cancel")}</Button>
             <Button onClick={handleSubmit} disabled={saving} data-testid="manual-tracking-submit-btn">
-              {saving ? "Logging…" : "Log Location"}
+              {saving ? t("Logging…") : t("Log Location")}
             </Button>
           </DialogFooter>
         </DialogContent>

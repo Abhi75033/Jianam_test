@@ -7,8 +7,10 @@ import { useSocket } from "@/hooks/useSocket";
 import { Navigation, User, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function LiveMapPage() {
+  const { t } = useLanguage();
   const { connected } = useSocket("/tracking");
   const [monksList, setMonksList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +32,7 @@ export default function LiveMapPage() {
       }));
       setMonksList(mappedList);
     } catch (e) {
-      toast.error("Failed to fetch live monk locations.");
+      toast.error(t("Failed to fetch live monk locations."));
     } finally {
       setLoading(false);
     }
@@ -43,19 +45,19 @@ export default function LiveMapPage() {
   return (
     <div className="h-full flex flex-col" data-testid="live-map-page">
       <PageHeader
-        title="Live Tracking Map"
-        subtitle="Geographical visualizer for all ongoing holy Vihar walks, safety rings and device locations."
+        title={t("Live Tracking Map")}
+        subtitle={t("Geographical visualizer for all ongoing holy Vihar walks, safety rings and device locations.")}
         actions={<LiveBadge connected={connected} />}
       />
 
       <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 h-[550px] min-h-[500px]">
         {/* Left Side Pane: Monks List */}
         <Card className="p-3 border border-slate-200 bg-white/70 backdrop-blur-md flex flex-col overflow-y-auto gap-2">
-          <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-2">Monks under monitoring</div>
+          <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-2">{t("Monks under monitoring")}</div>
           {loading ? (
-            <div className="text-xs text-slate-400 p-2">Loading locations...</div>
+            <div className="text-xs text-slate-400 p-2">{t("Loading locations...")}</div>
           ) : monksList.length === 0 ? (
-            <div className="text-xs text-slate-400 p-2">No active devices/monks tracking.</div>
+            <div className="text-xs text-slate-400 p-2">{t("No active devices/monks tracking.")}</div>
           ) : (
             monksList.map((m) => (
               <div key={m.id} className="border border-slate-100 rounded-lg p-2.5 bg-white hover:border-orange-200 cursor-pointer transition-all flex flex-col gap-1">
@@ -64,8 +66,8 @@ export default function LiveMapPage() {
                   {m.name}
                 </div>
                 <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between">
-                  <span>Status: {m.status}</span>
-                  <Badge variant="outline" className="text-[9px] px-1 font-mono-num">{m.battery}% batt</Badge>
+                  <span>{t("Status:")} {m.status}</span>
+                  <Badge variant="outline" className="text-[9px] px-1 font-mono-num">{m.battery}{t("% batt")}</Badge>
                 </div>
                 <div className="text-[10px] text-slate-500 font-mono-num mt-1 flex items-center gap-1">
                   <MapPin className="h-3 w-3 text-slate-400" />
@@ -84,13 +86,13 @@ export default function LiveMapPage() {
             <div className="inline-flex h-12 w-12 rounded-full bg-slate-800 items-center justify-center border border-slate-700 animate-pulse">
               <Navigation className="h-6 w-6 text-orange-400" />
             </div>
-            <div className="text-slate-300 font-semibold tracking-wide">Live Geography Engine Active</div>
-            <div className="text-xs text-slate-500 max-w-sm">Displaying geolocated pins overlayed on standard high-contrast hybrid vector maps.</div>
+            <div className="text-slate-300 font-semibold tracking-wide">{t("Live Geography Engine Active")}</div>
+            <div className="text-xs text-slate-500 max-w-sm">{t("Displaying geolocated pins overlayed on standard high-contrast hybrid vector maps.")}</div>
           </div>
 
           <div className="absolute bottom-4 right-4 bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-1.5 text-[10px] text-slate-400 font-mono shadow-xl flex items-center gap-2">
             <div className={`h-2 w-2 rounded-full bg-emerald-500 ${connected ? "animate-ping" : "bg-red-500"}`}></div>
-            <span>GPS Tracking Stream: {connected ? "Operational" : "Offline"} ({monksList.length} nodes active)</span>
+            <span>{t("GPS Tracking Stream:")} {connected ? t("Operational") : t("Offline")} ({monksList.length} {t("nodes active)")}</span>
           </div>
         </Card>
       </div>

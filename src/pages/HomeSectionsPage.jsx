@@ -14,11 +14,13 @@ import {
 } from "@/components/ui/dialog";
 import { LayoutTemplate, Plus, Pencil, Trash2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const SECTION_TYPES = ["Carousel", "Grid", "List", "Horizontal Cards"];
 const EMPTY_FORM = { name: "", sectionType: "Carousel", displayOrder: "0" };
 
 export default function HomeSectionsPage() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
@@ -53,7 +55,7 @@ export default function HomeSectionsPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name) { toast.error("Section Name is required."); return; }
+    if (!form.name) { toast.error(t("Section Name is required.")); return; }
     setSaving(true);
     try {
       const payload = {
@@ -63,10 +65,10 @@ export default function HomeSectionsPage() {
       };
       if (editing) {
         await api.patch(`/home-sections/${editing.id}`, payload);
-        toast.success("Home section updated.");
+        toast.success(t("Home section updated."));
       } else {
         await api.post("/home-sections", payload);
-        toast.success("Home section added.");
+        toast.success(t("Home section added."));
       }
       setOpenDialog(false);
       load();
@@ -81,7 +83,7 @@ export default function HomeSectionsPage() {
     setDeletingId(id);
     try {
       await api.delete(`/home-sections/${id}`);
-      toast.success("Section removed.");
+      toast.success(t("Section removed."));
       load();
     } catch (e) {
       toast.error(extractErrorMessage(e));
@@ -102,25 +104,25 @@ export default function HomeSectionsPage() {
 
   const columns = [
     {
-      key: "name", header: "Section Display Name",
+      key: "name", header: t("Section Display Name"),
       render: (r) => <span className="font-semibold text-slate-800">{r.name}</span>,
     },
     {
-      key: "sectionType", header: "UI Component Style",
+      key: "sectionType", header: t("UI Component Style"),
       render: (r) => <Badge variant="outline">{r.sectionType}</Badge>,
     },
     {
-      key: "order", header: "Position",
+      key: "order", header: t("Position"),
       render: (r) => <Badge variant="secondary">#{r.displayOrder}</Badge>,
     },
     {
-      key: "status", header: "Status",
+      key: "status", header: t("Status"),
       render: (r) => r.isActive
-        ? <Badge className="bg-emerald-500 text-white flex items-center w-fit gap-1"><Check className="h-3 w-3" />Live</Badge>
-        : <Badge variant="secondary">Inactive</Badge>,
+        ? <Badge className="bg-emerald-500 text-white flex items-center w-fit gap-1"><Check className="h-3 w-3" />{t("Live")}</Badge>
+        : <Badge variant="secondary">{t("Inactive")}</Badge>,
     },
     {
-      key: "active", header: "Toggle",
+      key: "active", header: t("Toggle"),
       render: (r) => <Switch checked={r.isActive} onCheckedChange={() => toggleActive(r)} />,
     },
     {
@@ -145,11 +147,11 @@ export default function HomeSectionsPage() {
   return (
     <div data-testid="home-sections-page">
       <PageHeader
-        title="Home Screen Layout Sections"
-        subtitle="Manage dynamic visual sections and dashboard feed widgets visible in the mobile application."
+        title={t("Home Screen Layout Sections")}
+        subtitle={t("Manage dynamic visual sections and dashboard feed widgets visible in the mobile application.")}
         actions={
           <Button onClick={openCreate} data-testid="home-sections-create-btn">
-            <Plus className="h-4 w-4 mr-2" /> Add Layout Section
+            <Plus className="h-4 w-4 mr-2" /> {t("Add Layout Section")}
           </Button>
         }
       />
@@ -159,9 +161,9 @@ export default function HomeSectionsPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           icon={LayoutTemplate}
-          title="No home sections configured"
-          description="Add layout sections to customize the mobile app home screen widget order."
-          action={<Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Add Layout Section</Button>}
+          title={t("No home sections configured")}
+          description={t("Add layout sections to customize the mobile app home screen widget order.")}
+          action={<Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />{t("Add Layout Section")}</Button>}
         />
       ) : (
         <DataTable columns={columns} rows={rows} loading={false} testId="home-sections-table" />
@@ -171,33 +173,33 @@ export default function HomeSectionsPage() {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Home Section" : "Add Home Page Widget"}</DialogTitle>
+            <DialogTitle>{editing ? t("Edit Home Section") : t("Add Home Page Widget")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div>
-              <Label className="text-xs">Section Display Name *</Label>
+              <Label className="text-xs">{t("Section Display Name *")}</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Daily Quotes & Spiritual Counters"
+                placeholder={t("e.g. Daily Quotes & Spiritual Counters")}
                 data-testid="section-name-input"
               />
             </div>
             <div>
-              <Label className="text-xs">UI Component Style</Label>
+              <Label className="text-xs">{t("UI Component Style")}</Label>
               <select
                 className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
                 value={form.sectionType}
                 onChange={(e) => setForm({ ...form, sectionType: e.target.value })}
                 data-testid="section-type-select"
               >
-                {SECTION_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                {SECTION_TYPES.map((tItem) => (
+                  <option key={tItem} value={tItem}>{t(tItem)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <Label className="text-xs">Position / Display Order</Label>
+              <Label className="text-xs">{t("Position / Display Order")}</Label>
               <Input
                 type="number"
                 value={form.displayOrder}
@@ -208,9 +210,9 @@ export default function HomeSectionsPage() {
             </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>{t("Cancel")}</Button>
             <Button onClick={handleSave} disabled={saving} data-testid="section-save-btn">
-              {saving ? "Saving…" : editing ? "Update Section" : "Save Section"}
+              {saving ? t("Saving…") : editing ? t("Update Section") : t("Save Section")}
             </Button>
           </DialogFooter>
         </DialogContent>

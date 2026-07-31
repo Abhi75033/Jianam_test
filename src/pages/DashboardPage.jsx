@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { StatCard } from "@/components/common/StatCard";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -86,16 +87,17 @@ const MOCK_ROOM_FLOORS = [
 ];
 
 function SendReminderDialog({ open, onClose }) {
+  const { t } = useLanguage();
   const [audience, setAudience] = useState("ALL");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const send = async () => {
-    if (!message.trim()) { toast.error("Please enter a message."); return; }
+    if (!message.trim()) { toast.error(t("Please enter a message.")); return; }
     setLoading(true);
     try {
       await api.post("/notifications/broadcast", { audience, body: message, category: "SERVICE" });
-      toast.success("Reminder sent successfully!");
+      toast.success(t("Reminder sent successfully!"));
       setMessage("");
       onClose();
     } catch (e) {
@@ -109,37 +111,37 @@ function SendReminderDialog({ open, onClose }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading">Send Reminder</DialogTitle>
+          <DialogTitle className="font-heading">{t("Send Reminder")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <Label className="text-xs">Target Audience</Label>
+            <Label className="text-xs">{t("Target Audience")}</Label>
             <select
               className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
             >
-              <option value="ALL">All Members</option>
-              <option value="VOLUNTEERS">Volunteers Only</option>
-              <option value="REGISTERED">Event Registrants</option>
+              <option value="ALL">{t("All Members")}</option>
+              <option value="VOLUNTEERS">{t("Volunteers Only")}</option>
+              <option value="REGISTERED">{t("Event Registrants")}</option>
             </select>
           </div>
           <div>
-            <Label className="text-xs">Message *</Label>
+            <Label className="text-xs">{t("Message *")}</Label>
             <Textarea
               className="mt-1"
               rows={4}
-              placeholder="Type your reminder message here…"
+              placeholder={t("Type your reminder message here…")}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>{t("Cancel")}</Button>
           <Button onClick={send} disabled={loading}>
             <Send className="h-4 w-4 mr-2" />
-            {loading ? "Sending…" : "Send Reminder"}
+            {loading ? t("Sending…") : t("Send Reminder")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -149,6 +151,7 @@ function SendReminderDialog({ open, onClose }) {
 
 function SectionCard({ number, title, viewAll, viewAllTo, children, testId, className = "" }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   return (
     <Card className={`p-5 rounded-xl border-border bg-white ${className}`} data-testid={testId}>
       <div className="flex items-center justify-between mb-4">
@@ -158,9 +161,9 @@ function SectionCard({ number, title, viewAll, viewAllTo, children, testId, clas
         {viewAll && (
           <button
             onClick={() => viewAllTo && navigate(viewAllTo)}
-            className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5"
+            className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5 font-bold"
           >
-            View All <ChevronRight className="h-3 w-3" />
+            {t("action.viewAll", "View All")} <ChevronRight className="h-3 w-3" />
           </button>
         )}
       </div>
@@ -195,6 +198,7 @@ const ORG_TYPES = [
 
 export default function DashboardPage() {
   const { user, isSuperAdmin } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [orgs, setOrgs] = useState([]);
   const [orgId, setOrgId] = useState(user?.organizationIds?.[0] || "");
@@ -459,7 +463,7 @@ export default function DashboardPage() {
                 : "text-slate-500 hover:text-slate-700"
               }`}
           >
-            A Dashboard
+            {t("dashboard.aDashboard", "A Dashboard")}
           </button>
           <button
             onClick={() => setActiveDashboardTab("SA_DASHBOARD")}
@@ -468,7 +472,7 @@ export default function DashboardPage() {
                 : "text-slate-500 hover:text-slate-700"
               }`}
           >
-            SA Dashboard
+            {t("dashboard.saDashboard", "SA Dashboard")}
           </button>
         </div>
       )}
@@ -482,29 +486,29 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="font-heading text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
-                SA Dashboard
+                {t("SA Dashboard")}
               </h1>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Global platform metrics, user analytics, and centralized configuration scope.
+                {t("Global platform metrics, user analytics, and centralized configuration scope.")}
               </p>
             </div>
           </div>
 
           {/* SA Stat Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <StatCard label="Total Members" value={(platformData?.totalMembers ?? 0).toLocaleString()} delta="Active on platform" icon={Users} tone="green" />
-            <StatCard label="Registered Orgs" value={(platformData?.totalOrgs ?? 0).toLocaleString()} delta="Temples & centers" icon={Landmark} tone="blue" />
-            <StatCard label="Total Donations" value={formatCurrency(platformData?.totalDonations ?? 0)} delta="Platform-wide ledger" icon={HeartHandshake} tone="green" />
-            <StatCard label="Active Volunteers" value={(platformData?.activeVolunteers ?? 0).toLocaleString()} delta="Assigned today" icon={HandHeart} tone="orange" />
-            <StatCard label="Ticket Sales" value={(platformData?.pendingTickets ?? 0).toLocaleString()} delta="Event tickets sold" icon={ClipboardList} tone="purple" />
+            <StatCard label={t("Total Members")} value={(platformData?.totalMembers ?? 0).toLocaleString()} delta={t("Active on platform")} icon={Users} tone="green" />
+            <StatCard label={t("Registered Orgs")} value={(platformData?.totalOrgs ?? 0).toLocaleString()} delta={t("Temples & centers")} icon={Landmark} tone="blue" />
+            <StatCard label={t("Total Donations")} value={formatCurrency(platformData?.totalDonations ?? 0)} delta={t("Platform-wide ledger")} icon={HeartHandshake} tone="green" />
+            <StatCard label={t("Active Volunteers")} value={(platformData?.activeVolunteers ?? 0).toLocaleString()} delta={t("Assigned today")} icon={HandHeart} tone="orange" />
+            <StatCard label={t("Ticket Sales")} value={(platformData?.pendingTickets ?? 0).toLocaleString()} delta={t("Event tickets sold")} icon={ClipboardList} tone="purple" />
           </div>
 
           {/* SA Charts & Lists Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <SectionCard number="1" title="Newest Organizations">
+            <SectionCard number="1" title={t("Newest Organizations")}>
               <div className="space-y-3">
                 {(!platformData?.recentOrgs || platformData.recentOrgs.length === 0) ? (
-                  <div className="text-center py-12 text-xs text-muted-foreground font-medium">No recent organizations registered.</div>
+                  <div className="text-center py-12 text-xs text-muted-foreground font-medium">{t("No recent organizations registered.")}</div>
                 ) : (
                   platformData.recentOrgs.map((o) => (
                     <div key={o.id} className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
@@ -519,10 +523,10 @@ export default function DashboardPage() {
               </div>
             </SectionCard>
 
-            <SectionCard number="2" title="Newest Members">
+            <SectionCard number="2" title={t("Newest Members")}>
               <div className="space-y-3">
                 {(!platformData?.recentMembers || platformData.recentMembers.length === 0) ? (
-                  <div className="text-center py-12 text-xs text-muted-foreground font-medium">No recent member signups.</div>
+                  <div className="text-center py-12 text-xs text-muted-foreground font-medium">{t("No recent member signups.")}</div>
                 ) : (
                   platformData.recentMembers.map((m) => (
                     <div key={m.publicId} className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
@@ -537,21 +541,21 @@ export default function DashboardPage() {
               </div>
             </SectionCard>
 
-            <SectionCard number="3" title="App Engagement Stats">
+            <SectionCard number="3" title={t("App Engagement Stats")}>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="p-3 border rounded-lg bg-slate-50/40 text-center">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Active Users (DAU)</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{t("Active Users (DAU)")}</div>
                   <div className="text-2xl font-black mt-1 font-mono-num text-slate-800">{platformData?.appUsage?.dau ?? 12}</div>
                 </div>
                 <div className="p-3 border rounded-lg bg-slate-50/40 text-center">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">API Latency</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{t("API Latency")}</div>
                   <div className="text-2xl font-black mt-1 font-mono-num text-slate-800">{platformData?.appUsage?.apiLatencyMs ?? 42}ms</div>
                 </div>
               </div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2">Platform Actions</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2">{t("Platform Actions")}</div>
               <div className="grid grid-cols-2 gap-2">
-                <Button size="xs" variant="outline" className="text-[10px] h-8 justify-start" onClick={() => navigate("/master-data")}>⚙ Master Data Config</Button>
-                <Button size="xs" variant="outline" className="text-[10px] h-8 justify-start" onClick={() => navigate("/staff")}>👥 Platform Staff</Button>
+                <Button size="xs" variant="outline" className="text-[10px] h-8 justify-start" onClick={() => navigate("/master-data")}>{t("⚙ Master Data Config")}</Button>
+                <Button size="xs" variant="outline" className="text-[10px] h-8 justify-start" onClick={() => navigate("/staff")}>{t("👥 Platform Staff")}</Button>
               </div>
             </SectionCard>
           </div>
@@ -569,11 +573,11 @@ export default function DashboardPage() {
                   {orgName}
                 </h1>
                 <div className="text-xs text-primary mt-1 flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3" /> Jai Jinendra
+                  <Sparkles className="h-3 w-3" /> {t("Jai Jinendra")}
                   {liveConnected ? (
-                    <LiveBadge label="Live Live" />
+                    <LiveBadge label={t("Live Live")} />
                   ) : (
-                    <span className="text-[10px] bg-slate-100 text-slate-500 font-semibold px-2 py-0.5 rounded-full border">Reconnecting</span>
+                    <span className="text-[10px] bg-slate-100 text-slate-500 font-semibold px-2 py-0.5 rounded-full border">{t("Reconnecting")}</span>
                   )}
                 </div>
               </div>
@@ -583,12 +587,12 @@ export default function DashboardPage() {
               <div className="flex gap-2 w-full md:w-auto shrink-0 flex-wrap">
                 <Select value={selectedType} onValueChange={setSelectedType}>
                   <SelectTrigger className="w-36 h-10 text-xs font-semibold bg-white border border-border">
-                    <SelectValue placeholder="Select Type" />
+                    <SelectValue placeholder={t("Select Type")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {ORG_TYPES.map((t) => (
-                      <SelectItem key={t.key} value={t.key} className="text-xs font-medium">
-                        {t.label}
+                    {ORG_TYPES.map((tItem) => (
+                      <SelectItem key={tItem.key} value={tItem.key} className="text-xs font-medium">
+                        {t(tItem.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -635,20 +639,20 @@ export default function DashboardPage() {
 
           {/* Metric stats row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 md:mb-6">
-            <StatCard label="Today's Visitors" value={(stats.todaysVisitors ?? 0).toLocaleString()} delta="Devotees checked-in" icon={Users} tone="green" testId="stat-visitors" />
-            <StatCard label="Bhojanshala Meals" value={(stats.bhojanshalaMeals ?? 0).toLocaleString()} delta="Meals served today" icon={UtensilsCrossed} tone="orange" testId="stat-meals" />
-            <StatCard label="Active Volunteers" value={(stats.activeVolunteers ?? 0).toLocaleString()} delta="On-duty volunteers" icon={HandHeart} tone="blue" testId="stat-volunteers" />
-            <StatCard label="Room Occupancy" value={`${stats.occupiedRooms ?? 0}`} delta="Occupied / 200 Rooms" icon={BedDouble} tone="purple" testId="stat-rooms" />
-            <StatCard label="Donations Today" value={formatCurrency(stats.totalDonations ?? 0)} delta={`${stats.donationCount ?? 0} transaction logs`} icon={HeartHandshake} tone="green" testId="stat-donations" />
+            <StatCard label={t("dashboard.todaysVisitors", "Today's Visitors")} value={(stats.todaysVisitors ?? 0).toLocaleString()} delta={t("Devotees checked-in")} icon={Users} tone="green" testId="stat-visitors" />
+            <StatCard label={t("dashboard.bhojanshalaMeals", "Bhojanshala Meals")} value={(stats.bhojanshalaMeals ?? 0).toLocaleString()} delta={t("Meals served today")} icon={UtensilsCrossed} tone="orange" testId="stat-meals" />
+            <StatCard label={t("dashboard.activeVolunteers", "Active Volunteers")} value={(stats.activeVolunteers ?? 0).toLocaleString()} delta={t("On-duty volunteers")} icon={HandHeart} tone="blue" testId="stat-volunteers" />
+            <StatCard label={t("dashboard.roomOccupancy", "Room Occupancy")} value={`${stats.occupiedRooms ?? 0}`} delta={t("Occupied / 200 Rooms")} icon={BedDouble} tone="purple" testId="stat-rooms" />
+            <StatCard label={t("dashboard.donationsToday", "Donations Today")} value={formatCurrency(stats.totalDonations ?? 0)} delta={t("{0} transaction logs", [stats.donationCount ?? 0])} icon={HeartHandshake} tone="green" testId="stat-donations" />
           </div>
 
           {/* Row 1: Monk arrivals · Room status · 99 Yatra */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-            <SectionCard number="1" title="Monk Arrival & Tracking" viewAll viewAllTo="/tracking" testId="section-monks">
+            <SectionCard number="1" title={t("dashboard.monkArrivalTracking", "Monk Arrival & Tracking")} viewAll viewAllTo="/tracking" testId="section-monks">
               <div className="space-y-3">
                 {activeMonks.length === 0 ? (
                   <div className="text-center py-12 text-xs text-muted-foreground font-medium">
-                    No active monk tracking data available.
+                    {t("dashboard.noMonkData", "No active monk tracking data available.")}
                   </div>
                 ) : (
                   activeMonks.map((m) => (
@@ -677,7 +681,7 @@ export default function DashboardPage() {
               </div>
             </SectionCard>
 
-            <SectionCard number="2" title="Room Status & Inventory" viewAll viewAllTo="/bookings" testId="section-rooms">
+            <SectionCard number="2" title={t("dashboard.roomStatusInventory", "Room Status & Inventory")} viewAll viewAllTo="/bookings" testId="section-rooms">
               {(() => {
                 const roomStats = stats.roomStats || { available: 0, occupied: 0, cleaning: 0, total: 0, floors: [] };
                 return (
@@ -685,19 +689,19 @@ export default function DashboardPage() {
                     <div className="grid grid-cols-3 gap-3 mb-4">
                       <div className="rounded-lg border border-border p-3 text-center">
                         <BedDouble className="h-5 w-5 mx-auto text-primary mb-1" />
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Available</div>
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{t("dashboard.available", "Available")}</div>
                         <div className="font-heading font-bold text-xl text-foreground mt-0.5">{roomStats.available}</div>
                         <div className="text-[10px] text-muted-foreground">{roomStats.total > 0 ? Math.round((roomStats.available / roomStats.total) * 100) : 0}%</div>
                       </div>
                       <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-3 text-center">
                         <Users className="h-5 w-5 mx-auto text-blue-600 mb-1" />
-                        <div className="text-[10px] uppercase tracking-wider text-blue-700 font-semibold">Occupied</div>
+                        <div className="text-[10px] uppercase tracking-wider text-blue-700 font-semibold">{t("dashboard.occupied", "Occupied")}</div>
                         <div className="font-heading font-bold text-xl text-blue-800 mt-1">{roomStats.occupied}</div>
                         <div className="text-[10px] text-blue-600">{roomStats.total > 0 ? Math.round((roomStats.occupied / roomStats.total) * 100) : 0}%</div>
                       </div>
                       <div className="rounded-lg border border-orange-100 bg-orange-50 p-3 text-center">
                         <Sparkles className="h-5 w-5 mx-auto text-orange-600 mb-1" />
-                        <div className="text-[10px] uppercase tracking-wider text-orange-700 font-semibold">Cleaning</div>
+                        <div className="text-[10px] uppercase tracking-wider text-orange-700 font-semibold">{t("dashboard.cleaning", "Cleaning")}</div>
                         <div className="font-heading font-bold text-xl text-orange-800 mt-1">{roomStats.cleaning}</div>
                         <div className="text-[10px] text-orange-600">{roomStats.total > 0 ? Math.round((roomStats.cleaning / roomStats.total) * 100) : 0}%</div>
                       </div>
@@ -705,7 +709,7 @@ export default function DashboardPage() {
                     <div className="space-y-2">
                       {roomStats.floors.length === 0 ? (
                         <div className="text-center py-6 text-xs text-muted-foreground">
-                          No rooms registered for this organization.
+                          {t("dashboard.noRooms", "No rooms registered for this organization.")}
                         </div>
                       ) : (
                         roomStats.floors.map((f) => (
@@ -725,20 +729,20 @@ export default function DashboardPage() {
               })()}
             </SectionCard>
 
-            <SectionCard number="3" title="99 Yatra Group Management" viewAll viewAllTo="/tours" testId="section-yatra">
+            <SectionCard number="3" title={t("dashboard.yatraGroupManagement", "99 Yatra Group Management")} viewAll viewAllTo="/tours" testId="section-yatra">
               {activeYatras.length === 0 ? (
                 <div className="text-center py-12 text-xs text-muted-foreground font-medium">
-                  No active Yatra groups registered.
+                  {t("dashboard.noYatra", "No active Yatra groups registered.")}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm min-w-[380px]">
                     <thead>
                       <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                        <th className="text-left font-semibold py-2">Sangh / Group</th>
-                        <th className="text-center font-semibold">People</th>
-                        <th className="text-center font-semibold">Done</th>
-                        <th className="text-right font-semibold">Progress</th>
+                        <th className="text-left font-semibold py-2">{t("col.name", "Sangh / Group")}</th>
+                        <th className="text-center font-semibold">{t("nav.members", "People")}</th>
+                        <th className="text-center font-semibold">{t("status.completed", "Done")}</th>
+                        <th className="text-right font-semibold">{t("Progress")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -766,19 +770,19 @@ export default function DashboardPage() {
 
           {/* Row 2: Bhojanshala · Events · Volunteers */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-            <SectionCard number="4" title="Bhojanshala Management" testId="section-bhojanshala">
+            <SectionCard number="4" title={t("dashboard.bhojanshalaManagement", "Bhojanshala Management")} testId="section-bhojanshala">
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: "Breakfast Count", value: Math.round((stats.todaysVisitors ?? 0) * 0.3), time: "07:00 AM - 08:30 AM", icon: Coffee, tone: "green" },
-                  { label: "Lunch Count", value: Math.round((stats.todaysVisitors ?? 0) * 0.8), time: "11:30 AM - 01:30 PM", icon: UtensilsCrossed, tone: "orange" },
-                  { label: "Dinner Count", value: Math.round((stats.todaysVisitors ?? 0) * 0.4), time: "07:00 PM - 08:30 PM", icon: Moon, tone: "purple" },
-                  { label: "Passes Issued", value: stats.todaysVisitors ?? 0, time: "Today", icon: ClipboardList, tone: "blue" },
+                  { labelKey: "dashboard.breakfastCount", label: t("Navkarsi Count"), value: Math.round((stats.todaysVisitors ?? 0) * 0.3), time: "07:00 AM - 08:30 AM", icon: Coffee, tone: "green" },
+                  { labelKey: "dashboard.lunchCount", label: t("Lunch Count"), value: Math.round((stats.todaysVisitors ?? 0) * 0.8), time: "11:30 AM - 01:30 PM", icon: UtensilsCrossed, tone: "orange" },
+                  { labelKey: "dashboard.dinnerCount", label: t("Choviyar Count"), value: Math.round((stats.todaysVisitors ?? 0) * 0.4), time: "07:00 PM - 08:30 PM", icon: Moon, tone: "purple" },
+                  { labelKey: "dashboard.passesIssued", label: t("Passes Issued"), value: stats.todaysVisitors ?? 0, time: t("Today"), icon: ClipboardList, tone: "blue" },
                 ].map((c) => (
                   <div key={c.label} className="rounded-lg border border-border p-3">
                     <div className={`icon-chip ${c.tone} h-9 w-9 mb-2`}>
                       <c.icon className="h-4 w-4" />
                     </div>
-                    <div className="text-[11px] text-muted-foreground">{c.label}</div>
+                    <div className="text-[11px] text-muted-foreground font-semibold">{t(c.labelKey, c.label)}</div>
                     <div className="font-heading font-bold text-2xl mt-0.5 font-mono-num">{c.value}</div>
                     <div className="text-[10px] text-muted-foreground mt-1">{c.time}</div>
                   </div>
@@ -786,11 +790,11 @@ export default function DashboardPage() {
               </div>
             </SectionCard>
 
-            <SectionCard number="5" title="Event Management" viewAll viewAllTo="/events" testId="section-events">
+            <SectionCard number="5" title={t("dashboard.eventManagement", "Event Management")} viewAll viewAllTo="/events" testId="section-events">
               <div className="space-y-3">
                 {activeEvents.length === 0 ? (
                   <div className="text-center py-8 text-xs text-muted-foreground">
-                    No upcoming events scheduled.
+                    {t("dashboard.noEvents", "No upcoming events scheduled.")}
                   </div>
                 ) : (
                   activeEvents.map((e, i) => (
@@ -804,35 +808,35 @@ export default function DashboardPage() {
                         <div className="text-[11px] text-muted-foreground">{e.time}</div>
                       </div>
                       <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-orange-100 text-orange-700 shrink-0">
-                        Upcoming
+                        {t("Upcoming")}
                       </span>
                     </div>
                   ))
                 )}
               </div>
               <div className="flex gap-2 mt-4">
-                <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={() => navigate("/events")} data-testid="events-create-btn">
-                  <PlusCircle className="h-4 w-4 mr-1.5" /> Create Event
+                <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 font-bold" onClick={() => navigate("/events")} data-testid="events-create-btn">
+                  <PlusCircle className="h-4 w-4 mr-1.5" /> {t("action.add", "Create Event")}
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowReminderDialog(true)} data-testid="send-reminder-btn">
-                  <Send className="h-4 w-4 mr-1.5" /> Send Reminder
+                <Button size="sm" variant="outline" className="flex-1 font-bold" onClick={() => setShowReminderDialog(true)} data-testid="send-reminder-btn">
+                  <Send className="h-4 w-4 mr-1.5" /> {t("dashboard.sendReminder", "Send Reminder")}
                 </Button>
               </div>
             </SectionCard>
 
-            <SectionCard number="6" title="Volunteer Assignment" viewAll viewAllTo="/volunteers" testId="section-volunteers">
+            <SectionCard number="6" title={t("dashboard.volunteerAssignment", "Volunteer Assignment")} viewAll viewAllTo="/volunteers" testId="section-volunteers">
               {activeVolunteers.length === 0 ? (
                 <div className="text-center py-12 text-xs text-muted-foreground font-sans">
-                  No volunteers assigned today.
+                  {t("dashboard.noVolunteers", "No volunteers assigned today.")}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm min-w-[320px]">
                     <thead>
                       <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                        <th className="text-left font-semibold py-2">Volunteer</th>
-                        <th className="text-left font-semibold">Duty</th>
-                        <th className="text-right font-semibold">Status</th>
+                        <th className="text-left font-semibold py-2">{t("volunteers.volunteerRole", "Volunteer")}</th>
+                        <th className="text-left font-semibold">{t("field.role", "Duty")}</th>
+                        <th className="text-right font-semibold">{t("field.status", "Status")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -861,20 +865,20 @@ export default function DashboardPage() {
 
           {/* Row 3: Live Donations · Announcements · Quick Actions */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <SectionCard number="7" title="Live Donations Ledger" viewAll viewAllTo="/donations" testId="section-donations">
+            <SectionCard number="7" title={t("dashboard.liveDonationsLedger", "Live Donations Ledger")} viewAll viewAllTo="/donations" testId="section-donations">
               <div className="flex justify-between items-center mb-3">
                 <div>
-                  <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Today's Total</div>
+                  <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t("dashboard.todaysTotal", "Today's Total")}</div>
                   <div className="font-heading font-bold text-3xl text-foreground font-mono-num">{formatCurrency(stats.totalDonations ?? 0)}</div>
                   <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
-                    {stats.donationCount ?? 0} donation transactions
+                    {stats.donationCount ?? 0} {t("dashboard.donationTransactions", "donation transactions")}
                   </div>
                 </div>
               </div>
               <div className="h-32 -mx-2 mb-3">
                 {getDonationsTrend().length === 0 ? (
                   <div className="h-full flex items-center justify-center border border-dashed rounded text-xs text-muted-foreground">
-                    No verified donation stats available.
+                    {t("dashboard.noDonationStats", "No verified donation stats available.")}
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
@@ -894,11 +898,11 @@ export default function DashboardPage() {
                   </ResponsiveContainer>
                 )}
               </div>
-              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">Recent Donations</div>
+              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">{t("dashboard.recentDonations", "Recent Donations")}</div>
               <div className="space-y-1.5">
                 {recentDonorsList.length === 0 ? (
                   <div className="text-center py-4 text-xs text-muted-foreground">
-                    No recent donations verified.
+                    {t("dashboard.noRecentDonations", "No recent donations verified.")}
                   </div>
                 ) : (
                   recentDonorsList.slice(0, 4).map((d, i) => (
@@ -914,11 +918,11 @@ export default function DashboardPage() {
               </div>
             </SectionCard>
 
-            <SectionCard number="8" title="Announcements" viewAll viewAllTo="/announcements" testId="section-announcements">
+            <SectionCard number="8" title={t("dashboard.announcements", "Announcements")} viewAll viewAllTo="/announcements" testId="section-announcements">
               <div className="space-y-3">
                 {activeAnnouncements.length === 0 ? (
                   <div className="text-center py-8 text-xs text-muted-foreground">
-                    No active announcements found.
+                    {t("dashboard.noAnnouncements", "No active announcements found.")}
                   </div>
                 ) : (
                   activeAnnouncements.map((a, i) => (
@@ -937,15 +941,15 @@ export default function DashboardPage() {
               </div>
             </SectionCard>
 
-            <SectionCard number="9" title="Quick Actions" testId="section-quick-actions">
+            <SectionCard number="9" title={t("dashboard.quickActions", "Quick Actions")} testId="section-quick-actions">
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { icon: CalendarPlus, label: "Add New Booking", tone: "green", to: "/bookings" },
-                  { icon: HeartHandshake, label: "Add Donation", tone: "orange", to: "/donations" },
-                  { icon: Megaphone, label: "Send Announcement", tone: "purple", to: "/announcements" },
-                  { icon: Sun, label: "Add Event", tone: "blue", to: "/events" },
-                  { icon: Landmark, label: "Book Doli Service", tone: "orange", to: "/bookings" },
-                  { icon: BarChart3, label: "View Reports", tone: "purple", to: "/reports" },
+                  { icon: CalendarPlus, labelKey: "dashboard.addNewBooking", label: t("Add New Booking"), tone: "green", to: "/bookings" },
+                  { icon: HeartHandshake, labelKey: "dashboard.addDonation", label: t("Add Donation"), tone: "orange", to: "/donations" },
+                  { icon: Megaphone, labelKey: "dashboard.sendAnnouncement", label: t("Send Announcement"), tone: "purple", to: "/announcements" },
+                  { icon: Sun, labelKey: "dashboard.addEvent", label: t("Add Event"), tone: "blue", to: "/events" },
+                  { icon: Landmark, labelKey: "dashboard.bookDoliService", label: t("Book Doli Service"), tone: "orange", to: "/bookings" },
+                  { icon: BarChart3, labelKey: "dashboard.viewReports", label: t("View Reports"), tone: "purple", to: "/reports" },
                 ].map((q) => (
                   <button
                     key={q.label}
@@ -956,7 +960,7 @@ export default function DashboardPage() {
                     <div className={`icon-chip ${q.tone} h-10 w-10`}>
                       <q.icon className="h-4 w-4" />
                     </div>
-                    <div className="text-[11px] font-medium text-foreground leading-tight">{q.label}</div>
+                    <div className="text-[11px] font-medium text-foreground leading-tight">{t(q.labelKey, q.label)}</div>
                   </button>
                 ))}
               </div>

@@ -17,8 +17,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import TimePicker from "@/components/common/TimePicker";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function TrackingPage() {
+  const { t } = useLanguage();
   const [journeys, setJourneys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState({}); // monkId -> {lat,lng,battery,ts}
@@ -30,7 +32,7 @@ export default function TrackingPage() {
 
   const handleSaveEvent = async () => {
     if (!eventForm.time) {
-      toast.error("Time is required.");
+      toast.error(t("Time is required."));
       return;
     }
     setSavingEvent(true);
@@ -55,7 +57,7 @@ export default function TrackingPage() {
         timestamp: isoString,
       });
 
-      toast.success("Journey event logged successfully.");
+      toast.success(t("Journey event logged successfully."));
       setOpenDialog(false);
       
       const res = await api.get("/tracking/journeys/active");
@@ -91,17 +93,17 @@ export default function TrackingPage() {
   });
 
   const columns = [
-    { key: "monk", header: "Monk", render: (r) => (
+    { key: "monk", header: t("Monk"), render: (r) => (
       <div>
         <div className="font-medium">{r.monk?.dikshaName || "—"}</div>
         <div className="text-xs text-muted-foreground font-mono">{r.monk?.publicId}</div>
       </div>
     ) },
-    { key: "route", header: "Route", render: (r) => r.route?.name || "—" },
-    { key: "progress", header: "Progress", render: (r) => (
-      <span className="text-xs">Stop {r.currentStopIndex ?? 0} of {r.totalStops ?? 0}</span>
+    { key: "route", header: t("Route"), render: (r) => r.route?.name || "—" },
+    { key: "progress", header: t("Progress"), render: (r) => (
+      <span className="text-xs">{t("Stop")} {r.currentStopIndex ?? 0} of {r.totalStops ?? 0}</span>
     ) },
-    { key: "loc", header: "Last Location", render: (r) => {
+    { key: "loc", header: t("Last Location"), render: (r) => {
       const loc = locations[r.monk?.id] || locations[r.monkId];
       if (!loc) return <span className="text-xs text-muted-foreground">—</span>;
       return (
@@ -111,16 +113,16 @@ export default function TrackingPage() {
         </div>
       );
     } },
-    { key: "battery", header: "Battery", render: (r) => {
+    { key: "battery", header: t("Battery"), render: (r) => {
       const loc = locations[r.monk?.id] || locations[r.monkId];
       if (loc?.battery == null) return <span className="text-xs text-muted-foreground">—</span>;
       const tone = loc.battery < 20 ? "text-red-600" : loc.battery < 40 ? "text-orange-600" : "text-emerald-600";
       return <span className={`text-xs flex items-center gap-1 ${tone}`}><Battery className="h-3 w-3" /> {loc.battery}%</span>;
     } },
     { key: "eta", header: "ETA", render: (r) => <span className="text-xs">{formatDateTime(r.eta)}</span> },
-    { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status || "ONGOING"} /> },
+    { key: "status", header: t("Status"), render: (r) => <StatusBadge status={r.status || "ONGOING"} /> },
     {
-      key: "actions", header: "Actions",
+      key: "actions", header: t("Actions"),
       render: (r) => (
         <Button 
           size="sm" 
@@ -138,7 +140,7 @@ export default function TrackingPage() {
           }}
           className="h-8 text-xs font-semibold border-orange-200 text-orange-600 hover:bg-orange-50"
         >
-          Log Event
+          {t("Log Event")}
         </Button>
       )
     }
@@ -147,23 +149,23 @@ export default function TrackingPage() {
   return (
     <div data-testid="tracking-page">
       <PageHeader
-        title="Monk Tracking"
-        subtitle="Live GPS journeys, battery status, and safety alerts."
+        title={t("Monk Tracking")}
+        subtitle={t("Live GPS journeys, battery status, and safety alerts.")}
         actions={<LiveBadge connected={connected} testId="tracking-live-status" />}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <StatCard label="Active Journeys" value={journeys.length} icon={RouteIcon} tone="blue" testId="tracking-stat-active" />
-        <StatCard label="Locations tracked" value={Object.keys(locations).length} icon={Signal} tone="green" testId="tracking-stat-locations" />
-        <StatCard label="Recent alerts" value={alerts.length} icon={AlertTriangle} tone={alerts.length ? "red" : "default"} testId="tracking-stat-alerts" />
-        <StatCard label="Realtime" value={connected ? "Online" : "Offline"} tone={connected ? "green" : "default"} testId="tracking-stat-live" />
+        <StatCard label={t("Active Journeys")} value={journeys.length} icon={RouteIcon} tone="blue" testId="tracking-stat-active" />
+        <StatCard label={t("Locations tracked")} value={Object.keys(locations).length} icon={Signal} tone="green" testId="tracking-stat-locations" />
+        <StatCard label={t("Recent alerts")} value={alerts.length} icon={AlertTriangle} tone={alerts.length ? "red" : "default"} testId="tracking-stat-alerts" />
+        <StatCard label={t("Realtime")} value={connected ? "Online" : "Offline"} tone={connected ? "green" : "default"} testId="tracking-stat-live" />
       </div>
 
       {alerts.length > 0 && (
         <Card className="mb-4 p-4 border-red-200 bg-red-50/40" data-testid="tracking-alert-strip">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="h-4 w-4 text-red-600" />
-            <div className="text-sm font-semibold text-red-800">Live alerts</div>
+            <div className="text-sm font-semibold text-red-800">{t("Live alerts")}</div>
           </div>
           <div className="space-y-2">
             {alerts.slice(0, 5).map((a, i) => (
@@ -184,46 +186,46 @@ export default function TrackingPage() {
         rows={journeys}
         loading={loading}
         testId="tracking-journeys-table"
-        emptyTitle="No active journeys"
-        emptyDescription="Start a journey from the monk profile to see live tracking here."
+        emptyTitle={t("No active journeys")}
+        emptyDescription={t("Start a journey from the monk profile to see live tracking here.")}
       />
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Log Vihar Journey Event</DialogTitle>
+            <DialogTitle>{t("Log Vihar Journey Event")}</DialogTitle>
           </DialogHeader>
           {selectedJourney && (
             <div className="space-y-4 pt-2">
               <div className="text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg border">
-                <strong>Monk:</strong> {selectedJourney.monk?.dikshaName} ({selectedJourney.monk?.publicId})<br />
-                <strong>Route:</strong> {selectedJourney.route?.name}
+                <strong>{t("Monk:")}</strong> {selectedJourney.monk?.dikshaName} ({selectedJourney.monk?.publicId})<br />
+                <strong>{t("Route:")}</strong> {selectedJourney.route?.name}
               </div>
 
               <div>
-                <Label className="text-xs">Event Type *</Label>
+                <Label className="text-xs">{t("Event Type *")}</Label>
                 <select
                   className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none"
                   value={eventForm.type}
                   onChange={(e) => setEventForm({ ...eventForm, type: e.target.value })}
                 >
-                  <option value="ARRIVAL">Arrival at Stop</option>
-                  <option value="DEPARTURE">Departure from Stop</option>
-                  <option value="DELAY">Vihar Delay Alert</option>
-                  <option value="MANUAL_UPDATE">Location Checkpoint</option>
+                  <option value="ARRIVAL">{t("Arrival at Stop")}</option>
+                  <option value="DEPARTURE">{t("Departure from Stop")}</option>
+                  <option value="DELAY">{t("Vihar Delay Alert")}</option>
+                  <option value="MANUAL_UPDATE">{t("Location Checkpoint")}</option>
                 </select>
               </div>
 
               <div>
-                <Label className="text-xs">Select Stop / Checkpoint *</Label>
+                <Label className="text-xs">{t("Select Stop / Checkpoint *")}</Label>
                 <select
                   className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none"
                   value={eventForm.templeId}
                   onChange={(e) => setEventForm({ ...eventForm, templeId: e.target.value })}
                 >
-                  <option value="">Select Stop...</option>
+                  <option value="">{t("Select Stop...")}</option>
                   {(selectedJourney.route?.stops || []).map((stop, idx) => (
                     <option key={idx} value={stop.templeId || stop.templeName}>
-                      Stop {idx + 1}: {stop.templeName}
+                      {t("Stop")} {idx + 1}: {stop.templeName}
                     </option>
                   ))}
                 </select>
@@ -231,7 +233,7 @@ export default function TrackingPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">Event Date *</Label>
+                  <Label className="text-xs">{t("Event Date *")}</Label>
                   <Input
                     type="date"
                     className="mt-1 h-9"
@@ -240,7 +242,7 @@ export default function TrackingPage() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Event Time *</Label>
+                  <Label className="text-xs">{t("Event Time *")}</Label>
                   <TimePicker
                     value={eventForm.time}
                     onChange={(val) => setEventForm({ ...eventForm, time: val })}
@@ -250,24 +252,24 @@ export default function TrackingPage() {
               </div>
 
               <div>
-                <Label className="text-xs">Notes / Details (Optional)</Label>
+                <Label className="text-xs">{t("Notes / Details (Optional)")}</Label>
                 <Textarea
                   value={eventForm.note}
                   onChange={(e) => setEventForm({ ...eventForm, note: e.target.value })}
-                  placeholder="e.g. Arrived safely, taking rest..."
+                  placeholder={t("e.g. Arrived safely, taking rest...")}
                   rows={2}
                 />
               </div>
             </div>
           )}
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>{t("Cancel")}</Button>
             <Button 
               onClick={handleSaveEvent} 
               disabled={savingEvent} 
               className="bg-orange-600 hover:bg-orange-700 text-white font-bold"
             >
-              {savingEvent ? "Submitting..." : "Log Event"}
+              {savingEvent ? t("Submitting...") : t("Log Event")}
             </Button>
           </DialogFooter>
         </DialogContent>

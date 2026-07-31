@@ -36,7 +36,7 @@ export const NAV_SECTIONS = [
     items: [
       { to: "/temples", label: "Temples", icon: Landmark, moduleKey: "TEMPLES", testId: "nav-temples" },
       { to: "/jain-centers", label: "Jain Centres", icon: Building2, moduleKey: "JAIN_CENTERS", testId: "nav-jain-centers" },
-      { to: "/stanaks", label: "Stanaks", icon: HomeIcon, moduleKey: "TEMPLES", testId: "nav-stanaks" },
+      { to: "/stanaks", label: "Sthanaks", icon: HomeIcon, moduleKey: "TEMPLES", testId: "nav-stanaks" },
       { to: "/dharamshalas", label: "Dharamshalas", icon: Hotel, moduleKey: "DHARAMSHALAS", testId: "nav-dharamshalas" },
       { to: "/community-pages", label: "Community Pages", icon: Globe, moduleKey: "COMMUNITY_PAGES", testId: "nav-community-pages" },
     ],

@@ -1,10 +1,12 @@
 import { Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Small connection-status pill for realtime pages.
  */
 export function LiveBadge({ connected, testId = "live-badge", label }) {
+  const { t } = useLanguage();
   return (
     <div
       className={cn(
@@ -23,7 +25,7 @@ export function LiveBadge({ connected, testId = "live-badge", label }) {
         )}
       />
       {connected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-      {label || (connected ? "Live" : "Offline")}
+      {label || (connected ? t("Live") : t("Offline"))}
     </div>
   );
 }

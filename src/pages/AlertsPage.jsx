@@ -12,8 +12,10 @@ import { formatDateTime } from "@/lib/utils";
 import { StatCard } from "@/components/common/StatCard";
 import { useSocket } from "@/hooks/useSocket";
 import { LiveBadge } from "@/components/common/LiveBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function AlertsPage() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
@@ -41,7 +43,7 @@ export default function AlertsPage() {
   const resolve = async (id) => {
     try {
       await api.patch(`/alerts/${id}/resolve`);
-      toast.success("Alert resolved.");
+      toast.success(t("Alert resolved."));
       setReload((k) => k + 1);
     } catch (e) { toast.error(extractErrorMessage(e)); }
   };
@@ -51,32 +53,32 @@ export default function AlertsPage() {
   const warningCount = rows.filter((r) => r.severity === "WARNING").length;
 
   const columns = [
-    { key: "severity", header: "Severity", render: (r) => <StatusBadge status={r.severity || "WARNING"} /> },
-    { key: "type", header: "Type", render: (r) => <Badge variant="outline">{r.type}</Badge> },
-    { key: "message", header: "Message", render: (r) => <div className="max-w-md truncate">{r.message || "—"}</div> },
-    { key: "monk", header: "Monk / Device", render: (r) => r.monk?.dikshaName || r.device?.name || "—" },
-    { key: "at", header: "Raised", render: (r) => <span className="text-xs">{formatDateTime(r.createdAt)}</span> },
-    { key: "actions", header: "Actions", render: (r) => (
+    { key: "severity", header: t("Severity"), render: (r) => <StatusBadge status={r.severity || "WARNING"} /> },
+    { key: "type", header: t("Type"), render: (r) => <Badge variant="outline">{r.type}</Badge> },
+    { key: "message", header: t("Message"), render: (r) => <div className="max-w-md truncate">{r.message || "—"}</div> },
+    { key: "monk", header: t("Monk / Device"), render: (r) => r.monk?.dikshaName || r.device?.name || "—" },
+    { key: "at", header: t("Raised"), render: (r) => <span className="text-xs">{formatDateTime(r.createdAt)}</span> },
+    { key: "actions", header: t("Actions"), render: (r) => (
       !r.resolvedAt ? (
         <Button size="sm" variant="outline" onClick={() => resolve(r.id)} data-testid={`alert-resolve-${r.id}`}>
-          <Check className="h-3 w-3 mr-1" /> Resolve
+          <Check className="h-3 w-3 mr-1" /> {t("Resolve")}
         </Button>
-      ) : <span className="text-xs text-muted-foreground">Resolved</span>
+      ) : <span className="text-xs text-muted-foreground">{t("Resolved")}</span>
     ) },
   ];
 
   return (
     <div data-testid="alerts-page">
       <PageHeader
-        title="Alerts"
-        subtitle="SOS, offline, route delays and low-battery notifications from the field."
+        title={t("alerts.title", "Alerts")}
+        subtitle={t("SOS, offline, route delays and low-battery notifications from the field.")}
         actions={<LiveBadge connected={connected} testId="alerts-live-status" />}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-        <StatCard label="Critical" value={criticalCount} icon={ShieldAlert} tone="danger" />
-        <StatCard label="Warning" value={warningCount} icon={BellRing} tone="warning" />
-        <StatCard label="Total Active" value={rows.filter((r) => !r.resolvedAt).length} tone="default" />
+        <StatCard label={t("Critical")} value={criticalCount} icon={ShieldAlert} tone="danger" />
+        <StatCard label={t("Warning")} value={warningCount} icon={BellRing} tone="warning" />
+        <StatCard label={t("Total Active")} value={rows.filter((r) => !r.resolvedAt).length} tone="default" />
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="mb-4">
@@ -88,7 +90,7 @@ export default function AlertsPage() {
       </Tabs>
 
       <DataTable columns={columns} rows={filtered} loading={loading} testId="alerts-table"
-        emptyTitle="All clear" emptyDescription="No active alerts. Enjoy the calm." />
+        emptyTitle={t("All clear")} emptyDescription={t("No active alerts. Enjoy the calm.")} />
     </div>
   );
 }

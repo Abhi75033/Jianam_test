@@ -11,8 +11,10 @@ import { Receipt, Search, Download, FileText, ArrowLeftRight } from "lucide-reac
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ReceiptsPage() {
+  const { t } = useLanguage();
   const { isSuperAdmin, user } = useAuth();
   const orgId = user?.organizationIds?.[0];
   const [rows, setRows] = useState([]);
@@ -54,17 +56,17 @@ export default function ReceiptsPage() {
   };
 
   const columns = [
-    { key: "receiptNumber", header: "Receipt No.", render: (r) => <span className="font-mono font-bold text-orange-600">{r.receiptNumber}</span> },
-    { key: "donorName", header: "Donor", render: (r) => <span className="font-medium text-slate-800">{r.donorName}</span> },
-    { key: "amount", header: "Amount", render: (r) => <span className="font-semibold text-slate-900">{formatCurrency(r.amount)}</span> },
-    { key: "date", header: "Date", render: (r) => <span className="text-xs text-slate-500">{formatDateTime(r.date)}</span> },
-    { key: "paymentMethod", header: "Method", render: (r) => <Badge variant="outline">{r.paymentMethod}</Badge> },
+    { key: "receiptNumber", header: t("Receipt No."), render: (r) => <span className="font-mono font-bold text-orange-600">{r.receiptNumber}</span> },
+    { key: "donorName", header: t("Donor"), render: (r) => <span className="font-medium text-slate-800">{r.donorName}</span> },
+    { key: "amount", header: t("Amount"), render: (r) => <span className="font-semibold text-slate-900">{formatCurrency(r.amount)}</span> },
+    { key: "date", header: t("Date"), render: (r) => <span className="text-xs text-slate-500">{formatDateTime(r.date)}</span> },
+    { key: "paymentMethod", header: t("Method"), render: (r) => <Badge variant="outline">{r.paymentMethod}</Badge> },
     {
-      key: "actions", header: "Actions",
+      key: "actions", header: t("Actions"),
       render: (r) => (
         <div className="flex items-center gap-1.5">
           <Button size="sm" variant="outline" onClick={() => viewReceipt(r)}>
-            <FileText className="h-3.5 w-3.5 mr-1" /> View
+            <FileText className="h-3.5 w-3.5 mr-1" /> {t("View")}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => downloadReceiptPdf(r)}>
             <Download className="h-3.5 w-3.5" />
@@ -83,14 +85,14 @@ export default function ReceiptsPage() {
   return (
     <div data-testid="receipts-page">
       <PageHeader
-        title="Donation Receipts"
-        subtitle="Access and issue system-generated tax receipts and transaction confirmations."
+        title={t("Donation Receipts")}
+        subtitle={t("Access and issue system-generated tax receipts and transaction confirmations.")}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-        <StatCard label="Total Receipts Issued" value={rows.length} icon={Receipt} tone="warning" />
-        <StatCard label="Total Amount Confirmed" value={formatCurrency(totalAmount)} icon={ArrowLeftRight} tone="default" />
-        <StatCard label="Pending Receipts" value="0" icon={FileText} tone="info" />
+        <StatCard label={t("Total Receipts Issued")} value={rows.length} icon={Receipt} tone="warning" />
+        <StatCard label={t("Total Amount Confirmed")} value={formatCurrency(totalAmount)} icon={ArrowLeftRight} tone="default" />
+        <StatCard label={t("Pending Receipts")} value="0" icon={FileText} tone="info" />
       </div>
 
       <div className="mb-4 max-w-sm">
@@ -99,7 +101,7 @@ export default function ReceiptsPage() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by receipt number or donor name…"
+            placeholder={t("Search by receipt number or donor name…")}
             className="pl-9 bg-white"
           />
         </div>
@@ -110,21 +112,21 @@ export default function ReceiptsPage() {
         rows={filtered}
         loading={loading}
         testId="receipts-table"
-        emptyTitle="No receipts generated"
-        emptyDescription="Donation receipts will be listed here once manual/online donations are recorded."
+        emptyTitle={t("No receipts generated")}
+        emptyDescription={t("Donation receipts will be listed here once manual/online donations are recorded.")}
       />
 
       {/* View Receipt Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-heading">Receipt Details</DialogTitle>
+            <DialogTitle className="font-heading">{t("Receipt Details")}</DialogTitle>
           </DialogHeader>
           {selectedReceipt && (
             <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 space-y-4 font-sans">
               <div className="flex justify-between items-center border-b pb-2">
                 <div>
-                  <div className="text-xs text-slate-400 uppercase tracking-wider">Receipt Number</div>
+                  <div className="text-xs text-slate-400 uppercase tracking-wider">{t("Receipt Number")}</div>
                   <div className="text-lg font-bold font-mono text-orange-600">{selectedReceipt.receiptNumber}</div>
                 </div>
                 <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white">CONFIRMED</Badge>
@@ -132,26 +134,26 @@ export default function ReceiptsPage() {
 
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-slate-400 text-xs block">Donor Name</span>
+                  <span className="text-slate-400 text-xs block">{t("Donor Name")}</span>
                   <span className="font-semibold text-slate-800">{selectedReceipt.donorName}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 text-xs block">Date & Time</span>
+                  <span className="text-slate-400 text-xs block">{t("Date & Time")}</span>
                   <span className="text-slate-800">{formatDateTime(selectedReceipt.date)}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 text-xs block">Amount</span>
+                  <span className="text-slate-400 text-xs block">{t("Amount")}</span>
                   <span className="font-bold text-slate-800">{formatCurrency(selectedReceipt.amount)}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 text-xs block">Payment Mode</span>
+                  <span className="text-slate-400 text-xs block">{t("Payment Mode")}</span>
                   <span className="font-medium text-slate-800">{selectedReceipt.paymentMethod}</span>
                 </div>
               </div>
 
               <div className="border-t pt-3 flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setOpen(false)}>Close</Button>
-                <Button onClick={() => downloadReceiptPdf(selectedReceipt)}>Download PDF</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>{t("Close")}</Button>
+                <Button onClick={() => downloadReceiptPdf(selectedReceipt)}>{t("Download PDF")}</Button>
               </div>
             </div>
           )}

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const STATUS_STYLES = {
   // Booking
@@ -40,6 +41,7 @@ const STATUS_STYLES = {
 };
 
 export function StatusBadge({ status, className }) {
+  const { t } = useLanguage();
   if (!status) return <span className="text-muted-foreground text-xs">—</span>;
   const styles = STATUS_STYLES[status] || "bg-slate-100 text-slate-700 border-slate-200";
   return (
@@ -47,7 +49,7 @@ export function StatusBadge({ status, className }) {
       variant="outline"
       title={
         status === "PENDING_ACTIVATION"
-          ? "This member profile was created by an admin and is pending mobile activation by the user."
+          ? t("This member profile was created by an admin and is pending mobile activation by the user.")
           : undefined
       }
       className={cn(

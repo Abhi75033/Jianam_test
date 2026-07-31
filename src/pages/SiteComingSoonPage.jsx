@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Instagram, Facebook, Youtube, Send, Check, ShieldCheck } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /* ── Configuration ────────────────────────────────────────────────
    LAUNCH_DATE is a fixed moment, not a rolling offset — the number
@@ -52,6 +53,7 @@ function makeStars(count) {
 }
 
 export default function SiteComingSoonPage() {
+  const { t } = useLanguage();
   const [remaining, setRemaining] = useState(() => getRemaining(LAUNCH_DATE));
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | error | done
@@ -119,9 +121,9 @@ export default function SiteComingSoonPage() {
   };
 
   const cells = [
-    { value: remaining.days, label: "Days" },
-    { value: remaining.hours, label: "Hours" },
-    { value: remaining.minutes, label: "Minutes" },
+    { value: remaining.days, label: t("Days") },
+    { value: remaining.hours, label: t("Hours") },
+    { value: remaining.minutes, label: t("Minutes") },
   ];
 
   return (
@@ -319,10 +321,10 @@ export default function SiteComingSoonPage() {
           />
           <div className="flex items-center gap-2.5">
             <span className="font-brand text-2xl leading-none tracking-wide sm:text-[1.7rem]">
-              JiNANAM
+              {t("JiNANAM")}
             </span>
             <span className="rounded-full border border-white/25 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[.14em] text-white/70">
-              Beta
+              {t("Beta")}
             </span>
           </div>
         </div>
@@ -334,7 +336,7 @@ export default function SiteComingSoonPage() {
           className="group inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-md transition hover:border-white/40 hover:bg-white/20 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E0A93A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0812] sm:px-5"
         >
           <ShieldCheck className="h-4 w-4 opacity-80 transition group-hover:opacity-100" />
-          Admin
+          {t("Admin")}
         </a>
       </header>
 
@@ -344,22 +346,21 @@ export default function SiteComingSoonPage() {
           className="jn-rise mb-5 text-[11px] uppercase tracking-[.28em] text-white/75"
           style={{ animationDelay: ".02s" }}
         >
-          Serving the Jain community
+          {t("Serving the Jain community")}
         </div>
 
         <h1
           className="jn-rise font-brand text-[3.25rem] font-semibold leading-[1.05] tracking-tight sm:text-7xl lg:text-8xl"
           style={{ animationDelay: ".05s" }}
         >
-          Coming Soon
+          {t("Coming Soon")}
         </h1>
 
         <p
           className="jn-rise mt-5 max-w-xl text-base leading-relaxed text-white/65 sm:text-lg"
           style={{ animationDelay: ".15s" }}
         >
-          One platform for every temple, MS &amp; seva — bookings, donations,
-          events and community, beautifully organised.
+          {t("One platform for every temple, MS & seva — bookings, donations, events and community, beautifully organised.")}sed.
         </p>
 
         {/* Countdown */}
@@ -378,7 +379,7 @@ export default function SiteComingSoonPage() {
                     {String(c.value).padStart(2, "0")}
                   </span>
                   <span className="text-[10px] uppercase tracking-[.16em] text-white/55 sm:text-xs">
-                    {c.label}
+                    {t(c.label)}
                   </span>
                 </div>
               </div>
@@ -395,7 +396,7 @@ export default function SiteComingSoonPage() {
             htmlFor="notify-email"
             className="block text-sm text-white/65 sm:text-base"
           >
-            Get notified when we go live:
+            {t("Get notified when we go live:")}
           </label>
 
           <form
@@ -428,10 +429,10 @@ export default function SiteComingSoonPage() {
             >
               {status === "done" ? (
                 <>
-                  Subscribed <Check className="h-4 w-4" />
+                  {t("Subscribed")} <Check className="h-4 w-4" />
                 </>
               ) : (
-                "Subscribe"
+                t("Subscribe")
               )}
             </button>
           </form>
@@ -439,12 +440,12 @@ export default function SiteComingSoonPage() {
           <p className="mt-2.5 min-h-[1.25rem] text-xs" aria-live="polite">
             {status === "error" && (
               <span id="notify-error" className="text-red-300">
-                Please enter a valid email address.
+                {t("Please enter a valid email address.")}
               </span>
             )}
             {status === "done" && (
               <span className="text-[#E0A93A]">
-                Thank you — we'll be in touch when JiNANAM launches.
+                {t("Thank you — we'll be in touch when JiNANAM launches.")}
               </span>
             )}
           </p>
@@ -453,7 +454,7 @@ export default function SiteComingSoonPage() {
         {/* Contact */}
         <div className="jn-rise mt-9" style={{ animationDelay: ".45s" }}>
           <p className="text-sm text-white/55">
-            If you have any questions, please contact us at:
+            {t("If you have any questions, please contact us at:")}
           </p>
           <a
             href={`mailto:${CONTACT_EMAIL}`}
@@ -482,7 +483,7 @@ export default function SiteComingSoonPage() {
       </main>
 
       <footer className="relative z-10 pb-8 text-center text-xs text-white/40">
-        © {new Date().getFullYear()} JiNANAM Foundation. All rights reserved.
+        © {new Date().getFullYear()} {t("JiNANAM Foundation. All rights reserved.")}
       </footer>
     </div>
   );

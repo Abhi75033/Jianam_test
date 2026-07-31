@@ -45,6 +45,7 @@ import {
 } from "@/constants/dropdownOptions";
 import { formatDate, formatDateTime, formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const SPONSOR_CATEGORIES = [
   "Accommodation", "Meals", "Transport", "Medical", "Water", "Snacks",
@@ -63,6 +64,7 @@ const TOUR_TYPES = [
 ];
 
 export default function ToursPage() {
+  const { t } = useLanguage();
   const { canDo, user, isSuperAdmin } = useAuth();
   
   // States
@@ -155,7 +157,7 @@ export default function ToursPage() {
         setSelectedTour(active || items[0]);
       }
     } catch (e) {
-      toast.error("Failed to load yatra tours ledger");
+      toast.error(t("Failed to load yatra tours ledger"));
     } finally {
       setLoading(false);
     }
@@ -191,7 +193,7 @@ export default function ToursPage() {
       setBulkAttendance(attMap);
 
     } catch (e) {
-      toast.error("Failed to sync tour subdetails");
+      toast.error(t("Failed to sync tour subdetails"));
     }
   };
 
@@ -224,7 +226,7 @@ export default function ToursPage() {
       };
 
       await api.post("/tours", payload);
-      toast.success("New 99/108 Yatra Tour published successfully!");
+      toast.success(t("New 99/108 Yatra Tour published successfully!"));
       setCreateTourOpen(false);
       setReloadKey(k => k + 1);
       resetTourForm();
@@ -254,7 +256,7 @@ export default function ToursPage() {
         description: sponsorDesc,
         amount: sponsorAmount ? Number(sponsorAmount) : undefined
       });
-      toast.success("Sponsor onboarded for the tour.");
+      toast.success(t("Sponsor onboarded for the tour."));
       setSponsorsOpen(false);
       setSponsorName(""); setSponsorMemberId(""); setSponsorAmount(""); setSponsorDesc("");
       setReloadKey(k => k + 1);
@@ -273,7 +275,7 @@ export default function ToursPage() {
         memberPublicId,
         parentMemberPublicId: parentPublicId || undefined
       });
-      toast.success("Participant enrolled in yatra group.");
+      toast.success(t("Participant enrolled in yatra group."));
       setAddParticipantOpen(false);
       setMemberPublicId("");
       setParentPublicId("");
@@ -298,7 +300,7 @@ export default function ToursPage() {
         emergencyContact: { phone: emergencyPhone },
         specialInstructions
       });
-      toast.success("Medical profile updated successfully.");
+      toast.success(t("Medical profile updated successfully."));
       setMedicalOpen(false);
       setDetailParticipant(null);
       setReloadKey(k => k + 1);
@@ -325,7 +327,7 @@ export default function ToursPage() {
         });
       }
 
-      toast.success("Accommodation building location configured.");
+      toast.success(t("Accommodation building location configured."));
       setAccommodationOpen(false);
       setLocName(""); setRoomName("");
       setReloadKey(k => k + 1);
@@ -342,7 +344,7 @@ export default function ToursPage() {
       await api.post(`/tours/participants/${assignParticipant.id}/room`, {
         tourRoomId: assignRoomId
       });
-      toast.success("Room assigned successfully!");
+      toast.success(t("Room assigned successfully!"));
       setAssignParticipant(null);
       setAssignRoomId("");
       setReloadKey(k => k + 1);
@@ -367,7 +369,7 @@ export default function ToursPage() {
           ]);
         })
       );
-      toast.success("Bulk progress and attendance checks saved!");
+      toast.success(t("Bulk progress and attendance checks saved!"));
       setBulkProgressOpen(false);
       setReloadKey(k => k + 1);
     } catch (err) {
@@ -381,7 +383,7 @@ export default function ToursPage() {
     if (!selectedTour || !commMsg) return;
     try {
       await api.post(`/tours/${selectedTour.id}/communications`, { message: commMsg });
-      toast.success("Yatra announcement broadcasted to members and parents.");
+      toast.success(t("Yatra announcement broadcasted to members and parents."));
       setMessageOpen(false);
       setCommMsg("");
       setReloadKey(k => k + 1);
@@ -399,7 +401,7 @@ export default function ToursPage() {
         date: new Date(schedDate).toISOString(),
         scheduleText: schedText
       });
-      toast.success("Daily itinerary schedule published.");
+      toast.success(t("Daily itinerary schedule published."));
       setScheduleOpen(false);
       setSchedText("");
       setReloadKey(k => k + 1);
@@ -421,9 +423,9 @@ export default function ToursPage() {
       a.href = URL.createObjectURL(blob);
       a.download = `tour-registry-${selectedTour.name}-${new Date().toISOString().slice(0, 10)}.${format === "xlsx" ? "xlsx" : "csv"}`;
       a.click();
-      toast.success("Report downloaded.");
+      toast.success(t("Report downloaded."));
     } catch (e) {
-      toast.error("Export failed");
+      toast.error(t("Export failed"));
     }
   };
 
@@ -433,10 +435,10 @@ export default function ToursPage() {
         <div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-6 w-6 text-amber-200" />
-            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">99 Tour Management</h1>
+            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">{t("99 Tour Management")}</h1>
           </div>
           <p className="text-orange-100 text-xs mt-1 max-w-lg">
-            Track daily Jatra milestones (99/108 targets), allocate roommates, schedule check-ins, and broadcast communications.
+            {t("Track daily Jatra milestones (99/108 targets), allocate roommates, schedule check-ins, and broadcast communications.")}
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 flex-wrap">
@@ -445,7 +447,7 @@ export default function ToursPage() {
               onClick={() => { resetTourForm(); setCreateTourOpen(true); }}
               className="bg-white hover:bg-orange-50 text-orange-700 font-bold h-10 px-5 shadow-md border border-white"
             >
-              <Plus className="h-4 w-4 mr-2" /> Create 99 Tour
+              <Plus className="h-4 w-4 mr-2" /> {t("Create 99 Tour")}
             </Button>
           )}
         </div>
@@ -454,7 +456,7 @@ export default function ToursPage() {
       {/* Select active tour selector */}
       <div className="flex justify-between items-center bg-slate-50 p-4 border rounded-xl flex-wrap gap-3">
         <div className="flex items-center gap-2.5">
-          <Label className="font-bold text-slate-800 text-xs uppercase tracking-wider">Active 99 Tour Yatra:</Label>
+          <Label className="font-bold text-slate-800 text-xs uppercase tracking-wider">{t("Active 99 Tour Yatra:")}</Label>
           <select
             value={selectedTour?.id || ""}
             onChange={(e) => setSelectedTour(tours.find(t => t.id === e.target.value))}
@@ -468,16 +470,16 @@ export default function ToursPage() {
 
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => setSponsorsOpen(true)} className="h-8 text-[11px] font-bold">
-            <DollarSign className="h-3.5 w-3.5 mr-1" /> Onboard Sponsors
+            <DollarSign className="h-3.5 w-3.5 mr-1" /> {t("Onboard Sponsors")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => setAccommodationOpen(true)} className="h-8 text-[11px] font-bold">
-            <Building className="h-3.5 w-3.5 mr-1" /> Accommodation Setup
+            <Building className="h-3.5 w-3.5 mr-1" /> {t("Accommodation Setup")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => setBulkProgressOpen(true)} className="h-8 text-[11px] font-bold">
-            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Bulk Daily Jatra
+            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> {t("Bulk Daily Jatra")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => setScheduleOpen(true)} className="h-8 text-[11px] font-bold">
-            <Calendar className="h-3.5 w-3.5 mr-1" /> Daily Schedule
+            <Calendar className="h-3.5 w-3.5 mr-1" /> {t("Daily Schedule")}
           </Button>
         </div>
       </div>
@@ -487,7 +489,7 @@ export default function ToursPage() {
         <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl text-amber-900 font-bold text-xs flex items-center gap-2.5 shadow-sm">
           <span className="text-base">🪔</span>
           <div>
-            <span>This 99 Yatra is being organized under the guidance of: </span>
+            <span>{t("This 99 Yatra is being organized under the guidance of:")} </span>
             <span className="text-orange-850 font-black">{selectedTour.primaryMonk?.dikshaName || selectedTour.monkGroupName || "Pujya Gurudev"}</span>
             {selectedTour.monkGroupName && <span className="text-slate-600 font-semibold"> ({selectedTour.monkGroupName})</span>}
           </div>
@@ -496,11 +498,11 @@ export default function ToursPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4 bg-slate-100 p-1 rounded-xl flex-wrap">
-          <TabsTrigger value="admin_tours" className="px-4 py-2 font-bold text-xs rounded-lg">🛡️ Tour Control Ledger</TabsTrigger>
-          <TabsTrigger value="accommodation_control" className="px-4 py-2 font-bold text-xs rounded-lg">🏨 Accommodation & Rooms</TabsTrigger>
-          <TabsTrigger value="bulk_jatra" className="px-4 py-2 font-bold text-xs rounded-lg">✍️ Bulk Daily Jatra Entry</TabsTrigger>
-          <TabsTrigger value="announcements_timeline" className="px-4 py-2 font-bold text-xs rounded-lg">📢 Communications & Schedule</TabsTrigger>
-          <TabsTrigger value="reports" className="px-4 py-2 font-bold text-xs rounded-lg">📊 Reports & Exports</TabsTrigger>
+          <TabsTrigger value="admin_tours" className="px-4 py-2 font-bold text-xs rounded-lg">{t("🛡️ Tour Control Ledger")}</TabsTrigger>
+          <TabsTrigger value="accommodation_control" className="px-4 py-2 font-bold text-xs rounded-lg">{t("🏨 Accommodation & Rooms")}</TabsTrigger>
+          <TabsTrigger value="bulk_jatra" className="px-4 py-2 font-bold text-xs rounded-lg">{t("✍️ Bulk Daily Jatra Entry")}</TabsTrigger>
+          <TabsTrigger value="announcements_timeline" className="px-4 py-2 font-bold text-xs rounded-lg">{t("📢 Communications & Schedule")}</TabsTrigger>
+          <TabsTrigger value="reports" className="px-4 py-2 font-bold text-xs rounded-lg">{t("📊 Reports & Exports")}</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Tour Dashboard */}
@@ -509,14 +511,14 @@ export default function ToursPage() {
             <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
               <div className="p-3 bg-orange-50 text-orange-700 rounded-lg"><Users className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Total Members Enrolled</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Total Members Enrolled")}</div>
                 <div className="text-xl font-black text-slate-805">{participants.length}</div>
               </div>
             </Card>
             <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
               <div className="p-3 bg-emerald-50 text-emerald-700 rounded-lg"><CheckCircle2 className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Completed 100% Target</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Completed 100% Target")}</div>
                 <div className="text-xl font-black text-slate-805">
                   {participants.filter(p => (p.cumulativeCount ?? 0) >= (selectedTour?.jatraTarget ?? 99)).length}
                 </div>
@@ -525,7 +527,7 @@ export default function ToursPage() {
             <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
               <div className="p-3 bg-rose-50 text-rose-700 rounded-lg"><Heart className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Medical Pending Forms</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Medical Pending Forms")}</div>
                 <div className="text-xl font-black text-rose-750">
                   {participants.filter(p => !p.medicalComplete).length}
                 </div>
@@ -534,9 +536,9 @@ export default function ToursPage() {
             <Card className="p-4 bg-white border rounded-xl shadow-sm flex items-center gap-3">
               <div className="p-3 bg-indigo-50 text-indigo-700 rounded-lg"><Download className="h-5 w-5" /></div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Reports Exports</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Reports Exports")}</div>
                 <div className="flex gap-1.5 mt-1">
-                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleExportReports("xlsx")}>Excel</Button>
+                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleExportReports("xlsx")}>{t("Excel")}</Button>
                   <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleExportReports("csv")}>CSV</Button>
                 </div>
               </div>
@@ -546,12 +548,12 @@ export default function ToursPage() {
           <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <div>
-                <h3 className="font-bold text-sm text-slate-800">Yatra Participants Progress</h3>
-                <p className="text-[11px] text-slate-400">Add members using Member ID, link parents, track daily Jatra milestones, and print completion certificates.</p>
+                <h3 className="font-bold text-sm text-slate-800">{t("Yatra Participants Progress")}</h3>
+                <p className="text-[11px] text-slate-400">{t("Add members using Member ID, link parents, track daily Jatra milestones, and print completion certificates.")}</p>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9 text-xs" onClick={() => setAddParticipantOpen(true)}>
-                  <Plus className="h-4 w-4 mr-1" /> Add Member
+                  <Plus className="h-4 w-4 mr-1" /> {t("Add Member")}
                 </Button>
               </div>
             </div>
@@ -560,7 +562,7 @@ export default function ToursPage() {
               columns={[
                 {
                   key: "member",
-                  header: "Participant Name",
+                  header: t("Participant Name"),
                   render: (r) => (
                     <div>
                       <div className="font-bold text-slate-805 text-xs">{r.member?.fullName}</div>
@@ -568,43 +570,43 @@ export default function ToursPage() {
                     </div>
                   )
                 },
-                { key: "gender", header: "Gender", render: (r) => <span className="text-slate-600 text-xs font-semibold capitalize">{r.member?.gender?.toLowerCase() || "—"}</span> },
+                { key: "gender", header: t("Gender"), render: (r) => <span className="text-slate-600 text-xs font-semibold capitalize">{r.member?.gender?.toLowerCase() || "—"}</span> },
                 {
                   key: "progress",
-                  header: "Progress Target",
+                  header: t("Progress Target"),
                   render: (r) => (
                     <div className="space-y-1">
-                      <div className="text-xs font-bold text-slate-700 font-mono-num">{r.cumulativeCount ?? 0} / {selectedTour?.jatraTarget ?? 99} Jatras</div>
+                      <div className="text-xs font-bold text-slate-700 font-mono-num">{r.cumulativeCount ?? 0} / {selectedTour?.jatraTarget ?? 99} {t("Jatras")}</div>
                       <div className="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
                         <div className="h-full bg-emerald-500 transition-all" style={{ width: `${Math.min(Math.round(((r.cumulativeCount ?? 0) / (selectedTour?.jatraTarget ?? 99)) * 100), 100)}%` }}></div>
                       </div>
                     </div>
                   )
                 },
-                { key: "room", header: "Assigned Room", render: (r) => <Badge variant="secondary" className="text-[10px]">{r.room?.name || "Unallocated"}</Badge> },
+                { key: "room", header: t("Assigned Room"), render: (r) => <Badge variant="secondary" className="text-[10px]">{r.room?.name || "Unallocated"}</Badge> },
                 {
                   key: "med",
-                  header: "Medical Form",
+                  header: t("Medical Form"),
                   render: (r) => (
                     <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => { setDetailParticipant(r); setMedicalOpen(true); }}>
-                      {r.medicalComplete ? "✅ Complete (Update)" : "⚠️ Pending"}
+                      {r.medicalComplete ? t("✅ Complete (Update)") : t("⚠️ Pending")}
                     </Button>
                   )
                 },
                 {
                   key: "actions",
-                  header: "Actions",
+                  header: t("Actions"),
                   render: (r) => (
                     <div className="flex gap-1">
                       {r.cumulativeCount >= (selectedTour?.jatraTarget ?? 99) && (
                         <a href={`${API_BASE}/tours/${selectedTour.id}/participants/${r.id}/certificate?token=${localStorage.getItem("jinanam_access_token")}`} target="_blank" rel="noreferrer">
                           <Button size="sm" variant="outline" className="h-7 text-[10px] bg-amber-50 text-amber-700 font-bold border-amber-200">
-                            🎓 Certificate
+                            {t("🎓 Certificate")}
                           </Button>
                         </a>
                       )}
                       <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => { setAssignParticipant(r); setActiveTab("accommodation_control"); }}>
-                        Room Assign
+                        {t("Room Assign")}
                       </Button>
                     </div>
                   )
@@ -612,8 +614,8 @@ export default function ToursPage() {
               ]}
               rows={participants}
               loading={loading}
-              emptyTitle="No participants enrolled"
-              emptyDescription="Select Add Member above to register JiNANAM devotees."
+              emptyTitle={t("No participants enrolled")}
+              emptyDescription={t("Select Add Member above to register JiNANAM devotees.")}
             />
           </Card>
         </TabsContent>
@@ -622,22 +624,22 @@ export default function ToursPage() {
         <TabsContent value="accommodation_control" className="space-y-4">
           <div className="grid grid-cols-12 gap-5">
             <Card className="col-span-12 md:col-span-4 p-4 bg-white border rounded-xl shadow-sm space-y-4">
-              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">Rooms & Buildings Occupancy</h3>
+              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">{t("Rooms & Buildings Occupancy")}</h3>
               <div className="space-y-2">
                 {occupancyList.length === 0 ? (
-                  <div className="text-slate-400 text-center py-4 text-xs">No rooms configured. Select Accommodation Setup above to onboard rooms.</div>
+                  <div className="text-slate-400 text-center py-4 text-xs">{t("No rooms configured. Select Accommodation Setup above to onboard rooms.")}</div>
                 ) : (
                   occupancyList.map((loc, idx) => (
                     <div key={idx} className="p-3 rounded-lg border bg-slate-50/50 space-y-2 text-xs">
                       <div className="font-bold text-slate-800 flex justify-between items-center">
                         <span>🏢 {loc.location}</span>
-                        <Badge variant="outline" className="text-[9px] font-mono-num">{loc.rooms?.length ?? 0} Rooms</Badge>
+                        <Badge variant="outline" className="text-[9px] font-mono-num">{loc.rooms?.length ?? 0} {t("Rooms")}</Badge>
                       </div>
                       <div className="space-y-1 pt-1.5 border-t">
                         {(loc.rooms || []).map((room, rIdx) => (
                           <div key={rIdx} className="flex justify-between items-center text-[11px] text-slate-650">
-                            <span>Room {room.name}</span>
-                            <span className="font-bold font-mono-num">{room.occupied ?? 0} / {room.capacity} beds</span>
+                            <span>{t("Room")} {room.name}</span>
+                            <span className="font-bold font-mono-num">{room.occupied ?? 0} / {room.capacity} {t("beds")}</span>
                           </div>
                         ))}
                       </div>
@@ -648,13 +650,13 @@ export default function ToursPage() {
             </Card>
 
             <Card className="col-span-12 md:col-span-8 p-4 bg-white border rounded-xl shadow-sm space-y-4">
-              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">Active Room Assignments</h3>
+              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">{t("Active Room Assignments")}</h3>
               {assignParticipant && (
                 <form onSubmit={handleAssignRoom} className="p-3 bg-amber-50/40 border border-amber-200 rounded-lg space-y-3 text-xs">
-                  <div className="font-bold text-slate-800">Assign Room to: {assignParticipant.member?.fullName}</div>
+                  <div className="font-bold text-slate-800">{t("Assign Room to:")} {assignParticipant.member?.fullName}</div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-[10px] uppercase font-bold text-slate-400">Select Room *</Label>
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Select Room *")}</Label>
                       <SearchableSelect
                         value={assignRoomId}
                         onValueChange={setAssignRoomId}
@@ -662,13 +664,13 @@ export default function ToursPage() {
                           value: r.id,
                           label: `${loc.location} — Room ${r.name} (${r.occupied}/${r.capacity} beds)`
                         })))}
-                        placeholder="Choose Room"
-                        searchPlaceholder="Search rooms…"
+                        placeholder={t("Choose Room")}
+                        searchPlaceholder={t("Search rooms…")}
                       />
                     </div>
                     <div className="flex items-end pb-1">
                       <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">
-                        Confirm Room Assignment
+                        {t("Confirm Room Assignment")}
                       </Button>
                     </div>
                   </div>
@@ -677,19 +679,19 @@ export default function ToursPage() {
 
               <DataTable
                 columns={[
-                  { key: "member", header: "Member", render: (r) => <span className="font-semibold text-slate-700">{r.member?.fullName}</span> },
-                  { key: "room", header: "Current Assigned Room", render: (r) => <Badge variant="secondary">{r.room?.name || "Unallocated"}</Badge> },
-                  { key: "building", header: "Building Location", render: (r) => <span className="text-slate-500 font-medium">{r.room?.location?.name || "—"}</span> },
+                  { key: "member", header: t("Member"), render: (r) => <span className="font-semibold text-slate-700">{r.member?.fullName}</span> },
+                  { key: "room", header: t("Current Assigned Room"), render: (r) => <Badge variant="secondary">{r.room?.name || "Unallocated"}</Badge> },
+                  { key: "building", header: t("Building Location"), render: (r) => <span className="text-slate-500 font-medium">{r.room?.location?.name || "—"}</span> },
                   {
                     key: "capacity",
-                    header: "Room capacity",
-                    render: (r) => r.room ? <span className="font-mono-num">{r.room.occupancy ?? 0} / {r.room.capacity} beds</span> : "—"
+                    header: t("Room capacity"),
+                    render: (r) => r.room ? <span className="font-mono-num">{r.room.occupancy ?? 0} / {r.room.capacity} {t("beds")}</span> : "—"
                   }
                 ]}
                 rows={participants}
                 loading={loading}
-                emptyTitle="No room layout list found"
-                emptyDescription="Assign rooms to yatra participants."
+                emptyTitle={t("No room layout list found")}
+                emptyDescription={t("Assign rooms to yatra participants.")}
               />
             </Card>
           </div>
@@ -698,10 +700,10 @@ export default function ToursPage() {
         {/* Tab 3: Announcements Timeline */}
         <TabsContent value="announcements_timeline" className="space-y-4">
           <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
-            <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">Sangh Announcements & Schedule timeline</h3>
+            <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">{t("Sangh Announcements & Schedule timeline")}</h3>
             <div className="space-y-4 max-w-xl">
               {communications.length === 0 ? (
-                <div className="text-slate-400 text-center py-8 text-xs">No announcements broadcasted. Select Broadcast Announcement above to publish.</div>
+                <div className="text-slate-400 text-center py-8 text-xs">{t("No announcements broadcasted. Select Broadcast Announcement above to publish.")}</div>
               ) : (
                 communications.map((comm, idx) => (
                   <div key={idx} className="flex gap-3 text-xs border-l-2 border-orange-500 pl-4 py-1.5 relative">
@@ -722,17 +724,17 @@ export default function ToursPage() {
           <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <div>
-                <h3 className="font-bold text-sm text-slate-800">✍️ Single-Screen Bulk Daily Jatra Entry</h3>
-                <p className="text-[11px] text-slate-400">Enter today's count for each participant. Cumulative totals recalculate automatically.</p>
+                <h3 className="font-bold text-sm text-slate-800">{t("✍️ Single-Screen Bulk Daily Jatra Entry")}</h3>
+                <p className="text-[11px] text-slate-400">{t("Enter today's count for each participant. Cumulative totals recalculate automatically.")}</p>
               </div>
               <Button onClick={handleBulkDailyProgress} className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9 text-xs">
-                Save All Daily Entries
+                {t("Save All Daily Entries")}
               </Button>
             </div>
 
             <div className="space-y-3">
               {participants.length === 0 ? (
-                <div className="text-slate-400 text-center py-8 text-xs">No participants enrolled in this tour.</div>
+                <div className="text-slate-400 text-center py-8 text-xs">{t("No participants enrolled in this tour.")}</div>
               ) : (
                 participants.map((p) => {
                   const currentCount = bulkJatraCounts[p.id] ?? 0;
@@ -750,11 +752,11 @@ export default function ToursPage() {
                           <Badge variant="secondary" className="text-[9px]">{p.room?.name || "Unallocated Room"}</Badge>
                         </div>
                         <div className="text-[10px] text-slate-500 flex items-center gap-2">
-                          <span>Previous Total: <b>{currentTotal}</b></span>
+                          <span>{t("Previous Total:")} <b>{currentTotal}</b></span>
                           <span>→</span>
-                          <span>Today: <b>+{currentCount}</b></span>
+                          <span>{t("Today:")} <b>+{currentCount}</b></span>
                           <span>→</span>
-                          <span className="text-emerald-700 font-black">New Total: {newTotal} / {target} ({progressPct}%)</span>
+                          <span className="text-emerald-700 font-black">{t("New Total:")} {newTotal} / {target} ({progressPct}%)</span>
                         </div>
                       </div>
 
@@ -795,11 +797,11 @@ export default function ToursPage() {
                           value={bulkAttendance[p.id] ?? "PRESENT"}
                           onValueChange={(val) => setBulkAttendance(prev => ({ ...prev, [p.id]: val }))}
                           options={[
-                            { value: "PRESENT", label: "Present" },
-                            { value: "ABSENT", label: "Absent" },
-                            { value: "NOT_WELL", label: "Not Well" },
+                            { value: "PRESENT", label: t("Present") },
+                            { value: "ABSENT", label: t("Absent") },
+                            { value: "NOT_WELL", label: t("Not Well") },
                           ]}
-                          placeholder="Status"
+                          placeholder={t("Status")}
                           className="w-28 text-xs"
                         />
                       </div>
@@ -815,21 +817,21 @@ export default function ToursPage() {
         <TabsContent value="reports" className="space-y-4">
           <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
             <div>
-              <h3 className="font-bold text-sm text-slate-800">📊 99 Yatra Tour Reports & Export Engine</h3>
-              <p className="text-[11px] text-slate-400">Download formatted PDF, Excel (XLSX), and CSV reports with JiNANAM branding. Reports remain available permanently.</p>
+              <h3 className="font-bold text-sm text-slate-800">{t("📊 99 Yatra Tour Reports & Export Engine")}</h3>
+              <p className="text-[11px] text-slate-400">{t("Download formatted PDF, Excel (XLSX), and CSV reports with JiNANAM branding. Reports remain available permanently.")}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {[
-                { title: "1. Tour Summary Report", desc: "Overview of dates, monk guidance, duration, and target counts.", type: "summary" },
-                { title: "2. Member Participant Report", desc: "Enrolled devotees, age, gender, emergency contacts, parent links.", type: "member" },
-                { title: "3. Parent Contact Report", desc: "Linked parents, mobile numbers, relationship, read-only status.", type: "parent" },
-                { title: "4. Accommodation Report", desc: "Buildings, rooms, capacity, occupancy, room change audit log.", type: "accommodation" },
-                { title: "5. Daily Jatra Report", desc: "Day-wise daily counts, cumulative totals, attendance status.", type: "jatra" },
-                { title: "6. Communication Report", desc: "Chronological log of all broadcasted yatra announcements.", type: "communication" },
-                { title: "7. Sponsor Ledger Report", desc: "Sponsors list, categories (Meals, Water, Medical, etc.), amounts.", type: "sponsor" },
-                { title: "8. Medical Intake Report", desc: "Blood group, allergies, medications (Admin Restricted).", type: "medical" },
-                { title: "9. Certificate Audit Report", desc: "100% target achievers, completion dates, QR verification tokens.", type: "certificate" },
+                { title: t("1. Tour Summary Report"), desc: t("Overview of dates, monk guidance, duration, and target counts."), type: "summary" },
+                { title: t("2. Member Participant Report"), desc: t("Enrolled devotees, age, gender, emergency contacts, parent links."), type: "member" },
+                { title: t("3. Parent Contact Report"), desc: t("Linked parents, mobile numbers, relationship, read-only status."), type: "parent" },
+                { title: t("4. Accommodation Report"), desc: t("Buildings, rooms, capacity, occupancy, room change audit log."), type: "accommodation" },
+                { title: t("5. Daily Jatra Report"), desc: t("Day-wise daily counts, cumulative totals, attendance status."), type: "jatra" },
+                { title: t("6. Communication Report"), desc: t("Chronological log of all broadcasted yatra announcements."), type: "communication" },
+                { title: t("7. Sponsor Ledger Report"), desc: t("Sponsors list, categories (Meals, Water, Medical, etc.), amounts."), type: "sponsor" },
+                { title: t("8. Medical Intake Report"), desc: t("Blood group, allergies, medications (Admin Restricted)."), type: "medical" },
+                { title: t("9. Certificate Audit Report"), desc: t("100% target achievers, completion dates, QR verification tokens."), type: "certificate" },
               ].map((rep, idx) => (
                 <Card key={idx} className="p-3.5 rounded-xl border bg-slate-50/50 flex flex-col justify-between space-y-3">
                   <div>
@@ -838,7 +840,7 @@ export default function ToursPage() {
                   </div>
                   <div className="flex gap-1.5 pt-2 border-t">
                     <Button size="sm" variant="outline" className="h-6 text-[10px] flex-1" onClick={() => handleExportTourReport(rep.type, "pdf")}>PDF</Button>
-                    <Button size="sm" variant="outline" className="h-6 text-[10px] flex-1" onClick={() => handleExportTourReport(rep.type, "xlsx")}>Excel</Button>
+                    <Button size="sm" variant="outline" className="h-6 text-[10px] flex-1" onClick={() => handleExportTourReport(rep.type, "xlsx")}>{t("Excel")}</Button>
                     <Button size="sm" variant="outline" className="h-6 text-[10px] flex-1" onClick={() => handleExportTourReport(rep.type, "csv")}>CSV</Button>
                   </div>
                 </Card>
@@ -853,22 +855,22 @@ export default function ToursPage() {
         <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto bg-white text-xs rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-heading font-black text-slate-850">
-              <Plus className="h-5 w-5 text-orange-655" /> Configure 99 Yatra Campaign
+              <Plus className="h-5 w-5 text-orange-655" /> {t("Configure 99 Yatra Campaign")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateTour} className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Yatra Tour Name *</Label>
-                <Input value={tourName} onChange={(e) => setTourName(e.target.value)} placeholder="e.g. Palitana 99 Kartik Tour" required className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Yatra Tour Name *")}</Label>
+                <Input value={tourName} onChange={(e) => setTourName(e.target.value)} placeholder={t("e.g. Palitana 99 Kartik Tour")} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Tour Type *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Tour Type *")}</Label>
                 <SearchableSelect
                   value={tourType}
                   onValueChange={setTourType}
                   options={TOUR_TYPES.map(t => ({ value: t, label: t }))}
-                  placeholder="Select Tour Type"
+                  placeholder={t("Select Tour Type")}
                   className="mt-1"
                 />
               </div>
@@ -876,67 +878,67 @@ export default function ToursPage() {
 
             {tourType === "Other" && (
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Specify Other Tour Type *</Label>
-                <Input value={tourTypeOther} onChange={(e) => setTourTypeOther(e.target.value)} placeholder="e.g. Custom 99 Yatra" required className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Specify Other Tour Type *")}</Label>
+                <Input value={tourTypeOther} onChange={(e) => setTourTypeOther(e.target.value)} placeholder={t("e.g. Custom 99 Yatra")} required className="h-9 mt-1" />
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Start Date *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Start Date *")}</Label>
                 <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">End Date *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("End Date *")}</Label>
                 <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required className="h-9 mt-1" />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Jatra Target *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Jatra Target *")}</Label>
                 <Input type="number" min={1} value={jatraTarget} onChange={(e) => setJatraTarget(e.target.value)} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Primary Monk ID *</Label>
-                <Input value={primaryMonkId} onChange={(e) => setPrimaryMonkId(e.target.value)} placeholder="Search MS ID" required className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Primary Monk ID *")}</Label>
+                <Input value={primaryMonkId} onChange={(e) => setPrimaryMonkId(e.target.value)} placeholder={t("Search MS ID")} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Monk Group Name</Label>
-                <Input value={monkGroupName} onChange={(e) => setMonkGroupName(e.target.value)} placeholder="e.g. Acharya Shri Group" className="h-9 mt-1" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Group Leader</Label>
-                <Input value={monkGroupLeader} onChange={(e) => setMonkGroupLeader(e.target.value)} placeholder="Leader Name" className="h-9 mt-1" />
-              </div>
-              <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Supporting Monks (comma separated)</Label>
-                <Input value={supportingMonks} onChange={(e) => setSupportingMonks(e.target.value)} placeholder="MS 1, MS 2..." className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Monk Group Name")}</Label>
+                <Input value={monkGroupName} onChange={(e) => setMonkGroupName(e.target.value)} placeholder={t("e.g. Acharya Shri Group")} className="h-9 mt-1" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Tour Location *</Label>
-                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Palitana, Gujarat" required className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Group Leader")}</Label>
+                <Input value={monkGroupLeader} onChange={(e) => setMonkGroupLeader(e.target.value)} placeholder={t("Leader Name")} className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Dharamshala ID Link</Label>
-                <Input value={dharamshalaId} onChange={(e) => setDharamshalaId(e.target.value)} placeholder="Dharamshala ID" className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Supporting Monks (comma separated)")}</Label>
+                <Input value={supportingMonks} onChange={(e) => setSupportingMonks(e.target.value)} placeholder={t("MS 1, MS 2...")} className="h-9 mt-1" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Tour Location *")}</Label>
+                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder={t("e.g. Palitana, Gujarat")} required className="h-9 mt-1" />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Dharamshala ID Link")}</Label>
+                <Input value={dharamshalaId} onChange={(e) => setDharamshalaId(e.target.value)} placeholder={t("Dharamshala ID")} className="h-9 mt-1" />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Tour Description</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Provide yatra details..." className="mt-1" />
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Tour Description")}</Label>
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("Provide yatra details...")} className="mt-1" />
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setCreateTourOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">Publish Tour Campaign</Button>
+              <Button type="button" variant="ghost" onClick={() => setCreateTourOpen(false)}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">{t("Publish Tour Campaign")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -947,22 +949,22 @@ export default function ToursPage() {
         <DialogContent className="sm:max-w-md text-xs bg-white rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-orange-655" /> Add Yatra Sponsor Entry
+              <DollarSign className="h-5 w-5 text-orange-655" /> {t("Add Yatra Sponsor Entry")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAddSponsor} className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Sponsor Name *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Sponsor Name *")}</Label>
                 <Input value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Sponsor Category *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Sponsor Category *")}</Label>
                 <SearchableSelect
                   value={sponsorCategory}
                   onValueChange={setSponsorCategory}
                   options={SPONSOR_CATEGORY_OPTIONS}
-                  placeholder="Select Sponsor Category"
+                  placeholder={t("Select Sponsor Category")}
                   className="mt-1.5"
                 />
               </div>
@@ -970,23 +972,23 @@ export default function ToursPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">JiNANAM Member ID</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("JiNANAM Member ID")}</Label>
                 <Input value={sponsorMemberId} onChange={(e) => setSponsorMemberId(e.target.value)} className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Amount Sponsored (INR)</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Amount Sponsored (INR)")}</Label>
                 <Input type="number" value={sponsorAmount} onChange={(e) => setSponsorAmount(e.target.value)} className="h-9 mt-1" />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Sponsorship Description</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Sponsorship Description")}</Label>
               <Input value={sponsorDesc} onChange={(e) => setSponsorDesc(e.target.value)} className="h-9 mt-1" />
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setSponsorsOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">Save Sponsor Entry</Button>
+              <Button type="button" variant="ghost" onClick={() => setSponsorsOpen(false)}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">{t("Save Sponsor Entry")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -997,24 +999,24 @@ export default function ToursPage() {
         <DialogContent className="sm:max-w-md text-xs bg-white rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-orange-655" /> Onboard Participant
+              <Users className="h-5 w-5 text-orange-655" /> {t("Onboard Participant")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAddParticipant} className="space-y-4 pt-2">
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Devotee Member Public ID *</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Devotee Member Public ID *")}</Label>
               <Input value={memberPublicId} onChange={(e) => setMemberPublicId(e.target.value)} required className="h-9 mt-1" />
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Parent Member Public ID (Optional)</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Parent Member Public ID (Optional)")}</Label>
               <Input value={parentPublicId} onChange={(e) => setParentPublicId(e.target.value)} className="h-9 mt-1" />
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setAddParticipantOpen(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => setAddParticipantOpen(false)}>{t("Cancel")}</Button>
               <Button type="submit" disabled={submittingParticipant} className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">
-                {submittingParticipant ? "Enrolling Devotee..." : "Onboard Participant"}
+                {submittingParticipant ? t("Enrolling Devotee...") : t("Onboard Participant")}
               </Button>
             </DialogFooter>
           </form>
@@ -1026,57 +1028,57 @@ export default function ToursPage() {
         <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto bg-white text-xs rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-rose-600" /> Participant Medical Intake Form
+              <Heart className="h-5 w-5 text-rose-600" /> {t("Participant Medical Intake Form")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleMedicalForm} className="space-y-4 pt-2">
             {detailParticipant && (
               <div className="p-3 bg-slate-50 border rounded-lg">
-                <div className="font-bold text-slate-800">Devotee: {detailParticipant.member?.fullName}</div>
+                <div className="font-bold text-slate-800">{t("Devotee:")} {detailParticipant.member?.fullName}</div>
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Blood Group *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Blood Group *")}</Label>
                 <SearchableSelect
                   value={bloodGroup}
                   onValueChange={setBloodGroup}
                   options={BLOOD_GROUP_OPTIONS}
-                  placeholder="Select Blood Group"
+                  placeholder={t("Select Blood Group")}
                   className="mt-1.5"
                 />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Emergency Phone contact *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Emergency Phone contact *")}</Label>
                 <Input value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} required className="h-9 mt-1" />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Known Allergies</Label>
-              <Input value={allergies} onChange={(e) => setAllergies(e.target.value)} placeholder="e.g. Dust, Penicillin" className="h-9 mt-1" />
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Known Allergies")}</Label>
+              <Input value={allergies} onChange={(e) => setAllergies(e.target.value)} placeholder={t("e.g. Dust, Penicillin")} className="h-9 mt-1" />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Existing Medical Conditions</Label>
-                <Input value={conditions} onChange={(e) => setConditions(e.target.value)} placeholder="e.g. Hypertension" className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Existing Medical Conditions")}</Label>
+                <Input value={conditions} onChange={(e) => setConditions(e.target.value)} placeholder={t("e.g. Hypertension")} className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Current Medications</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Current Medications")}</Label>
                 <Input value={medications} onChange={(e) => setMedications(e.target.value)} className="h-9 mt-1" />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Special Medical Instructions</Label>
-              <Textarea value={specialInstructions} onChange={(e) => setSpecialInstructions(e.target.value)} placeholder="Doctor details, instructions, etc." className="mt-1" />
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Special Medical Instructions")}</Label>
+              <Textarea value={specialInstructions} onChange={(e) => setSpecialInstructions(e.target.value)} placeholder={t("Doctor details, instructions, etc.")} className="mt-1" />
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => { setMedicalOpen(false); setDetailParticipant(null); }}>Cancel</Button>
-              <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-9">Save Medical Intake</Button>
+              <Button type="button" variant="ghost" onClick={() => { setMedicalOpen(false); setDetailParticipant(null); }}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-9">{t("Save Medical Intake")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1087,39 +1089,39 @@ export default function ToursPage() {
         <DialogContent className="sm:max-w-md text-xs bg-white rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5 text-orange-655" /> Onboard Room / Building
+              <Building className="h-5 w-5 text-orange-655" /> {t("Onboard Room / Building")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAddAccommodation} className="space-y-4 pt-2">
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Building / Location Name *</Label>
-              <Input value={locName} onChange={(e) => setLocName(e.target.value)} placeholder="e.g. Sangh Ashram Block A" required className="h-9 mt-1" />
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Building / Location Name *")}</Label>
+              <Input value={locName} onChange={(e) => setLocName(e.target.value)} placeholder={t("e.g. Sangh Ashram Block A")} required className="h-9 mt-1" />
             </div>
 
             <div className="grid grid-cols-3 gap-2 border-t pt-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Room Number *</Label>
-                <Input value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder="Room 108" required className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Room Number *")}</Label>
+                <Input value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder={t("Room 108")} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Room Type</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Room Type")}</Label>
                 <SearchableSelect
                   value={roomType}
                   onValueChange={setRoomType}
                   options={toOptions(["Standard", "Hall", "VIP"])}
-                  placeholder="Select Room Type"
+                  placeholder={t("Select Room Type")}
                   className="mt-1.5"
                 />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Bed Capacity *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Bed Capacity *")}</Label>
                 <Input type="number" min={1} value={roomCapacity} onChange={(e) => setRoomCapacity(e.target.value)} required className="h-9 mt-1" />
               </div>
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setAccommodationOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">Publish Room Details</Button>
+              <Button type="button" variant="ghost" onClick={() => setAccommodationOpen(false)}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">{t("Publish Room Details")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1130,12 +1132,12 @@ export default function ToursPage() {
         <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto bg-white text-xs rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-orange-655" /> Bulk Daily Jatra Counts
+              <CheckCircle2 className="h-5 w-5 text-orange-655" /> {t("Bulk Daily Jatra Counts")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleBulkDailyProgress} className="space-y-4 pt-2">
             <div className="p-3 bg-slate-50 border rounded-lg leading-normal">
-              Enter the daily count completed by each devotee. The system automatically recalculates cumulative totals.
+              {t("Enter the daily count completed by each devotee. The system automatically recalculates cumulative totals.")}
             </div>
 
             <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -1143,11 +1145,11 @@ export default function ToursPage() {
                 <div key={p.id} className="flex justify-between items-center p-2 border rounded bg-white">
                   <div>
                     <span className="font-bold text-slate-800">{p.member?.fullName}</span>
-                    <div className="text-[9px] text-slate-400 font-semibold font-mono-num">Current Total: {p.cumulativeCount ?? 0} Jatras</div>
+                    <div className="text-[9px] text-slate-400 font-semibold font-mono-num">{t("Current Total:")} {p.cumulativeCount ?? 0} {t("Jatras")}</div>
                   </div>
                   <div className="flex gap-2 items-center">
                     <div>
-                      <Label className="text-[9px] text-slate-450 uppercase font-black">Daily Jatra</Label>
+                      <Label className="text-[9px] text-slate-450 uppercase font-black">{t("Daily Jatra")}</Label>
                       <Input type="number" min={0} value={bulkJatraCounts[p.id] ?? 0}
                         onChange={(e) => {
                           const val = Number(e.target.value);
@@ -1159,16 +1161,16 @@ export default function ToursPage() {
                       />
                     </div>
                     <div>
-                      <Label className="text-[9px] text-slate-455 uppercase font-black">Attendance</Label>
+                      <Label className="text-[9px] text-slate-455 uppercase font-black">{t("Attendance")}</Label>
                       <SearchableSelect
                         value={bulkAttendance[p.id] ?? "PRESENT"}
                         onValueChange={(val) => setBulkAttendance(prev => ({ ...prev, [p.id]: val }))}
                         options={[
-                          { value: "PRESENT", label: "Present" },
-                          { value: "ABSENT", label: "Absent" },
-                          { value: "NOT_WELL", label: "Not Well" },
+                          { value: "PRESENT", label: t("Present") },
+                          { value: "ABSENT", label: t("Absent") },
+                          { value: "NOT_WELL", label: t("Not Well") },
                         ]}
-                        placeholder="Select"
+                        placeholder={t("Select")}
                         className="w-24 text-[10px]"
                       />
                     </div>
@@ -1178,8 +1180,8 @@ export default function ToursPage() {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setBulkProgressOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">Save Progress Entry</Button>
+              <Button type="button" variant="ghost" onClick={() => setBulkProgressOpen(false)}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">{t("Save Progress Entry")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1190,23 +1192,23 @@ export default function ToursPage() {
         <DialogContent className="sm:max-w-md text-xs bg-white rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-orange-655" /> Publish Daily Schedule
+              <Calendar className="h-5 w-5 text-orange-655" /> {t("Publish Daily Schedule")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handlePublishSchedule} className="space-y-4 pt-2">
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Schedule Date *</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Schedule Date *")}</Label>
               <Input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} required className="h-9 mt-1" />
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Daily Itinerary Details *</Label>
-              <Textarea value={schedText} onChange={(e) => setSchedText(e.target.value)} placeholder="Wake-up: 5AM, Yatra Start: 6AM..." required className="mt-1" />
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Daily Itinerary Details *")}</Label>
+              <Textarea value={schedText} onChange={(e) => setSchedText(e.target.value)} placeholder={t("Wake-up: 5AM, Yatra Start: 6AM...")} required className="mt-1" />
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setScheduleOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">Publish Itinerary</Button>
+              <Button type="button" variant="ghost" onClick={() => setScheduleOpen(false)}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">{t("Publish Itinerary")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1217,18 +1219,18 @@ export default function ToursPage() {
         <DialogContent className="sm:max-w-md text-xs bg-white rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-orange-655" /> Broadcast Sangh Announcement
+              <MessageSquare className="h-5 w-5 text-orange-655" /> {t("Broadcast Sangh Announcement")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handlePublishMessage} className="space-y-4 pt-2">
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Announcement message *</Label>
-              <Textarea value={commMsg} onChange={(e) => setCommMsg(e.target.value)} placeholder="Text messages only. Provide safety updates, schedule changes, reporting times..." required className="mt-1" />
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Announcement message *")}</Label>
+              <Textarea value={commMsg} onChange={(e) => setCommMsg(e.target.value)} placeholder={t("Text messages only. Provide safety updates, schedule changes, reporting times...")} required className="mt-1" />
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setMessageOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">Broadcast Message</Button>
+              <Button type="button" variant="ghost" onClick={() => setMessageOpen(false)}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9">{t("Broadcast Message")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

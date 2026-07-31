@@ -15,6 +15,7 @@ import { ALL_MODULES, ALL_ACTIONS, ROLE_LABELS } from "@/constants/modules";
 import { formatDateTime } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ROLES = [
   "SUPER_ADMIN", "TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JAIN_CENTER_ADMIN",
@@ -22,6 +23,7 @@ const ROLES = [
 ];
 
 function RolePermissionMatrix() {
+  const { t } = useLanguage();
   const [selectedRole, setSelectedRole] = useState("TEMPLE_ADMIN");
   const [matrix, setMatrix] = useState({});
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ function RolePermissionMatrix() {
         }))
       );
       await api.put(`/settings/roles/${selectedRole}/permissions`, { permissions });
-      toast.success("Permissions saved.");
+      toast.success(t("Permissions saved."));
     } catch (e) {
       toast.error(extractErrorMessage(e));
     } finally { setSaving(false); }
@@ -67,9 +69,9 @@ function RolePermissionMatrix() {
     <Card className="p-5 rounded-md border-border bg-white shadow-sm">
       <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
         <div className="flex-1">
-          <h3 className="font-heading text-lg font-semibold text-slate-800">Role Permission Matrix</h3>
+          <h3 className="font-heading text-lg font-semibold text-slate-800">{t("Role Permission Matrix")}</h3>
           <p className="text-xs text-muted-foreground">
-            Configure what each role can do. DELETE is always Super-Admin only.
+            {t("Configure what each role can do. DELETE is always Super-Admin only.")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -96,7 +98,7 @@ function RolePermissionMatrix() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left text-[10px] uppercase tracking-widest text-slate-400 py-2 pr-4 w-56">Module</th>
+                <th className="text-left text-[10px] uppercase tracking-widest text-slate-400 py-2 pr-4 w-56">{t("Module")}</th>
                 {ALL_ACTIONS.map((a) => (
                   <th key={a} className="text-center text-[10px] uppercase tracking-widest text-slate-400 py-2 px-2 w-24">{a}</th>
                 ))}
@@ -127,7 +129,7 @@ function RolePermissionMatrix() {
       )}
       <div className="flex justify-end mt-4">
         <Button onClick={save} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white" data-testid="rbac-save-button">
-          <Save className="h-4 w-4 mr-2" /> {saving ? "Saving..." : "Save Permissions"}
+          <Save className="h-4 w-4 mr-2" /> {saving ? t("Saving...") : t("Save Permissions")}
         </Button>
       </div>
     </Card>
@@ -135,6 +137,7 @@ function RolePermissionMatrix() {
 }
 
 function AppSettings() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newKey, setNewKey] = useState("");
@@ -151,7 +154,7 @@ function AppSettings() {
     if (!newKey) return;
     try {
       await api.put(`/settings/app/${encodeURIComponent(newKey)}`, { value: newVal });
-      toast.success("Setting updated.");
+      toast.success(t("Setting updated."));
       setNewKey(""); setNewVal("");
       const res = await api.get("/settings/app");
       setSettings(res.data?.data || []);
@@ -160,13 +163,13 @@ function AppSettings() {
 
   return (
     <Card className="p-5 rounded-md border-border bg-white shadow-sm">
-      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-1">App Settings</h3>
-      <p className="text-xs text-muted-foreground mb-4">Platform-wide key/value configuration.</p>
+      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-1">{t("App Settings")}</h3>
+      <p className="text-xs text-muted-foreground mb-4">{t("Platform-wide key/value configuration.")}</p>
       {loading ? (
         <Skeleton className="h-40 w-full" />
       ) : (
         <div className="space-y-2 max-h-64 overflow-y-auto mb-4">
-          {settings.length === 0 && <div className="text-sm text-muted-foreground">No settings yet.</div>}
+          {settings.length === 0 && <div className="text-sm text-muted-foreground">{t("No settings yet.")}</div>}
           {settings.map((s, i) => (
             <div key={s.key || i} className="flex items-center justify-between text-sm px-3 py-2 bg-slate-50 border border-slate-100 rounded-md">
               <div className="font-mono text-xs font-semibold text-slate-700">{s.key}</div>
@@ -176,15 +179,16 @@ function AppSettings() {
         </div>
       )}
       <div className="grid grid-cols-3 gap-2">
-        <Input value={newKey} onChange={(e) => setNewKey(e.target.value)} placeholder="Key" data-testid="settings-key-input" />
-        <Input value={newVal} onChange={(e) => setNewVal(e.target.value)} placeholder="Value" data-testid="settings-value-input" />
-        <Button onClick={upsert} className="bg-orange-500 hover:bg-orange-600 text-white" data-testid="settings-save-button"><Save className="h-4 w-4 mr-2" /> Save</Button>
+        <Input value={newKey} onChange={(e) => setNewKey(e.target.value)} placeholder={t("Key")} data-testid="settings-key-input" />
+        <Input value={newVal} onChange={(e) => setNewVal(e.target.value)} placeholder={t("Value")} data-testid="settings-value-input" />
+        <Button onClick={upsert} className="bg-orange-500 hover:bg-orange-600 text-white" data-testid="settings-save-button"><Save className="h-4 w-4 mr-2" /> {t("Save")}</Button>
       </div>
     </Card>
   );
 }
 
 function AlertThresholds() {
+  const { t } = useLanguage();
   const [thresholds, setThresholds] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -201,31 +205,31 @@ function AlertThresholds() {
   const update = async (type, value) => {
     try {
       await api.put(`/settings/alert-thresholds/${type}`, { value: Number(value) });
-      toast.success("Threshold updated.");
+      toast.success(t("Threshold updated."));
     } catch (e) { toast.error(extractErrorMessage(e)); }
   };
 
   return (
     <Card className="p-5 rounded-md border-border bg-white shadow-sm">
-      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-1">Alert Thresholds</h3>
-      <p className="text-xs text-muted-foreground mb-4">Configure when device alerts are triggered.</p>
+      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-1">{t("Alert Thresholds")}</h3>
+      <p className="text-xs text-muted-foreground mb-4">{t("Configure when device alerts are triggered.")}</p>
       {loading ? (
         <Skeleton className="h-40 w-full" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
-            { type: "OFFLINE_MINUTES", label: "Offline (minutes)", default: 30 },
-            { type: "LOW_BATTERY_PCT", label: "Low Battery (%)", default: 20 },
-            { type: "ROUTE_DELAY_MINUTES", label: "Route Delay (minutes)", default: 30 },
-          ].map((t) => (
-            <div key={t.type}>
-              <Label className="text-xs text-slate-600 font-semibold">{t.label}</Label>
+            { type: "OFFLINE_MINUTES", label: t("Offline (minutes)"), default: 30 },
+            { type: "LOW_BATTERY_PCT", label: t("Low Battery (%)"), default: 20 },
+            { type: "ROUTE_DELAY_MINUTES", label: t("Route Delay (minutes)"), default: 30 },
+          ].map((tItem) => (
+            <div key={tItem.type}>
+              <Label className="text-xs text-slate-600 font-semibold">{t(tItem.label)}</Label>
               <div className="flex gap-2 mt-1">
                 <Input
                   type="number"
-                  defaultValue={thresholds[t.type] ?? t.default}
-                  onBlur={(e) => update(t.type, e.target.value)}
-                  data-testid={`threshold-${t.type}`}
+                  defaultValue={thresholds[tItem.type] ?? tItem.default}
+                  onBlur={(e) => update(tItem.type, e.target.value)}
+                  data-testid={`threshold-${tItem.type}`}
                 />
               </div>
             </div>
@@ -237,6 +241,7 @@ function AlertThresholds() {
 }
 
 function LoginHistory() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -247,20 +252,20 @@ function LoginHistory() {
 
   return (
     <Card className="p-5 rounded-md border-border bg-white shadow-sm">
-      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-4">Login History</h3>
+      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-4">{t("Login History")}</h3>
       {loading ? <Skeleton className="h-40 w-full" /> : (
         rows.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No login records.</div>
+          <div className="text-sm text-muted-foreground">{t("No login records.")}</div>
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {rows.map((r, i) => (
               <div key={i} className="flex items-center justify-between text-sm px-3 py-2 bg-slate-50 border border-slate-100 rounded-md">
                 <div>
                   <div className="font-semibold text-slate-800">{r.user?.mobile || r.mobile}</div>
-                  <div className="text-xs text-slate-400">IP: {r.ip || "Unknown"} · Device ID: {r.deviceId || "Unknown"}</div>
+                  <div className="text-xs text-slate-400">{t("IP:")} {r.ip || "Unknown"} {t("· Device ID:")} {r.deviceId || "Unknown"}</div>
                 </div>
                 <div className="text-xs text-slate-400 font-mono-num">{formatDateTime(r.createdAt)}</div>
-                {r.flaggedSuspicious && <Badge variant="destructive">Suspicious</Badge>}
+                {r.flaggedSuspicious && <Badge variant="destructive">{t("Suspicious")}</Badge>}
               </div>
             ))}
           </div>
@@ -273,6 +278,7 @@ function LoginHistory() {
 // ─── USER SPECIFIC PERMISSION OVERRIDES FOR SUPER ADMIN ────────────────────
 
 function UserPermissionOverrides() {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [members, setMembers] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -292,7 +298,7 @@ function UserPermissionOverrides() {
       const res = await api.get(`/members`, { params: { q: searchQuery } });
       setMembers(res.data?.data || []);
     } catch (e) {
-      toast.error("Failed to search members.");
+      toast.error(t("Failed to search members."));
     } finally {
       setSearching(false);
     }
@@ -304,7 +310,7 @@ function UserPermissionOverrides() {
       const res = await api.get(`/settings/users/${userId}/permission-overrides`);
       setOverrides(res.data?.data || []);
     } catch (e) {
-      toast.error("Failed to load user permission overrides.");
+      toast.error(t("Failed to load user permission overrides."));
     } finally {
       setLoadingOverrides(false);
     }
@@ -312,7 +318,7 @@ function UserPermissionOverrides() {
 
   const selectUser = (member) => {
     if (!member.userId) {
-      toast.error("Selected member does not have a linked User ID.");
+      toast.error(t("Selected member does not have a linked User ID."));
       return;
     }
     setSelectedUser({
@@ -334,7 +340,7 @@ function UserPermissionOverrides() {
         allowed,
         organizationId: organizationId || null,
       });
-      toast.success("Permission override saved.");
+      toast.success(t("Permission override saved."));
       fetchOverrides(selectedUser.userId);
       setOrganizationId("");
     } catch (e) {
@@ -348,7 +354,7 @@ function UserPermissionOverrides() {
     if (!selectedUser) return;
     try {
       await api.delete(`/settings/users/${selectedUser.userId}/permission-overrides/${overrideId}`);
-      toast.success("Override removed.");
+      toast.success(t("Override removed."));
       fetchOverrides(selectedUser.userId);
     } catch (e) {
       toast.error(extractErrorMessage(e));
@@ -358,19 +364,19 @@ function UserPermissionOverrides() {
   return (
     <div className="space-y-4">
       <Card className="p-5 rounded-md border-border bg-white shadow-sm">
-        <h3 className="font-heading text-lg font-semibold text-slate-800 mb-1">User Permission Overrides</h3>
-        <p className="text-xs text-muted-foreground mb-4">Add granular access permissions or restrictions for individual users, overriding role-based defaults.</p>
+        <h3 className="font-heading text-lg font-semibold text-slate-800 mb-1">{t("User Permission Overrides")}</h3>
+        <p className="text-xs text-muted-foreground mb-4">{t("Add granular access permissions or restrictions for individual users, overriding role-based defaults.")}</p>
         <div className="space-y-3">
-          <Label className="text-xs font-semibold text-slate-700">Search for Member to manage overrides</Label>
+          <Label className="text-xs font-semibold text-slate-700">{t("Search for Member to manage overrides")}</Label>
           <div className="flex gap-2">
             <Input 
               value={searchQuery} 
               onChange={(e) => setSearchQuery(e.target.value)} 
-              placeholder="Search by name, mobile number, or Member ID" 
+              placeholder={t("Search by name, mobile number, or Member ID")} 
               onKeyDown={(e) => e.key === "Enter" && searchUsers()}
             />
             <Button onClick={searchUsers} disabled={searching} className="bg-orange-500 hover:bg-orange-600 text-white">
-              {searching ? "Searching..." : "Search"}
+              {searching ? t("Searching...") : t("Search")}
             </Button>
           </div>
 
@@ -384,10 +390,10 @@ function UserPermissionOverrides() {
                 >
                   <div>
                     <div className="font-semibold text-slate-800">{m.fullName} ({m.publicId})</div>
-                    <div className="text-xs text-slate-400">Mobile: {m.mobile} · Category: {m.category}</div>
+                    <div className="text-xs text-slate-400">{t("Mobile:")} {m.mobile} {t("· Category:")} {m.category}</div>
                   </div>
                   <Button size="sm" variant="outline" className="text-xs px-2.5 py-1">
-                    Select
+                    {t("Select")}
                   </Button>
                 </div>
               ))}
@@ -400,41 +406,41 @@ function UserPermissionOverrides() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="p-5 rounded-md border-border bg-white shadow-sm h-fit">
             <h4 className="font-heading text-sm font-semibold text-slate-800 mb-4">
-              Add Override rule for <span className="text-orange-500">{selectedUser.fullName}</span>
+              {t("Add Override rule for")} <span className="text-orange-500">{selectedUser.fullName}</span>
             </h4>
             <div className="space-y-3.5">
               <div>
-                <Label className="text-xs font-semibold text-slate-700">Module</Label>
+                <Label className="text-xs font-semibold text-slate-700">{t("Module")}</Label>
                 <select 
                   value={selectedModule} 
                   onChange={(e) => setSelectedModule(e.target.value)}
                   className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   {ALL_MODULES.map(m => (
-                    <option key={m} value={m}>{m.replace(/_/g, " ")}</option>
+                    <option key={m} value={m}>{t(m.replace(/_/g, " "))}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <Label className="text-xs font-semibold text-slate-700">Action</Label>
+                <Label className="text-xs font-semibold text-slate-700">{t("Action")}</Label>
                 <select 
                   value={selectedAction} 
                   onChange={(e) => setSelectedAction(e.target.value)}
                   className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   {ALL_ACTIONS.map(a => (
-                    <option key={a} value={a}>{a}</option>
+                    <option key={a} value={a}>{t(a)}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <Label className="text-xs font-semibold text-slate-700">Organization ID (Optional Scope)</Label>
+                <Label className="text-xs font-semibold text-slate-700">{t("Organization ID (Optional Scope)")}</Label>
                 <Input 
                   value={organizationId} 
                   onChange={(e) => setOrganizationId(e.target.value)} 
-                  placeholder="Leave empty for global scope" 
+                  placeholder={t("Leave empty for global scope")} 
                 />
               </div>
 
@@ -445,22 +451,22 @@ function UserPermissionOverrides() {
                   onCheckedChange={(checked) => setAllowed(!!checked)} 
                 />
                 <Label htmlFor="override-allowed" className="text-xs font-semibold text-slate-700 cursor-pointer">
-                  Allow Action (uncheck to explicitly Block)
+                  {t("Allow Action (uncheck to explicitly Block)")}
                 </Label>
               </div>
 
               <Button onClick={addOverride} disabled={savingOverride} className="w-full bg-orange-500 hover:bg-orange-600 text-white mt-2">
-                <Save className="h-4 w-4 mr-2" /> {savingOverride ? "Saving..." : "Add Override Rule"}
+                <Save className="h-4 w-4 mr-2" /> {savingOverride ? t("Saving...") : t("Add Override Rule")}
               </Button>
             </div>
           </Card>
 
           <Card className="p-5 rounded-md border-border bg-white shadow-sm">
-            <h4 className="font-heading text-sm font-semibold text-slate-800 mb-4">Active Override Rules</h4>
+            <h4 className="font-heading text-sm font-semibold text-slate-800 mb-4">{t("Active Override Rules")}</h4>
             {loadingOverrides ? (
               <Skeleton className="h-40 w-full" />
             ) : overrides.length === 0 ? (
-              <div className="text-sm text-muted-foreground text-center py-8">No permission overrides active for this user.</div>
+              <div className="text-sm text-muted-foreground text-center py-8">{t("No permission overrides active for this user.")}</div>
             ) : (
               <div className="space-y-2.5 max-h-96 overflow-y-auto">
                 {overrides.map((o) => (
@@ -473,7 +479,7 @@ function UserPermissionOverrides() {
                         <span className="font-semibold text-slate-800">{o.module} : {o.action}</span>
                       </div>
                       {o.organizationId && (
-                        <div className="text-[10px] text-muted-foreground mt-1">Org ID Scope: {o.organizationId}</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">{t("Org ID Scope:")} {o.organizationId}</div>
                       )}
                     </div>
                     <Button 
@@ -482,7 +488,7 @@ function UserPermissionOverrides() {
                       onClick={() => deleteOverride(o.id)}
                       className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
                     >
-                      Delete
+                      {t("Delete")}
                     </Button>
                   </div>
                 ))}
@@ -498,6 +504,7 @@ function UserPermissionOverrides() {
 // ─── NEW ORG-SPECIFIC CONFIGURATION FOR NORMAL ADMINS ──────────────────────
 
 function OrgConfigForm({ orgId }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     staffWorkingHoursStart: "",
     staffWorkingHoursEnd: "",
@@ -519,7 +526,7 @@ function OrgConfigForm({ orgId }) {
         staffEarlyExitBefore: d.staffEarlyExitBefore || "",
       });
     }).catch(() => {
-      toast.error("Failed to load organization settings.");
+      toast.error(t("Failed to load organization settings."));
     }).finally(() => setLoading(false));
   }, [orgId]);
 
@@ -527,9 +534,9 @@ function OrgConfigForm({ orgId }) {
     setSaving(true);
     try {
       await api.patch(`/temples/${orgId}`, form);
-      toast.success("Organization settings updated successfully.");
+      toast.success(t("Organization settings updated successfully."));
     } catch (e) {
-      toast.error("Failed to update organization settings.");
+      toast.error(t("Failed to update organization settings."));
     } finally {
       setSaving(false);
     }
@@ -539,31 +546,31 @@ function OrgConfigForm({ orgId }) {
 
   return (
     <Card className="p-5 rounded-md border-border bg-white shadow-sm">
-      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-1">Organization Working Rules</h3>
-      <p className="text-xs text-muted-foreground mb-4">Configure shift timings and attendance rules for your staff.</p>
+      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-1">{t("Organization Working Rules")}</h3>
+      <p className="text-xs text-muted-foreground mb-4">{t("Configure shift timings and attendance rules for your staff.")}</p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
-          <Label className="text-xs font-semibold text-slate-700">Staff Working Hours Start</Label>
+          <Label className="text-xs font-semibold text-slate-700">{t("Staff Working Hours Start")}</Label>
           <Input type="time" value={form.staffWorkingHoursStart} onChange={(e) => setForm({ ...form, staffWorkingHoursStart: e.target.value })} className="mt-1" />
         </div>
         <div>
-          <Label className="text-xs font-semibold text-slate-700">Staff Working Hours End</Label>
+          <Label className="text-xs font-semibold text-slate-700">{t("Staff Working Hours End")}</Label>
           <Input type="time" value={form.staffWorkingHoursEnd} onChange={(e) => setForm({ ...form, staffWorkingHoursEnd: e.target.value })} className="mt-1" />
         </div>
         <div>
-          <Label className="text-xs font-semibold text-slate-700">Mark Late Arrival After</Label>
+          <Label className="text-xs font-semibold text-slate-700">{t("Mark Late Arrival After")}</Label>
           <Input type="time" value={form.staffLateArrivalAfter} onChange={(e) => setForm({ ...form, staffLateArrivalAfter: e.target.value })} className="mt-1" />
         </div>
         <div>
-          <Label className="text-xs font-semibold text-slate-700">Mark Early Exit Before</Label>
+          <Label className="text-xs font-semibold text-slate-700">{t("Mark Early Exit Before")}</Label>
           <Input type="time" value={form.staffEarlyExitBefore} onChange={(e) => setForm({ ...form, staffEarlyExitBefore: e.target.value })} className="mt-1" />
         </div>
       </div>
       
       <div className="flex justify-end mt-4">
         <Button onClick={save} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white">
-          <Save className="h-4 w-4 mr-2" /> {saving ? "Saving..." : "Save Settings"}
+          <Save className="h-4 w-4 mr-2" /> {saving ? t("Saving...") : t("Save Settings")}
         </Button>
       </div>
     </Card>
@@ -571,6 +578,7 @@ function OrgConfigForm({ orgId }) {
 }
 
 function OrgAuditHistory({ orgId }) {
+  const { t } = useLanguage();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -586,18 +594,18 @@ function OrgAuditHistory({ orgId }) {
 
   return (
     <Card className="p-5 rounded-md border-border bg-white shadow-sm">
-      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-4">Activity History Log</h3>
+      <h3 className="font-heading text-lg font-semibold text-slate-800 mb-4">{t("Activity History Log")}</h3>
       {loading ? (
         <Skeleton className="h-40 w-full" />
       ) : logs.length === 0 ? (
-        <div className="text-sm text-muted-foreground">No recent activity logs.</div>
+        <div className="text-sm text-muted-foreground">{t("No recent activity logs.")}</div>
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {logs.map((l, i) => (
             <div key={i} className="flex items-center justify-between text-sm px-3 py-2 bg-slate-50 border border-slate-100 rounded-md">
               <div>
                 <div className="font-semibold text-slate-800">{l.action} · {l.entityType}</div>
-                <div className="text-xs text-slate-400">Actor ID: {l.actorId}</div>
+                <div className="text-xs text-slate-400">{t("Actor ID:")} {l.actorId}</div>
               </div>
               <div className="text-xs text-slate-400 font-mono-num">{formatDateTime(l.createdAt)}</div>
             </div>
@@ -611,6 +619,7 @@ function OrgAuditHistory({ orgId }) {
 // ─── SETTINGS PAGE ROUTER ENTRYPOINT ─────────────────────────────────────────
 
 export default function SettingsPage() {
+  const { t } = useLanguage();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -631,16 +640,16 @@ export default function SettingsPage() {
     return (
       <div data-testid="settings-page">
         <PageHeader
-          title="Organization Settings"
-          subtitle="Configure working rules, timings, and view audit history logs for your center."
+          title={t("Organization Settings")}
+          subtitle={t("Configure working rules, timings, and view audit history logs for your center.")}
         />
         <Tabs value={currentTab} onValueChange={handleTabChange}>
           <TabsList className="mb-4">
             <TabsTrigger value="org-config">
-              <Sliders className="h-3.5 w-3.5 mr-1.5" /> Working Rules
+              <Sliders className="h-3.5 w-3.5 mr-1.5" /> {t("Working Rules")}
             </TabsTrigger>
             <TabsTrigger value="audit">
-              <History className="h-3.5 w-3.5 mr-1.5" /> Activity History
+              <History className="h-3.5 w-3.5 mr-1.5" /> {t("Activity History")}
             </TabsTrigger>
           </TabsList>
           <TabsContent value="org-config">
@@ -657,25 +666,25 @@ export default function SettingsPage() {
   return (
     <div data-testid="settings-page">
       <PageHeader
-        title="Settings & Platform Governance"
-        subtitle="Roles & permissions, app configuration, alert thresholds, and security controls."
+        title={t("Settings & Platform Governance")}
+        subtitle={t("Roles & permissions, app configuration, alert thresholds, and security controls.")}
       />
       <Tabs value={validSuperTabs.includes(currentTab) ? currentTab : "app"} onValueChange={handleTabChange}>
         <TabsList className="mb-4">
           <TabsTrigger value="app" data-testid="settings-tab-app">
-            <Sliders className="h-3.5 w-3.5 mr-1.5" /> Platform Settings
+            <Sliders className="h-3.5 w-3.5 mr-1.5" /> {t("Platform Settings")}
           </TabsTrigger>
           <TabsTrigger value="rbac" data-testid="settings-tab-rbac">
-            <Shield className="h-3.5 w-3.5 mr-1.5" /> Security & Access Control
+            <Shield className="h-3.5 w-3.5 mr-1.5" /> {t("Security & Access Control")}
           </TabsTrigger>
           <TabsTrigger value="user-overrides" data-testid="settings-tab-user-overrides">
-            <UserCheck className="h-3.5 w-3.5 mr-1.5" /> User Overrides
+            <UserCheck className="h-3.5 w-3.5 mr-1.5" /> {t("User Overrides")}
           </TabsTrigger>
           <TabsTrigger value="alerts" data-testid="settings-tab-alerts">
-            <Bell className="h-3.5 w-3.5 mr-1.5" /> Alert Thresholds
+            <Bell className="h-3.5 w-3.5 mr-1.5" /> {t("Alert Thresholds")}
           </TabsTrigger>
           <TabsTrigger value="login-history" data-testid="settings-tab-login-history">
-            <History className="h-3.5 w-3.5 mr-1.5" /> Login History
+            <History className="h-3.5 w-3.5 mr-1.5" /> {t("Login History")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="app"><AppSettings /></TabsContent>

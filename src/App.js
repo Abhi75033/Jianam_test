@@ -1,6 +1,7 @@
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import AdminLayout from "@/components/layout/AdminLayout";
 import LoginPage from "@/pages/LoginPage";
@@ -88,11 +89,15 @@ const isAdminPath =
 function PublicApp() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<SiteComingSoonPage />} />
-        <Route path="/welcome" element={<LandingPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      {/* Public pages need the same language context as the admin tree so the
+          en/hi/gu switch applies here too. */}
+      <LanguageProvider>
+        <Routes>
+          <Route path="/" element={<SiteComingSoonPage />} />
+          <Route path="/welcome" element={<LandingPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }
@@ -100,7 +105,8 @@ function PublicApp() {
 function AdminApp() {
   return (
     <BrowserRouter basename="/admin">
-      <AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
@@ -227,7 +233,7 @@ function AdminApp() {
               element={
                 <OrgDetailPage
                   basePath="/stanaks"
-                  entityLabel="Stanak"
+                  entityLabel="Sthanak"
                   apiPrefix="/temples"
                 />
               }
@@ -237,6 +243,10 @@ function AdminApp() {
 
             {/* ─── Community ──────────────────────────────────────── */}
             <Route path="feed" element={<FeedPage />} />
+            <Route path="feed/create-post" element={<FeedPage defaultCompose={true} />} />
+            <Route path="community/scheduled-posts" element={<FeedPage defaultTab="scheduled" />} />
+            <Route path="community/featured-posts" element={<FeedPage defaultTab="featured" />} />
+            <Route path="community/reported-posts" element={<FeedPage defaultTab="reported" />} />
             <Route path="events" element={<EventsPage />} />
             <Route path="news" element={<NewsPage />} />
             <Route path="announcements" element={<AnnouncementsPage />} />
@@ -318,7 +328,8 @@ function AdminApp() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
-    </BrowserRouter>
+    </LanguageProvider>
+  </BrowserRouter>
   );
 }
 

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const GEO_VISIBILITY_OPTIONS = ["Global", "Country", "State", "District", "City", "Area"];
@@ -80,6 +81,7 @@ function SectionHead({ icon: Icon, label }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function CommunityPagesPage() {
+  const { t } = useLanguage();
   const { user, isSuperAdmin, canDo } = useAuth();
 
   // List state
@@ -268,7 +270,7 @@ export default function CommunityPagesPage() {
     try {
       await api.post(`/community-pages/${detailPage.id}/leave`);
       setMyMembership(null);
-      toast.success("You have left the community.");
+      toast.success(t("You have left the community."));
       setReloadKey((k) => k + 1);
     } catch (err) { toast.error(extractErrorMessage(err)); }
     finally { setJoining(false); }
@@ -277,7 +279,7 @@ export default function CommunityPagesPage() {
   // ─── Edit page (owner) ───────────────────────────────────────────────────
   const handleEditSave = async (e) => {
     e?.preventDefault();
-    if (!editForm.name?.trim()) { toast.error("Page name is required."); return; }
+    if (!editForm.name?.trim()) { toast.error(t("Page name is required.")); return; }
     setEditSaving(true);
     try {
       const galleryUrls = (editForm.gallery || []).filter((u) => u?.trim());
@@ -305,7 +307,7 @@ export default function CommunityPagesPage() {
           youtube: editForm.youtube?.trim() || undefined,
         },
       });
-      toast.success("Page updated successfully!");
+      toast.success(t("Page updated successfully!"));
       setOpenEdit(false);
       openDetail(detailPage);
       setReloadKey((k) => k + 1);
@@ -316,7 +318,7 @@ export default function CommunityPagesPage() {
   // ─── CSV Export ───────────────────────────────────────────────────────────
   const exportMembersCSV = () => {
     const rows = members[memberTab];
-    if (!rows?.length) { toast.error("No members to export."); return; }
+    if (!rows?.length) { toast.error(t("No members to export.")); return; }
     const header = ["Member ID", "Name", "City", "State", "Community", "Join Date", "Status"];
     const lines = rows.map((m) => [
       m.member?.publicId || "",
@@ -361,14 +363,14 @@ export default function CommunityPagesPage() {
     try {
       // Use decision endpoint with REJECTED to remove — live server doesn't have DELETE /members/:id yet
       await api.post(`/community-pages/${detailPage.id}/members/decision`, { memberId, decision: "REJECTED" });
-      toast.success("Member removed.");
+      toast.success(t("Member removed."));
       loadMembers(detailPage.id);
     } catch (err) { toast.error(extractErrorMessage(err)); }
   };
 
   // ─── Create post ──────────────────────────────────────────────────────────
   const submitPost = async () => {
-    if (!newPost.description.trim()) { toast.error("Post content is required."); return; }
+    if (!newPost.description.trim()) { toast.error(t("Post content is required.")); return; }
     setPostSaving(true);
     const postPayload = {
       title: newPost.title.trim() || undefined,
@@ -384,7 +386,7 @@ export default function CommunityPagesPage() {
         // Fallback to global /feed/posts endpoint if community-pages endpoint is 404 on live server
         await api.post(`/feed/posts`, postPayload);
       }
-      toast.success("Post published successfully!");
+      toast.success(t("Post published successfully!"));
       setNewPost({ title: "", description: "", coverUrl: "", type: "Notice" });
       loadFeed(detailPage.id);
     } catch (err) { toast.error(extractErrorMessage(err)); }
@@ -414,7 +416,7 @@ export default function CommunityPagesPage() {
       };
       await api.patch(`/community-pages/${detailPage.id}`, visPayload);
 
-      toast.success("Settings updated.");
+      toast.success(t("Settings updated."));
       openDetail(detailPage);
       setReloadKey((k) => k + 1);
     } catch (err) { toast.error(extractErrorMessage(err)); }
@@ -441,7 +443,7 @@ export default function CommunityPagesPage() {
         // Fallback on live server if DELETE endpoint is not yet active
         await api.patch(`/community-pages/${detailPage.id}/subscription`, { status: "SUSPENDED" });
       }
-      toast.success("Page deleted successfully.");
+      toast.success(t("Page deleted successfully."));
       setDetailPage(null);
       setReloadKey((k) => k + 1);
     } catch (err) { toast.error(extractErrorMessage(err)); }
@@ -450,7 +452,7 @@ export default function CommunityPagesPage() {
   // ─── Create page submit ───────────────────────────────────────────────────
   const handleCreate = async (e) => {
     e?.preventDefault();
-    if (!form.name.trim()) { toast.error("Page name is required."); return; }
+    if (!form.name.trim()) { toast.error(t("Page name is required.")); return; }
     setSaving(true);
     try {
       const galleryUrls = form.gallery.filter((u) => u.trim());
@@ -488,7 +490,7 @@ export default function CommunityPagesPage() {
         ownerUserIds: ownerInputs.filter(Boolean).length ? ownerInputs.filter(Boolean) : [user?.id].filter(Boolean),
       };
       await api.post("/community-pages", payload);
-      toast.success("Community Page created!");
+      toast.success(t("Community Page created!"));
       setOpenCreate(false);
       setForm({ ...EMPTY_FORM });
       setOwnerInputs([""]);
@@ -501,11 +503,11 @@ export default function CommunityPagesPage() {
   return (
     <div data-testid="community-pages-page" className="space-y-5">
       <PageHeader
-        title="Community Pages"
-        subtitle="Official digital presence for Jain organizations, trusts, youth groups, and social communities."
+        title={t("Community Pages")}
+        subtitle={t("Official digital presence for Jain organizations, trusts, youth groups, and social communities.")}
         actions={isSuperAdmin && (
           <Button onClick={() => setOpenCreate(true)} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">
-            <Plus className="h-4 w-4 mr-2" /> Create Community Page
+            <Plus className="h-4 w-4 mr-2" /> {t("Create Community Page")}
           </Button>
         )}
       />
@@ -515,33 +517,33 @@ export default function CommunityPagesPage() {
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search pages by name or keyword..." className="pl-9 h-9 bg-white text-sm" />
+            placeholder={t("Search pages by name or keyword...")} className="pl-9 h-9 bg-white text-sm" />
         </div>
         <select className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
           value={filterCat} onChange={(e) => setFilterCat(e.target.value)}>
-          <option value="">All Categories</option>
+          <option value="">{t("All Categories")}</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
           value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-          <option value="">All Status</option>
-          <option value="ACTIVE">Active</option>
-          <option value="EXPIRING_SOON">Expiring Soon</option>
-          <option value="EXPIRED">Expired</option>
-          <option value="SUSPENDED">Suspended</option>
+          <option value="">{t("All Status")}</option>
+          <option value="ACTIVE">{t("Active")}</option>
+          <option value="EXPIRING_SOON">{t("Expiring Soon")}</option>
+          <option value="EXPIRED">{t("Expired")}</option>
+          <option value="SUSPENDED">{t("Suspended")}</option>
         </select>
         <Input value={filterState} onChange={(e) => setFilterState(e.target.value)}
-          placeholder="Filter by State..." className="h-9 w-36 bg-white text-sm" />
+          placeholder={t("Filter by State...")} className="h-9 w-36 bg-white text-sm" />
         <Input value={filterCity} onChange={(e) => setFilterCity(e.target.value)}
-          placeholder="Filter by City..." className="h-9 w-36 bg-white text-sm" />
+          placeholder={t("Filter by City...")} className="h-9 w-36 bg-white text-sm" />
         <Button variant="outline" size="sm" onClick={() => {
           setSearch(""); setFilterCat(""); setFilterStatus(""); setFilterState(""); setFilterCity("");
           setReloadKey((k) => k + 1);
         }} className="h-9 text-xs">
-          <X className="h-3.5 w-3.5 mr-1" /> Clear
+          <X className="h-3.5 w-3.5 mr-1" /> {t("Clear")}
         </Button>
         <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)} className="h-9">
-          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Refresh
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {t("Refresh")}
         </Button>
       </div>
 
@@ -551,7 +553,7 @@ export default function CommunityPagesPage() {
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48" />)}
         </div>
       ) : pages.length === 0 ? (
-        <EmptyState title="No community pages found" description="Create the first community page or adjust your filters." icon={Users} />
+        <EmptyState title={t("No community pages found")} description={t("Create the first community page or adjust your filters.")} icon={Users} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pages.map((p) => (
@@ -559,13 +561,13 @@ export default function CommunityPagesPage() {
               onClick={() => openDetail(p)} data-testid={`cp-card-${p.id}`}>
               {/* Banner */}
               <div className="h-20 bg-gradient-to-r from-orange-400 to-amber-500 relative">
-                {p.bannerUrl && <img src={p.bannerUrl} alt="banner" className="w-full h-full object-cover" />}
+                {p.bannerUrl && <img src={p.bannerUrl} alt={t("banner")} className="w-full h-full object-cover" />}
                 <div className="absolute top-2 right-2"><StatusBadge status={p.subscriptionStatus || "ACTIVE"} /></div>
               </div>
               <div className="p-4 -mt-6 relative">
                 {/* Logo */}
                 <div className="w-12 h-12 rounded-xl border-2 border-white shadow-md bg-white flex items-center justify-center overflow-hidden mb-2">
-                  {p.logoUrl ? <img src={p.logoUrl} alt="logo" className="w-full h-full object-cover" />
+                  {p.logoUrl ? <img src={p.logoUrl} alt={t("logo")} className="w-full h-full object-cover" />
                     : <Building2 className="h-6 w-6 text-orange-400" />}
                 </div>
                 <div className="font-bold text-slate-900 text-sm leading-tight">{p.name}</div>
@@ -573,12 +575,12 @@ export default function CommunityPagesPage() {
                 <Badge variant="outline" className="mt-1.5 text-[10px] font-semibold">{p.category?.name || "Organization"}</Badge>
                 {p.about && <p className="mt-2 text-xs text-slate-500 line-clamp-2">{p.about}</p>}
                 <div className="mt-3 flex items-center justify-between text-xs text-slate-500 border-t pt-2">
-                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5 text-orange-400" /> {p._count?.members || 0} members</span>
+                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5 text-orange-400" /> {p._count?.members || 0} {t("members")}</span>
                   <Badge variant="outline" className="text-[10px] font-bold uppercase">{p.joinApprovalMode || "MANUAL"}</Badge>
                 </div>
                 {(p._count?.members === 0 ? false : p.pendingCount > 0) && (
                   <div className="mt-2 text-[11px] text-orange-600 font-medium flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {p.pendingCount} pending request(s)
+                    <Clock className="h-3 w-3" /> {p.pendingCount} {t("pending request(s)")}
                   </div>
                 )}
               </div>
@@ -594,7 +596,7 @@ export default function CommunityPagesPage() {
         <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-2xl shadow-2xl bg-slate-50 h-[92vh] max-h-[92vh] flex flex-col">
           <DialogHeader className="px-6 py-4 border-b bg-slate-900 shrink-0">
             <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
-              <Users className="h-5 w-5 text-orange-400" /> Create Community Page
+              <Users className="h-5 w-5 text-orange-400" /> {t("Create Community Page")}
             </DialogTitle>
           </DialogHeader>
 
@@ -603,76 +605,76 @@ export default function CommunityPagesPage() {
 
               {/* 1. Basic Info */}
               <section className="space-y-3 bg-white rounded-xl p-4 border">
-                <SectionHead icon={Info} label="Basic Information" />
+                <SectionHead icon={Info} label={t("Basic Information")} />
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2">
-                    <Label className="text-xs font-bold">Page Name *</Label>
+                    <Label className="text-xs font-bold">{t("Page Name *")}</Label>
                     <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="e.g. Jain Youth Association Mumbai" className="mt-1 h-9 text-sm" required />
+                      placeholder={t("e.g. Jain Youth Association Mumbai")} className="mt-1 h-9 text-sm" required />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Short Name / Abbreviation</Label>
+                    <Label className="text-xs font-semibold">{t("Short Name / Abbreviation")}</Label>
                     <Input value={form.shortName} onChange={(e) => setForm({ ...form, shortName: e.target.value })}
-                      placeholder="e.g. JYA Mumbai" className="mt-1 h-9 text-sm" />
+                      placeholder={t("e.g. JYA Mumbai")} className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Category</Label>
+                    <Label className="text-xs font-semibold">{t("Category")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:border-orange-500"
                       value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
-                      <option value="">Select Category...</option>
+                      <option value="">{t("Select Category...")}</option>
                       {categories.length > 0
                         ? categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)
-                        : ORG_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                        : ORG_TYPES.map((tItem) => <option key={tItem} value={tItem}>{t(tItem)}</option>)}
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Organization Type</Label>
+                    <Label className="text-xs font-semibold">{t("Organization Type")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:border-orange-500"
                       value={form.orgType} onChange={(e) => setForm({ ...form, orgType: e.target.value })}>
-                      <option value="">Select Type...</option>
-                      {ORG_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                      <option value="">{t("Select Type...")}</option>
+                      {ORG_TYPES.map((tItem) => <option key={tItem} value={tItem}>{t(tItem)}</option>)}
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Established Year</Label>
+                    <Label className="text-xs font-semibold">{t("Established Year")}</Label>
                     <Input type="number" min="1800" max="2100" value={form.establishedYear}
                       onChange={(e) => setForm({ ...form, establishedYear: e.target.value })}
-                      placeholder="e.g. 1995" className="mt-1 h-9 text-sm" />
+                      placeholder={t("e.g. 1995")} className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Join Approval Mode</Label>
+                    <Label className="text-xs font-semibold">{t("Join Approval Mode")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:border-orange-500"
                       value={form.joinApprovalMode} onChange={(e) => setForm({ ...form, joinApprovalMode: e.target.value })}>
-                      <option value="MANUAL">Manual Approval (Admin must approve)</option>
-                      <option value="AUTO">Auto Approve (Instant join)</option>
+                      <option value="MANUAL">{t("Manual Approval (Admin must approve)")}</option>
+                      <option value="AUTO">{t("Auto Approve (Instant join)")}</option>
                     </select>
                   </div>
                   <div className="col-span-2">
-                    <Label className="text-xs font-semibold">About / Description</Label>
+                    <Label className="text-xs font-semibold">{t("About / Description")}</Label>
                     <Textarea rows={3} value={form.about}
                       onChange={(e) => setForm({ ...form, about: e.target.value })}
-                      placeholder="Describe the mission, objectives, and purpose..." className="mt-1 text-sm" />
+                      placeholder={t("Describe the mission, objectives, and purpose...")} className="mt-1 text-sm" />
                   </div>
                 </div>
               </section>
 
               {/* 2. Media */}
               <section className="space-y-3 bg-white rounded-xl p-4 border">
-                <SectionHead icon={ImageIcon} label="Media & Branding" />
+                <SectionHead icon={ImageIcon} label={t("Media & Branding")} />
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs font-semibold">Logo Image URL</Label>
+                    <Label className="text-xs font-semibold">{t("Logo Image URL")}</Label>
                     <Input value={form.logoUrl} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
                       placeholder="https://..." className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Cover Banner Image URL</Label>
+                    <Label className="text-xs font-semibold">{t("Cover Banner Image URL")}</Label>
                     <Input value={form.bannerUrl} onChange={(e) => setForm({ ...form, bannerUrl: e.target.value })}
                       placeholder="https://..." className="mt-1 h-9 text-sm" />
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold">Gallery Images (up to 10 URLs)</Label>
+                  <Label className="text-xs font-semibold">{t("Gallery Images (up to 10 URLs)")}</Label>
                   <div className="grid grid-cols-2 gap-2 mt-1">
                     {form.gallery.map((url, i) => (
                       <Input key={i} value={url}
@@ -688,46 +690,46 @@ export default function CommunityPagesPage() {
 
               {/* 3. Contacts & Location */}
               <section className="space-y-3 bg-white rounded-xl p-4 border">
-                <SectionHead icon={Phone} label="Contacts & Location" />
+                <SectionHead icon={Phone} label={t("Contacts & Location")} />
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs font-semibold">Phone Number</Label>
+                    <Label className="text-xs font-semibold">{t("Phone Number")}</Label>
                     <Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
                       placeholder="+91 99999 99999" className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Email Address</Label>
+                    <Label className="text-xs font-semibold">{t("Email Address")}</Label>
                     <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
                       placeholder="info@community.org" className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Operates From</Label>
+                    <Label className="text-xs font-semibold">{t("Operates From")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:border-orange-500"
                       value={form.operatesFrom} onChange={(e) => setForm({ ...form, operatesFrom: e.target.value })}>
-                      {OPERATES_FROM_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                      {OPERATES_FROM_OPTIONS.map((o) => <option key={o} value={o}>{t(o)}</option>)}
                     </select>
                   </div>
                   {form.operatesFrom !== "Online" && (
                     <div>
-                      <Label className="text-xs font-semibold">Office / Physical Address</Label>
+                      <Label className="text-xs font-semibold">{t("Office / Physical Address")}</Label>
                       <Input value={form.officeAddress} onChange={(e) => setForm({ ...form, officeAddress: e.target.value })}
-                        placeholder="Full address..." className="mt-1 h-9 text-sm" />
+                        placeholder={t("Full address...")} className="mt-1 h-9 text-sm" />
                     </div>
                   )}
                   <div>
-                    <Label className="text-xs font-semibold">Google Maps Link</Label>
+                    <Label className="text-xs font-semibold">{t("Google Maps Link")}</Label>
                     <Input value={form.googleMapsUrl} onChange={(e) => setForm({ ...form, googleMapsUrl: e.target.value })}
                       placeholder="https://maps.google.com/..." className="mt-1 h-9 text-sm" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 border-t pt-3">
                   <div>
-                    <Label className="text-xs font-semibold">Google Form Name</Label>
+                    <Label className="text-xs font-semibold">{t("Google Form Name")}</Label>
                     <Input value={form.googleFormName} onChange={(e) => setForm({ ...form, googleFormName: e.target.value })}
-                      placeholder="e.g. Membership Registration Form" className="mt-1 h-9 text-sm" />
+                      placeholder={t("e.g. Membership Registration Form")} className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Google Form Link</Label>
+                    <Label className="text-xs font-semibold">{t("Google Form Link")}</Label>
                     <Input value={form.googleFormLink} onChange={(e) => setForm({ ...form, googleFormLink: e.target.value })}
                       placeholder="https://forms.google.com/..." className="mt-1 h-9 text-sm" />
                   </div>
@@ -736,14 +738,14 @@ export default function CommunityPagesPage() {
 
               {/* 4. Social Links */}
               <section className="space-y-3 bg-white rounded-xl p-4 border">
-                <SectionHead icon={Globe} label="Social Media Links" />
+                <SectionHead icon={Globe} label={t("Social Media Links")} />
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { key: "website", label: "Website", ph: "https://..." },
-                    { key: "whatsappGroup", label: "WhatsApp Group", ph: "https://chat.whatsapp.com/..." },
-                    { key: "instagram", label: "Instagram", ph: "https://instagram.com/..." },
-                    { key: "facebook", label: "Facebook", ph: "https://facebook.com/..." },
-                    { key: "youtube", label: "YouTube", ph: "https://youtube.com/..." },
+                    { key: "website", label: t("Website"), ph: "https://..." },
+                    { key: "whatsappGroup", label: t("WhatsApp Group"), ph: "https://chat.whatsapp.com/..." },
+                    { key: "instagram", label: t("Instagram"), ph: "https://instagram.com/..." },
+                    { key: "facebook", label: t("Facebook"), ph: "https://facebook.com/..." },
+                    { key: "youtube", label: t("YouTube"), ph: "https://youtube.com/..." },
                   ].map(({ key, label, ph }) => (
                     <div key={key}>
                       <Label className="text-xs font-semibold">{label}</Label>
@@ -757,34 +759,34 @@ export default function CommunityPagesPage() {
               {/* 5. Visibility (SA only) */}
               {isSuperAdmin && (
                 <section className="space-y-3 bg-white rounded-xl p-4 border">
-                  <SectionHead icon={Eye} label="Community & Geographic Visibility" />
+                  <SectionHead icon={Eye} label={t("Community & Geographic Visibility")} />
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs font-semibold">Community Visibility</Label>
+                      <Label className="text-xs font-semibold">{t("Community Visibility")}</Label>
                       <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:border-orange-500"
                         value={form.communityVisibility} onChange={(e) => setForm({ ...form, communityVisibility: e.target.value })}>
-                        <option value="PUBLIC">Public (Visible to all members)</option>
-                        <option value="MEMBERS_ONLY">Members Only</option>
+                        <option value="PUBLIC">{t("Public (Visible to all members)")}</option>
+                        <option value="MEMBERS_ONLY">{t("Members Only")}</option>
                       </select>
                     </div>
                     <div>
-                      <Label className="text-xs font-semibold">Geographic Visibility</Label>
+                      <Label className="text-xs font-semibold">{t("Geographic Visibility")}</Label>
                       <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:border-orange-500"
                         value={form.geoVisibility} onChange={(e) => setForm({ ...form, geoVisibility: e.target.value })}>
-                        {GEO_VISIBILITY_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                        {GEO_VISIBILITY_OPTIONS.map((o) => <option key={o} value={o}>{t(o)}</option>)}
                       </select>
                     </div>
                     {["State", "District", "City", "Area"].includes(form.geoVisibility) && (
                       <>
                         <div>
-                          <Label className="text-xs font-semibold">State</Label>
+                          <Label className="text-xs font-semibold">{t("State")}</Label>
                           <Input value={form.geoState} onChange={(e) => setForm({ ...form, geoState: e.target.value })}
-                            placeholder="e.g. Gujarat" className="mt-1 h-9 text-sm" />
+                            placeholder={t("e.g. Gujarat")} className="mt-1 h-9 text-sm" />
                         </div>
                         <div>
-                          <Label className="text-xs font-semibold">City</Label>
+                          <Label className="text-xs font-semibold">{t("City")}</Label>
                           <Input value={form.geoCity} onChange={(e) => setForm({ ...form, geoCity: e.target.value })}
-                            placeholder="e.g. Surat" className="mt-1 h-9 text-sm" />
+                            placeholder={t("e.g. Surat")} className="mt-1 h-9 text-sm" />
                         </div>
                       </>
                     )}
@@ -795,16 +797,16 @@ export default function CommunityPagesPage() {
               {/* 6. Subscription (SA only) */}
               {isSuperAdmin && (
                 <section className="space-y-3 bg-white rounded-xl p-4 border">
-                  <SectionHead icon={Calendar} label="Subscription Dates" />
+                  <SectionHead icon={Calendar} label={t("Subscription Dates")} />
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs font-semibold">Subscription Start Date</Label>
+                      <Label className="text-xs font-semibold">{t("Subscription Start Date")}</Label>
                       <Input type="date" value={form.subscriptionStartDate}
                         onChange={(e) => setForm({ ...form, subscriptionStartDate: e.target.value })}
                         className="mt-1 h-9 text-sm" />
                     </div>
                     <div>
-                      <Label className="text-xs font-semibold">Subscription Expiry Date</Label>
+                      <Label className="text-xs font-semibold">{t("Subscription Expiry Date")}</Label>
                       <Input type="date" value={form.subscriptionExpiresAt}
                         onChange={(e) => setForm({ ...form, subscriptionExpiresAt: e.target.value })}
                         className="mt-1 h-9 text-sm" />
@@ -816,7 +818,7 @@ export default function CommunityPagesPage() {
               {/* 7. Page Owners */}
               {isSuperAdmin && (
                 <section className="space-y-3 bg-white rounded-xl p-4 border">
-                  <SectionHead icon={Crown} label="Page Owner(s) — Link Members" />
+                  <SectionHead icon={Crown} label={t("Page Owner(s) — Link Members")} />
                   <div className="space-y-2">
                     {ownerInputs.map((val, i) => (
                       <div key={i} className="flex gap-2 items-center">
@@ -836,7 +838,7 @@ export default function CommunityPagesPage() {
                     {ownerInputs.length < 5 && (
                       <Button type="button" variant="outline" size="sm"
                         onClick={() => setOwnerInputs([...ownerInputs, ""])} className="text-xs">
-                        <Plus className="h-3.5 w-3.5 mr-1" /> Add Another Owner
+                        <Plus className="h-3.5 w-3.5 mr-1" /> {t("Add Another Owner")}
                       </Button>
                     )}
                   </div>
@@ -846,9 +848,9 @@ export default function CommunityPagesPage() {
             </div>
 
             <div className="p-4 bg-white border-t flex justify-end gap-2 shrink-0">
-              <Button type="button" variant="outline" onClick={() => setOpenCreate(false)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => setOpenCreate(false)}>{t("Cancel")}</Button>
               <Button type="submit" disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">
-                {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating…</> : "Save & Create Page"}
+                {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("Creating…")}</> : t("Save & Create Page")}
               </Button>
             </div>
           </form>
@@ -865,12 +867,12 @@ export default function CommunityPagesPage() {
             <>
               <div className="h-28 bg-gradient-to-r from-orange-500 to-amber-400 relative shrink-0">
                 {detailPage.bannerUrl && (
-                  <img src={detailPage.bannerUrl} alt="banner" className="w-full h-full object-cover" />
+                  <img src={detailPage.bannerUrl} alt={t("banner")} className="w-full h-full object-cover" />
                 )}
                 <div className="absolute bottom-0 left-6 translate-y-1/2">
                   <div className="w-16 h-16 rounded-2xl border-4 border-white shadow-lg bg-white flex items-center justify-center overflow-hidden">
                     {detailPage.logoUrl
-                      ? <img src={detailPage.logoUrl} alt="logo" className="w-full h-full object-cover" />
+                      ? <img src={detailPage.logoUrl} alt={t("logo")} className="w-full h-full object-cover" />
                       : <Building2 className="h-8 w-8 text-orange-400" />}
                   </div>
                 </div>
@@ -899,7 +901,7 @@ export default function CommunityPagesPage() {
                     {canDo("COMMUNITY_PAGES", "EDIT") && (
                       <Button size="sm" variant="outline" onClick={() => setOpenEdit(true)}
                         className="h-8 text-xs font-bold hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300">
-                        <Edit className="h-3.5 w-3.5 mr-1.5" /> Edit Page
+                        <Edit className="h-3.5 w-3.5 mr-1.5" /> {t("Edit Page")}
                       </Button>
                     )}
                   </div>
@@ -908,12 +910,12 @@ export default function CommunityPagesPage() {
                 {/* Tabs */}
                 <div className="flex gap-0.5 mt-3 -mb-px overflow-x-auto">
                   {[
-                    { id: "profile",   label: "Profile",   icon: Info },
-                    { id: "members",   label: "Members",   icon: Users },
-                    { id: "feed",      label: "Feed",      icon: Rss },
-                    { id: "gallery",   label: "Gallery",   icon: ImageIcon },
-                    { id: "analytics", label: "Analytics", icon: BarChart2 },
-                    ...(isSuperAdmin ? [{ id: "settings", label: "Settings", icon: Settings }] : []),
+                    { id: "profile",   label: t("Profile"),   icon: Info },
+                    { id: "members",   label: t("Members"),   icon: Users },
+                    { id: "feed",      label: t("Feed"),      icon: Rss },
+                    { id: "gallery",   label: t("Gallery"),   icon: ImageIcon },
+                    { id: "analytics", label: t("Analytics"), icon: BarChart2 },
+                    ...(isSuperAdmin ? [{ id: "settings", label: t("Settings"), icon: Settings }] : []),
                   ].map(({ id, label, icon: Icon }) => (
                     <button key={id} onClick={() => switchDetailTab(id)}
                       className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
@@ -935,14 +937,14 @@ export default function CommunityPagesPage() {
                   <div className="space-y-5">
                     {detailPage.about && (
                       <div className="bg-white rounded-xl border p-4">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">About</h4>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">{t("About")}</h4>
                         <p className="text-sm text-slate-700 leading-relaxed">{detailPage.about}</p>
                       </div>
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-white rounded-xl border p-4 space-y-2">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Organization Details</h4>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">{t("Organization Details")}</h4>
                         {[
                           ["Type", detailPage.orgType],
                           ["Established", detailPage.establishedYear],
@@ -959,7 +961,7 @@ export default function CommunityPagesPage() {
                       </div>
 
                       <div className="bg-white rounded-xl border p-4 space-y-2">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Contact Details</h4>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">{t("Contact Details")}</h4>
                         {detailPage.contacts?.phone && (
                           <div className="flex items-center gap-2 text-xs text-slate-700">
                             <Phone className="h-3.5 w-3.5 text-orange-500" /> {detailPage.contacts.phone}
@@ -978,7 +980,7 @@ export default function CommunityPagesPage() {
                         {detailPage.googleMapsUrl && (
                           <a href={detailPage.googleMapsUrl} target="_blank" rel="noreferrer"
                             className="flex items-center gap-2 text-xs text-blue-600 hover:underline">
-                            <Globe className="h-3.5 w-3.5" /> View on Maps
+                            <Globe className="h-3.5 w-3.5" /> {t("View on Maps")}
                           </a>
                         )}
                       </div>
@@ -987,7 +989,7 @@ export default function CommunityPagesPage() {
                     {/* Social links */}
                     {detailPage.socialLinks && Object.values(detailPage.socialLinks).some(Boolean) && (
                       <div className="bg-white rounded-xl border p-4">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Links & Social Channels</h4>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">{t("Links & Social Channels")}</h4>
                         <div className="flex flex-wrap gap-2">
                           {Object.entries(detailPage.socialLinks).map(([k, v]) => v && (
                             <a key={k} href={String(v)} target="_blank" rel="noreferrer"
@@ -1007,7 +1009,7 @@ export default function CommunityPagesPage() {
                         </h4>
                         <a href={detailPage.googleFormLink} target="_blank" rel="noreferrer"
                           className="text-xs text-blue-700 hover:underline flex items-center gap-1">
-                          <ExternalLink className="h-3 w-3" /> Open Form Link
+                          <ExternalLink className="h-3 w-3" /> {t("Open Form Link")}
                         </a>
                       </div>
                     )}
@@ -1016,24 +1018,24 @@ export default function CommunityPagesPage() {
                     {!isSuperAdmin && !canDo("COMMUNITY_PAGES", "EDIT") && (
                       <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center justify-between">
                         <div>
-                          <div className="text-sm font-bold text-slate-800">Join this Community</div>
+                          <div className="text-sm font-bold text-slate-800">{t("Join this Community")}</div>
                           <div className="text-xs text-slate-500 mt-0.5">
-                            {myMembership === "APPROVED" ? "You are an active member of this page."
-                              : myMembership === "PENDING" ? "Your join request is pending approval."
-                              : "Become a member to receive updates and notifications."}
+                            {myMembership === "APPROVED" ? t("You are an active member of this page.")
+                              : myMembership === "PENDING" ? t("Your join request is pending approval.")
+                              : t("Become a member to receive updates and notifications.")}
                           </div>
                         </div>
                         {myMembership === "APPROVED" ? (
                           <Button size="sm" variant="outline" onClick={leavePage} disabled={joining}
                             className="border-red-200 text-red-600 hover:bg-red-50 font-bold shrink-0">
-                            {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <><LogOut className="h-3.5 w-3.5 mr-1.5" /> Leave Page</>}
+                            {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <><LogOut className="h-3.5 w-3.5 mr-1.5" /> {t("Leave Page")}</>}
                           </Button>
                         ) : myMembership === "PENDING" ? (
-                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 font-bold">⏳ Pending</Badge>
+                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 font-bold">{t("⏳ Pending")}</Badge>
                         ) : (
                           <Button size="sm" onClick={joinPage} disabled={joining}
                             className="bg-orange-500 hover:bg-orange-600 text-white font-bold shrink-0">
-                            {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Users className="h-3.5 w-3.5 mr-1.5" /> Join Community</>}
+                            {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Users className="h-3.5 w-3.5 mr-1.5" /> {t("Join Community")}</>}
                           </Button>
                         )}
                       </div>
@@ -1041,10 +1043,10 @@ export default function CommunityPagesPage() {
 
                     {/* Subscription info */}
                     <div className="bg-slate-800 text-white rounded-xl p-4">
-                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Subscription</h4>
+                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">{t("Subscription")}</h4>
                       <div className="grid grid-cols-3 gap-4 text-center">
                         <div>
-                          <div className="text-xs text-slate-400 mb-1">Status</div>
+                          <div className="text-xs text-slate-400 mb-1">{t("Status")}</div>
                           <Badge className={`text-xs font-bold ${
                             detailPage.subscriptionStatus === "ACTIVE" ? "bg-emerald-500" :
                             detailPage.subscriptionStatus === "EXPIRING_SOON" ? "bg-amber-500" :
@@ -1053,7 +1055,7 @@ export default function CommunityPagesPage() {
                           </Badge>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-400 mb-1">Start Date</div>
+                          <div className="text-xs text-slate-400 mb-1">{t("Start Date")}</div>
                           <div className="text-sm font-bold">
                             {detailPage.subscriptionStartDate || detailPage.createdAt
                               ? new Date(detailPage.subscriptionStartDate || detailPage.createdAt).toLocaleDateString("en-IN")
@@ -1061,7 +1063,7 @@ export default function CommunityPagesPage() {
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-400 mb-1">Expiry Date</div>
+                          <div className="text-xs text-slate-400 mb-1">{t("Expiry Date")}</div>
                           <div className="text-sm font-bold">
                             {detailPage.subscriptionExpiresAt
                               ? new Date(detailPage.subscriptionExpiresAt).toLocaleDateString("en-IN")
@@ -1095,16 +1097,16 @@ export default function CommunityPagesPage() {
                       </div>
                       <Button size="sm" variant="outline" onClick={exportMembersCSV}
                         className="h-7 text-xs font-bold hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300">
-                        <FileText className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+                        <FileText className="h-3.5 w-3.5 mr-1.5" /> {t("Export CSV")}
                       </Button>
                     </div>
 
                     {membersLoading ? (
                       <div className="flex items-center gap-2 text-sm text-slate-500 py-8">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Loading members...
+                        <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading members...")}
                       </div>
                     ) : members[memberTab]?.length === 0 ? (
-                      <div className="text-center text-sm text-slate-500 py-10">No {memberTab.toLowerCase()} members.</div>
+                      <div className="text-center text-sm text-slate-500 py-10">{t("No")} {memberTab.toLowerCase()} {t("members.")}</div>
                     ) : (
                       <div className="space-y-2">
                         {members[memberTab].map((m) => (
@@ -1121,7 +1123,7 @@ export default function CommunityPagesPage() {
                                 {m.member?.city && <span>{m.member.city}</span>}
                                 {m.member?.state && <span>{m.member.state}</span>}
                                 {m.member?.sect && <span>{m.member.sect}</span>}
-                                <span>Joined: {new Date(m.createdAt).toLocaleDateString("en-IN")}</span>
+                                <span>{t("Joined:")} {new Date(m.createdAt).toLocaleDateString("en-IN")}</span>
                               </div>
                             </div>
                             <div className="flex gap-1.5 shrink-0">
@@ -1129,18 +1131,18 @@ export default function CommunityPagesPage() {
                                 <>
                                   <Button size="sm" onClick={() => decideMember(m.id, "APPROVED")}
                                     className="h-7 text-xs bg-emerald-500 hover:bg-emerald-600 text-white">
-                                    <Check className="h-3 w-3 mr-1" /> Approve
+                                    <Check className="h-3 w-3 mr-1" /> {t("Approve")}
                                   </Button>
                                   <Button size="sm" variant="outline" onClick={() => decideMember(m.id, "REJECTED")}
                                     className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50">
-                                    <X className="h-3 w-3 mr-1" /> Reject
+                                    <X className="h-3 w-3 mr-1" /> {t("Reject")}
                                   </Button>
                                 </>
                               )}
                               {memberTab === "APPROVED" && canDo("COMMUNITY_PAGES", "EDIT") && (
                                 <Button size="sm" variant="outline" onClick={() => removeMember(m.id)}
                                   className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50">
-                                  <UserX className="h-3 w-3 mr-1" /> Remove
+                                  <UserX className="h-3 w-3 mr-1" /> {t("Remove")}
                                 </Button>
                               )}
                             </div>
@@ -1157,15 +1159,15 @@ export default function CommunityPagesPage() {
                     {/* Create post (owner only) */}
                     {canDo("COMMUNITY_PAGES", "EDIT") && (
                       <div className="bg-white border rounded-xl p-4 space-y-3">
-                        <h4 className="text-xs font-bold text-slate-700">Publish a New Update</h4>
+                        <h4 className="text-xs font-bold text-slate-700">{t("Publish a New Update")}</h4>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <Label className="text-xs font-semibold">Post Title (Optional)</Label>
+                            <Label className="text-xs font-semibold">{t("Post Title (Optional)")}</Label>
                             <Input value={newPost.title} onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                              placeholder="e.g. Event Announcement" className="mt-1 h-8 text-sm" />
+                              placeholder={t("e.g. Event Announcement")} className="mt-1 h-8 text-sm" />
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold">Post Type</Label>
+                            <Label className="text-xs font-semibold">{t("Post Type")}</Label>
                             <select className="w-full mt-1 h-8 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                               value={newPost.type} onChange={(e) => {
                                 if (e.target.value === "PaidEvent") {
@@ -1174,30 +1176,30 @@ export default function CommunityPagesPage() {
                                 }
                                 setNewPost({ ...newPost, type: e.target.value });
                               }}>
-                              <option value="Notice">Notice</option>
-                              <option value="Announcement">Announcement</option>
-                              <option value="Update">General Update</option>
-                              <option value="Event">Free Event</option>
-                              <option value="Poll">Poll</option>
-                              <option value="PaidEvent">Paid Event (Restricted)</option>
-                              <option value="MANUAL">Other</option>
+                              <option value="Notice">{t("Notice")}</option>
+                              <option value="Announcement">{t("Announcement")}</option>
+                              <option value="Update">{t("General Update")}</option>
+                              <option value="Event">{t("Free Event")}</option>
+                              <option value="Poll">{t("Poll")}</option>
+                              <option value="PaidEvent">{t("Paid Event (Restricted)")}</option>
+                              <option value="MANUAL">{t("Other")}</option>
                             </select>
                           </div>
                           <div className="col-span-2">
-                            <Label className="text-xs font-semibold">Content *</Label>
+                            <Label className="text-xs font-semibold">{t("Content *")}</Label>
                             <Textarea rows={3} value={newPost.description}
                               onChange={(e) => setNewPost({ ...newPost, description: e.target.value })}
-                              placeholder="Write your update, notice, or announcement..." className="mt-1 text-sm" />
+                              placeholder={t("Write your update, notice, or announcement...")} className="mt-1 text-sm" />
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold">Cover Image URL (Optional)</Label>
+                            <Label className="text-xs font-semibold">{t("Cover Image URL (Optional)")}</Label>
                             <Input value={newPost.coverUrl} onChange={(e) => setNewPost({ ...newPost, coverUrl: e.target.value })}
                               placeholder="https://..." className="mt-1 h-8 text-sm" />
                           </div>
                           <div className="flex items-end">
                             <Button onClick={submitPost} disabled={postSaving}
                               className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-8 text-xs w-full">
-                              {postSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Send className="h-3.5 w-3.5 mr-1.5" /> Publish Post</>}
+                              {postSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Send className="h-3.5 w-3.5 mr-1.5" /> {t("Publish Post")}</>}
                             </Button>
                           </div>
                         </div>
@@ -1206,10 +1208,10 @@ export default function CommunityPagesPage() {
 
                     {feedLoading ? (
                       <div className="flex items-center gap-2 text-sm text-slate-500 py-8">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Loading feed...
+                        <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading feed...")}
                       </div>
                     ) : feedPosts.length === 0 ? (
-                      <div className="text-center text-sm text-slate-500 py-10">No posts published yet.</div>
+                      <div className="text-center text-sm text-slate-500 py-10">{t("No posts published yet.")}</div>
                     ) : (
                       <div className="space-y-3">
                         {feedPosts.map((post) => (
@@ -1228,15 +1230,15 @@ export default function CommunityPagesPage() {
                               </span>
                             </div>
                             {post.coverUrl && (
-                              <img src={post.coverUrl} alt="cover"
+                              <img src={post.coverUrl} alt={t("cover")}
                                 className="w-full h-32 object-cover rounded-lg my-2" />
                             )}
                             {post.description && (
                               <p className="text-sm text-slate-700 mt-1 leading-relaxed">{post.description}</p>
                             )}
                             <div className="flex items-center gap-4 mt-3 pt-2 border-t text-[11px] text-slate-400">
-                              <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {post.viewCount} views</span>
-                              {!post.isActive && <Badge className="text-[10px] bg-slate-100 text-slate-500">Expired</Badge>}
+                              <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {post.viewCount} {t("views")}</span>
+                              {!post.isActive && <Badge className="text-[10px] bg-slate-100 text-slate-500">{t("Expired")}</Badge>}
                             </div>
                           </div>
                         ))}
@@ -1251,7 +1253,7 @@ export default function CommunityPagesPage() {
                     {(() => {
                       const gallery = Array.isArray(detailPage.gallery) ? detailPage.gallery.filter(Boolean) : [];
                       return gallery.length === 0
-                        ? <div className="text-center text-sm text-slate-500 py-12">No gallery images added yet.</div>
+                        ? <div className="text-center text-sm text-slate-500 py-12">{t("No gallery images added yet.")}</div>
                         : (
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {gallery.map((url, i) => (
@@ -1264,7 +1266,7 @@ export default function CommunityPagesPage() {
                     })()}
                     {canDo("COMMUNITY_PAGES", "EDIT") && (
                       <p className="text-xs text-slate-400 italic text-center">
-                        To update gallery images, contact the platform admin or use the edit form.
+                        {t("To update gallery images, contact the platform admin or use the edit form.")}
                       </p>
                     )}
                   </div>
@@ -1275,30 +1277,30 @@ export default function CommunityPagesPage() {
                   <div className="space-y-5">
                     {analyticsLoading ? (
                       <div className="flex items-center gap-2 text-sm text-slate-500 py-8">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Loading analytics...
+                        <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading analytics...")}
                       </div>
                     ) : analytics ? (
                       <>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <StatCard label="Total Members" value={analytics.totalMembers} icon={Users} color="orange" />
-                          <StatCard label="New (30 days)" value={analytics.newMembersThisMonth} icon={UserCheck} color="green" />
-                          <StatCard label="New (7 days)" value={analytics.newMembersThisWeek} icon={UserCheck} color="blue" />
-                          <StatCard label="Pending Requests" value={analytics.pendingRequests} icon={Clock} color="amber" />
+                          <StatCard label={t("Total Members")} value={analytics.totalMembers} icon={Users} color="orange" />
+                          <StatCard label={t("New (30 days)")} value={analytics.newMembersThisMonth} icon={UserCheck} color="green" />
+                          <StatCard label={t("New (7 days)")} value={analytics.newMembersThisWeek} icon={UserCheck} color="blue" />
+                          <StatCard label={t("Pending Requests")} value={analytics.pendingRequests} icon={Clock} color="amber" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <StatCard label="Total Posts" value={analytics.totalPosts} icon={Rss} color="purple" />
-                          <StatCard label="Posts (30 days)" value={analytics.recentPosts} icon={FileText} color="blue" />
+                          <StatCard label={t("Total Posts")} value={analytics.totalPosts} icon={Rss} color="purple" />
+                          <StatCard label={t("Posts (30 days)")} value={analytics.recentPosts} icon={FileText} color="blue" />
                         </div>
                         <div className="bg-white border rounded-xl p-4">
-                          <h4 className="text-xs font-bold text-slate-700 mb-3">Member Growth (Last 30 Days)</h4>
+                          <h4 className="text-xs font-bold text-slate-700 mb-3">{t("Member Growth (Last 30 Days)")}</h4>
                           <div className={`text-3xl font-black ${analytics.memberGrowthLast30Days >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                             {analytics.memberGrowthLast30Days >= 0 ? "+" : ""}{analytics.memberGrowthLast30Days}
                           </div>
-                          <div className="text-xs text-slate-500 mt-1">net new members compared to 30 days ago</div>
+                          <div className="text-xs text-slate-500 mt-1">{t("net new members compared to 30 days ago")}</div>
                         </div>
                       </>
                     ) : (
-                      <div className="text-center text-sm text-slate-500 py-10">Analytics unavailable.</div>
+                      <div className="text-center text-sm text-slate-500 py-10">{t("Analytics unavailable.")}</div>
                     )}
                   </div>
                 )}
@@ -1308,33 +1310,33 @@ export default function CommunityPagesPage() {
                   <div className="space-y-5">
                     {/* Subscription */}
                     <section className="bg-white border rounded-xl p-4 space-y-3">
-                      <SectionHead icon={Calendar} label="Subscription Management" />
+                      <SectionHead icon={Calendar} label={t("Subscription Management")} />
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs font-semibold">Subscription Plan</Label>
+                          <Label className="text-xs font-semibold">{t("Subscription Plan")}</Label>
                           <Input value={settingsForm.subscriptionPlan || ""}
                             onChange={(e) => setSettingsForm({ ...settingsForm, subscriptionPlan: e.target.value })}
-                            placeholder="e.g. Annual Plan" className="mt-1 h-9 text-sm" />
+                            placeholder={t("e.g. Annual Plan")} className="mt-1 h-9 text-sm" />
                         </div>
                         <div>
-                          <Label className="text-xs font-semibold">Subscription Status</Label>
+                          <Label className="text-xs font-semibold">{t("Subscription Status")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={settingsForm.subscriptionStatus || "ACTIVE"}
                             onChange={(e) => setSettingsForm({ ...settingsForm, subscriptionStatus: e.target.value })}>
-                            <option value="ACTIVE">Active</option>
-                            <option value="EXPIRING_SOON">Expiring Soon</option>
-                            <option value="EXPIRED">Expired</option>
-                            <option value="SUSPENDED">Suspended</option>
+                            <option value="ACTIVE">{t("Active")}</option>
+                            <option value="EXPIRING_SOON">{t("Expiring Soon")}</option>
+                            <option value="EXPIRED">{t("Expired")}</option>
+                            <option value="SUSPENDED">{t("Suspended")}</option>
                           </select>
                         </div>
                         <div>
-                          <Label className="text-xs font-semibold">Start Date</Label>
+                          <Label className="text-xs font-semibold">{t("Start Date")}</Label>
                           <Input type="date" value={settingsForm.subscriptionStartDate || ""}
                             onChange={(e) => setSettingsForm({ ...settingsForm, subscriptionStartDate: e.target.value })}
                             className="mt-1 h-9 text-sm" />
                         </div>
                         <div>
-                          <Label className="text-xs font-semibold">Expiry Date</Label>
+                          <Label className="text-xs font-semibold">{t("Expiry Date")}</Label>
                           <Input type="date" value={settingsForm.subscriptionExpiresAt || ""}
                             onChange={(e) => setSettingsForm({ ...settingsForm, subscriptionExpiresAt: e.target.value })}
                             className="mt-1 h-9 text-sm" />
@@ -1344,36 +1346,36 @@ export default function CommunityPagesPage() {
 
                     {/* Visibility */}
                     <section className="bg-white border rounded-xl p-4 space-y-3">
-                      <SectionHead icon={Globe} label="Visibility Settings" />
+                      <SectionHead icon={Globe} label={t("Visibility Settings")} />
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs font-semibold">Community Visibility</Label>
+                          <Label className="text-xs font-semibold">{t("Community Visibility")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={settingsForm.communityVisibility || "PUBLIC"}
                             onChange={(e) => setSettingsForm({ ...settingsForm, communityVisibility: e.target.value })}>
-                            <option value="PUBLIC">Public (Visible to all members)</option>
-                            <option value="MEMBERS_ONLY">Members Only</option>
+                            <option value="PUBLIC">{t("Public (Visible to all members)")}</option>
+                            <option value="MEMBERS_ONLY">{t("Members Only")}</option>
                           </select>
                         </div>
                         <div>
-                          <Label className="text-xs font-semibold">Geographic Visibility</Label>
+                          <Label className="text-xs font-semibold">{t("Geographic Visibility")}</Label>
                           <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                             value={settingsForm.geoVisibility || "Global"}
                             onChange={(e) => setSettingsForm({ ...settingsForm, geoVisibility: e.target.value })}>
-                            {GEO_VISIBILITY_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                            {GEO_VISIBILITY_OPTIONS.map((o) => <option key={o} value={o}>{t(o)}</option>)}
                           </select>
                         </div>
                         {["State", "District", "City", "Area"].includes(settingsForm.geoVisibility) && (
                           <>
                             <div>
-                              <Label className="text-xs font-semibold">State</Label>
+                              <Label className="text-xs font-semibold">{t("State")}</Label>
                               <Input value={settingsForm.geoState || ""} onChange={(e) => setSettingsForm({ ...settingsForm, geoState: e.target.value })}
-                                placeholder="e.g. Gujarat" className="mt-1 h-9 text-sm" />
+                                placeholder={t("e.g. Gujarat")} className="mt-1 h-9 text-sm" />
                             </div>
                             <div>
-                              <Label className="text-xs font-semibold">City</Label>
+                              <Label className="text-xs font-semibold">{t("City")}</Label>
                               <Input value={settingsForm.geoCity || ""} onChange={(e) => setSettingsForm({ ...settingsForm, geoCity: e.target.value })}
-                                placeholder="e.g. Surat" className="mt-1 h-9 text-sm" />
+                                placeholder={t("e.g. Surat")} className="mt-1 h-9 text-sm" />
                             </div>
                           </>
                         )}
@@ -1385,23 +1387,23 @@ export default function CommunityPagesPage() {
                       <div className="flex flex-wrap gap-2">
                         <Button onClick={deletePage} variant="outline"
                           className="border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs">
-                          <Trash2 className="h-4 w-4 mr-1.5" /> Delete Page (Permanently)
+                          <Trash2 className="h-4 w-4 mr-1.5" /> {t("Delete Page (Permanently)")}
                         </Button>
                         {detailPage?.subscriptionStatus === "SUSPENDED" || detailPage?.subscriptionStatus === "EXPIRED" ? (
                           <Button onClick={() => toggleSuspendStatus("ACTIVE")}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">
-                            <Check className="h-4 w-4 mr-1.5" /> Make Active (Reactivate Page)
+                            <Check className="h-4 w-4 mr-1.5" /> {t("Make Active (Reactivate Page)")}
                           </Button>
                         ) : (
                           <Button onClick={() => toggleSuspendStatus("SUSPENDED")} variant="outline"
                             className="border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold text-xs">
-                            <AlertTriangle className="h-4 w-4 mr-1.5" /> Suspend Page
+                            <AlertTriangle className="h-4 w-4 mr-1.5" /> {t("Suspend Page")}
                           </Button>
                         )}
                       </div>
                       <Button onClick={saveSettings} disabled={settingsSaving}
                         className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm">
-                        {settingsSaving ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : "Save Settings"}
+                        {settingsSaving ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : t("Save Settings")}
                       </Button>
                     </div>
                   </div>
@@ -1420,7 +1422,7 @@ export default function CommunityPagesPage() {
         <DialogContent className="max-w-3xl p-0 overflow-hidden rounded-2xl shadow-2xl bg-slate-50 h-[88vh] max-h-[88vh] flex flex-col">
           <DialogHeader className="px-6 py-4 border-b bg-slate-900 shrink-0">
             <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
-              <Edit className="h-5 w-5 text-orange-400" /> Edit Page Details — {detailPage?.name}
+              <Edit className="h-5 w-5 text-orange-400" /> {t("Edit Page Details —")} {detailPage?.name}
             </DialogTitle>
           </DialogHeader>
 
@@ -1429,66 +1431,66 @@ export default function CommunityPagesPage() {
 
               {/* 1. Basic Info */}
               <section className="space-y-3 bg-white rounded-xl p-4 border">
-                <SectionHead icon={Info} label="Basic Information" />
+                <SectionHead icon={Info} label={t("Basic Information")} />
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2">
-                    <Label className="text-xs font-bold">Page Name *</Label>
+                    <Label className="text-xs font-bold">{t("Page Name *")}</Label>
                     <Input value={editForm.name || ""} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      placeholder="Page Name" className="mt-1 h-9 text-sm" required />
+                      placeholder={t("Page Name")} className="mt-1 h-9 text-sm" required />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Short Name / Abbreviation</Label>
+                    <Label className="text-xs font-semibold">{t("Short Name / Abbreviation")}</Label>
                     <Input value={editForm.shortName || ""} onChange={(e) => setEditForm({ ...editForm, shortName: e.target.value })}
-                      placeholder="Short Name" className="mt-1 h-9 text-sm" />
+                      placeholder={t("Short Name")} className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Organization Type</Label>
+                    <Label className="text-xs font-semibold">{t("Organization Type")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                       value={editForm.orgType || ""} onChange={(e) => setEditForm({ ...editForm, orgType: e.target.value })}>
-                      <option value="">Select Type...</option>
-                      {ORG_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                      <option value="">{t("Select Type...")}</option>
+                      {ORG_TYPES.map((tItem) => <option key={tItem} value={tItem}>{t(tItem)}</option>)}
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Established Year</Label>
+                    <Label className="text-xs font-semibold">{t("Established Year")}</Label>
                     <Input type="number" min="1800" max="2100" value={editForm.establishedYear || ""}
                       onChange={(e) => setEditForm({ ...editForm, establishedYear: e.target.value })}
-                      placeholder="e.g. 1995" className="mt-1 h-9 text-sm" />
+                      placeholder={t("e.g. 1995")} className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Join Approval Mode</Label>
+                    <Label className="text-xs font-semibold">{t("Join Approval Mode")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                       value={editForm.joinApprovalMode || "MANUAL"} onChange={(e) => setEditForm({ ...editForm, joinApprovalMode: e.target.value })}>
-                      <option value="MANUAL">Manual Approval</option>
-                      <option value="AUTO">Auto Approve</option>
+                      <option value="MANUAL">{t("Manual Approval")}</option>
+                      <option value="AUTO">{t("Auto Approve")}</option>
                     </select>
                   </div>
                   <div className="col-span-2">
-                    <Label className="text-xs font-semibold">About / Description</Label>
+                    <Label className="text-xs font-semibold">{t("About / Description")}</Label>
                     <Textarea rows={3} value={editForm.about || ""}
                       onChange={(e) => setEditForm({ ...editForm, about: e.target.value })}
-                      placeholder="Describe the mission and activities..." className="mt-1 text-sm" />
+                      placeholder={t("Describe the mission and activities...")} className="mt-1 text-sm" />
                   </div>
                 </div>
               </section>
 
               {/* 2. Media */}
               <section className="space-y-3 bg-white rounded-xl p-4 border">
-                <SectionHead icon={ImageIcon} label="Media & Branding" />
+                <SectionHead icon={ImageIcon} label={t("Media & Branding")} />
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs font-semibold">Logo Image URL</Label>
+                    <Label className="text-xs font-semibold">{t("Logo Image URL")}</Label>
                     <Input value={editForm.logoUrl || ""} onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })}
                       placeholder="https://..." className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Cover Banner Image URL</Label>
+                    <Label className="text-xs font-semibold">{t("Cover Banner Image URL")}</Label>
                     <Input value={editForm.bannerUrl || ""} onChange={(e) => setEditForm({ ...editForm, bannerUrl: e.target.value })}
                       placeholder="https://..." className="mt-1 h-9 text-sm" />
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold">Gallery Images (up to 10 URLs)</Label>
+                  <Label className="text-xs font-semibold">{t("Gallery Images (up to 10 URLs)")}</Label>
                   <div className="grid grid-cols-2 gap-2 mt-1">
                     {(editForm.gallery || Array(10).fill("")).map((url, i) => (
                       <Input key={i} value={url || ""}
@@ -1505,46 +1507,46 @@ export default function CommunityPagesPage() {
 
               {/* 3. Contacts */}
               <section className="space-y-3 bg-white rounded-xl p-4 border">
-                <SectionHead icon={Phone} label="Contacts & Location" />
+                <SectionHead icon={Phone} label={t("Contacts & Location")} />
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs font-semibold">Phone Number</Label>
+                    <Label className="text-xs font-semibold">{t("Phone Number")}</Label>
                     <Input type="tel" value={editForm.phone || ""} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                       placeholder="+91..." className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Email Address</Label>
+                    <Label className="text-xs font-semibold">{t("Email Address")}</Label>
                     <Input type="email" value={editForm.email || ""} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                       placeholder="info@..." className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Operates From</Label>
+                    <Label className="text-xs font-semibold">{t("Operates From")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none"
                       value={editForm.operatesFrom || "Office"} onChange={(e) => setEditForm({ ...editForm, operatesFrom: e.target.value })}>
-                      {OPERATES_FROM_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                      {OPERATES_FROM_OPTIONS.map((o) => <option key={o} value={o}>{t(o)}</option>)}
                     </select>
                   </div>
                   {editForm.operatesFrom !== "Online" && (
                     <div>
-                      <Label className="text-xs font-semibold">Office Address</Label>
+                      <Label className="text-xs font-semibold">{t("Office Address")}</Label>
                       <Input value={editForm.officeAddress || ""} onChange={(e) => setEditForm({ ...editForm, officeAddress: e.target.value })}
-                        placeholder="Full address..." className="mt-1 h-9 text-sm" />
+                        placeholder={t("Full address...")} className="mt-1 h-9 text-sm" />
                     </div>
                   )}
                   <div>
-                    <Label className="text-xs font-semibold">Google Maps Link</Label>
+                    <Label className="text-xs font-semibold">{t("Google Maps Link")}</Label>
                     <Input value={editForm.googleMapsUrl || ""} onChange={(e) => setEditForm({ ...editForm, googleMapsUrl: e.target.value })}
                       placeholder="https://maps..." className="mt-1 h-9 text-sm" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 border-t pt-3">
                   <div>
-                    <Label className="text-xs font-semibold">Google Form Name</Label>
+                    <Label className="text-xs font-semibold">{t("Google Form Name")}</Label>
                     <Input value={editForm.googleFormName || ""} onChange={(e) => setEditForm({ ...editForm, googleFormName: e.target.value })}
-                      placeholder="Form Name" className="mt-1 h-9 text-sm" />
+                      placeholder={t("Form Name")} className="mt-1 h-9 text-sm" />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Google Form Link</Label>
+                    <Label className="text-xs font-semibold">{t("Google Form Link")}</Label>
                     <Input value={editForm.googleFormLink || ""} onChange={(e) => setEditForm({ ...editForm, googleFormLink: e.target.value })}
                       placeholder="https://forms..." className="mt-1 h-9 text-sm" />
                   </div>
@@ -1553,14 +1555,14 @@ export default function CommunityPagesPage() {
 
               {/* 4. Social Links */}
               <section className="space-y-3 bg-white rounded-xl p-4 border">
-                <SectionHead icon={Globe} label="Social Links" />
+                <SectionHead icon={Globe} label={t("Social Links")} />
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { key: "website", label: "Website", ph: "https://..." },
-                    { key: "whatsappGroup", label: "WhatsApp", ph: "https://chat.whatsapp.com/..." },
-                    { key: "instagram", label: "Instagram", ph: "https://instagram.com/..." },
-                    { key: "facebook", label: "Facebook", ph: "https://facebook.com/..." },
-                    { key: "youtube", label: "YouTube", ph: "https://youtube.com/..." },
+                    { key: "website", label: t("Website"), ph: "https://..." },
+                    { key: "whatsappGroup", label: t("WhatsApp"), ph: "https://chat.whatsapp.com/..." },
+                    { key: "instagram", label: t("Instagram"), ph: "https://instagram.com/..." },
+                    { key: "facebook", label: t("Facebook"), ph: "https://facebook.com/..." },
+                    { key: "youtube", label: t("YouTube"), ph: "https://youtube.com/..." },
                   ].map(({ key, label, ph }) => (
                     <div key={key}>
                       <Label className="text-xs font-semibold">{label}</Label>
@@ -1574,9 +1576,9 @@ export default function CommunityPagesPage() {
             </div>
 
             <div className="p-4 bg-white border-t flex justify-end gap-2 shrink-0">
-              <Button type="button" variant="outline" onClick={() => setOpenEdit(false)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => setOpenEdit(false)}>{t("Cancel")}</Button>
               <Button type="submit" disabled={editSaving} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">
-                {editSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+                {editSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("Save Changes")}
               </Button>
             </div>
           </form>
@@ -1590,17 +1592,16 @@ export default function CommunityPagesPage() {
         <DialogContent className="max-w-md p-6 rounded-2xl bg-white">
           <div className="flex items-center gap-3 text-amber-600 mb-3">
             <AlertTriangle className="h-8 w-8 shrink-0" />
-            <h3 className="font-bold text-base text-slate-900">Paid Events Policy</h3>
+            <h3 className="font-bold text-base text-slate-900">{t("Paid Events Policy")}</h3>
           </div>
           <p className="text-sm text-slate-600 leading-relaxed mb-4">
-            Paid Events are managed exclusively by the <strong>JiNANAM Team</strong>.
-            Please raise a Support Ticket to process paid event listing, ticketing, and gateway configuration.
+            {t("Paid Events are managed exclusively by the")} <strong>{t("JiNANAM Team")}</strong>{t(". Please raise a Support Ticket to process paid event listing, ticketing, and gateway configuration.")}
           </p>
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 font-medium mb-4">
-            🎫 A Support Ticket will automatically be generated for your request.
+            {t("🎫 A Support Ticket will automatically be generated for your request.")}
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowPaidEventWarn(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setShowPaidEventWarn(false)}>{t("Close")}</Button>
             <Button onClick={async () => {
               try {
                 await api.post("/tickets-support", {
@@ -1608,14 +1609,14 @@ export default function CommunityPagesPage() {
                   category: "COMMUNITY_PAGE_PAID_EVENT",
                   description: `Page ${detailPage?.name} (${detailPage?.publicId}) requests a Paid Event setup.`,
                 });
-                toast.success("Support Ticket raised successfully! Our team will contact you.");
+                toast.success(t("Support Ticket raised successfully! Our team will contact you."));
               } catch {
-                toast.success("Support Ticket request registered. JiNANAM team notified!");
+                toast.success(t("Support Ticket request registered. JiNANAM team notified!"));
               } finally {
                 setShowPaidEventWarn(false);
               }
             }} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">
-              Raise Support Ticket
+              {t("Raise Support Ticket")}
             </Button>
           </div>
         </DialogContent>

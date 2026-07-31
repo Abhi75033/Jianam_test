@@ -71,8 +71,8 @@ export const COMMUNICATION_METHOD_OPTIONS = toOptions(COMMUNICATION_METHODS);
 export const JAIN_SECTS = ["Shwetambar", "Digambar"];
 export const JAIN_SECT_OPTIONS = toOptions(JAIN_SECTS);
 
-export const SHWETAMBAR_SUB_SECTS = ["Murtipujak", "Sthanakvasi", "Terapanth"];
-export const DIGAMBAR_SUB_SECTS = ["Bisapantha", "Terapantha", "Taranapantha", "Gumanapantha", "Totapantha"];
+export const SHWETAMBAR_SUB_SECTS = ["Murtipujak", "Sthanakvasi", "Terapanth", "Other"];
+export const DIGAMBAR_SUB_SECTS = ["Bisapantha", "Terapantha", "Taranapantha", "Gumanapantha", "Totapantha", "Other"];
 
 export const MOTHER_TONGUES = ["Gujarati", "Hindi", "Kutchi", "Marathi", "Marwari", "English", "Others"];
 export const MOTHER_TONGUE_OPTIONS = toOptions(MOTHER_TONGUES);
@@ -100,7 +100,7 @@ export const MURTIPUJAK_GACCHAS = [
   "Sadhapunamiya Gaccha", "Nagarakotiya Gaccha", "Hasora Gaccha", "Bhatanera Gaccha", "Janahara Gaccha",
   "Jagayana Gaccha", "Bhimasena Gaccha", "Takadiya Gaccha", "Kamboja Gaccha", "Senata Gaccha",
   "Vaghera Gaccha", "Vahediya Gaccha", "Siddhapura Gaccha", "Ghoghari Gaccha", "Nigamiya Gaccha",
-  "Punamiya Gaccha", "Varhadiya Gaccha", "Namila Gaccha"
+  "Punamiya Gaccha", "Varhadiya Gaccha", "Namila Gaccha", "Other Gaccha"
 ];
 export const MURTIPUJAK_GACCHA_OPTIONS = toOptions(MURTIPUJAK_GACCHAS, "Choose Gaccha...");
 

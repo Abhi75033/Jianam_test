@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, Users, PartyPopper, HeartHandshake, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Mobile bottom navigation matching Vihaar app style.
 // Shown only on small screens (< md).
@@ -13,6 +14,7 @@ const ITEMS = [
 ];
 
 export default function MobileBottomNav() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -38,7 +40,7 @@ export default function MobileBottomNav() {
             data-testid={`mobile-nav-${it.label.toLowerCase()}`}
           >
             <Icon className={cn("h-5 w-5", active && "text-primary")} />
-            <span className="text-[10px] font-medium">{it.label}</span>
+            <span className="text-[10px] font-medium">{t(it.label)}</span>
             {active && (
               <span className="absolute top-0 h-1 w-8 rounded-b-md bg-primary" />
             )}

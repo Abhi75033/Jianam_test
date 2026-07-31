@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Search as SearchIcon, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const TYPE_LABEL = {
   ORGANIZATION: "Organization",
@@ -29,6 +30,7 @@ const TYPE_PATH = {
 };
 
 export default function SearchPage() {
+  const { t } = useLanguage();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const [q, setQ] = useState(params.get("q") || "");
@@ -68,8 +70,8 @@ export default function SearchPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
         <ShieldAlert className="h-16 w-16 text-red-500" />
-        <h2 className="text-xl font-bold text-slate-800">Access Denied</h2>
-        <p className="text-sm text-slate-500">Only Super Admins can access this page.</p>
+        <h2 className="text-xl font-bold text-slate-800">{t("Access Denied")}</h2>
+        <p className="text-sm text-slate-500">{t("Only Super Admins can access this page.")}</p>
       </div>
     );
   }
@@ -77,15 +79,15 @@ export default function SearchPage() {
   return (
     <div data-testid="search-page">
       <PageHeader
-        title="Global Search"
-        subtitle="Search across members, temples, monks, events, community pages — or type a public ID like JFJT108."
+        title={t("Global Search")}
+        subtitle={t("Search across members, temples, monks, events, community pages — or type a public ID like JFJT108.")}
       />
       <form onSubmit={submit} className="mb-6">
         <div className="relative max-w-2xl">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder="Search anything…"
+            placeholder={t("Search anything…")}
             className="pl-9 h-11 bg-white"
             data-testid="search-input"
             autoFocus
@@ -98,7 +100,7 @@ export default function SearchPage() {
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
         </div>
       ) : q && results.length === 0 ? (
-        <EmptyState title="No results" description={`Nothing matched "${q}".`} />
+        <EmptyState title={t("No results")} description={`Nothing matched "${q}".`} />
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([type, items]) => (

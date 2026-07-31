@@ -37,8 +37,10 @@ import {
 } from "lucide-react";
 import { formatDateTime, initials } from "@/lib/utils";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-export default function FeedPage() {
+export default function FeedPage({ defaultCompose = false, defaultTab = "all" }) {
+  const { t } = useLanguage();
   const { user, isSuperAdmin, canDo } = useAuth();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -47,6 +49,9 @@ export default function FeedPage() {
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
 
+  // Active view tab state
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
   // Search & Filter state
   const [q, setQ] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -54,8 +59,13 @@ export default function FeedPage() {
   const [savedOnly, setSavedOnly] = useState(false);
 
   // Compose State
-  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(defaultCompose);
   const [composeSaving, setComposeSaving] = useState(false);
+
+  useEffect(() => {
+    setComposeOpen(defaultCompose);
+    setActiveTab(defaultTab);
+  }, [defaultCompose, defaultTab]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -131,7 +141,7 @@ export default function FeedPage() {
       setHasMore(feedItems.length === 10);
       if (resetPage) setPage(1);
     } catch (e) {
-      toast.error("Failed to load feed");
+      toast.error(t("Failed to load feed"));
     } finally {
       setLoading(false);
     }
@@ -181,10 +191,10 @@ export default function FeedPage() {
     try {
       if (isBookmarked) {
         await api.delete(`/feed/posts/${postItem.id}/bookmark`);
-        toast.success("Bookmark removed");
+        toast.success(t("Bookmark removed"));
       } else {
         await api.post(`/feed/posts/${postItem.id}/bookmark`);
-        toast.success("Post bookmarked");
+        toast.success(t("Post bookmarked"));
       }
       // Reload current items
       loadFeed(true);
@@ -202,7 +212,7 @@ export default function FeedPage() {
   const copyShareLink = (postItem) => {
     const deepLink = `https://jinanam.com/feed/posts/${postItem.id}`;
     navigator.clipboard.writeText(deepLink);
-    toast.success("Deep link copied to clipboard!");
+    toast.success(t("Deep link copied to clipboard!"));
     setShareOpen(false);
   };
 
@@ -214,7 +224,7 @@ export default function FeedPage() {
       const res = await api.get(`/feed/posts/${postItem.id}/analytics`);
       setAnalyticsData(res.data?.data || null);
     } catch (err) {
-      toast.error("Failed to load analytics");
+      toast.error(t("Failed to load analytics"));
     } finally {
       setAnalyticsLoading(false);
     }
@@ -223,7 +233,7 @@ export default function FeedPage() {
   const handleComposeSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title.trim()) {
-      toast.error("Title is required.");
+      toast.error(t("Title is required."));
       return;
     }
     setComposeSaving(true);
@@ -244,7 +254,7 @@ export default function FeedPage() {
       };
 
       await api.post("/feed/posts", payload);
-      toast.success("Feed post published successfully!");
+      toast.success(t("Feed post published successfully!"));
       setComposeOpen(false);
       setFormData({
         title: "",
@@ -279,6 +289,14 @@ export default function FeedPage() {
     );
   };
 
+  const getHeaderTitle = () => {
+    if (defaultCompose) return t("nav.createPost", "Create New Post");
+    if (activeTab === "scheduled") return t("nav.scheduledPosts", "Scheduled Posts");
+    if (activeTab === "featured") return t("nav.featuredPosts", "Featured Posts");
+    if (activeTab === "reported") return t("nav.reportedPosts", "Reported Posts");
+    return t("nav.feedManagement", "JiNANAM Community Feed");
+  };
+
   return (
     <div className="space-y-6" data-testid="feed-page">
       {/* Upper Title Section */}
@@ -286,35 +304,57 @@ export default function FeedPage() {
         <div>
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-300 animate-pulse" />
-            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">JiNANAM Community Feed</h1>
+            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">{getHeaderTitle()}</h1>
           </div>
           <p className="text-purple-100 text-xs mt-1 max-w-lg">
-            Personalized, community-specific, and location-aware updates matching your preferences and spiritual alignment.
+            {t("feed.subtitle", "Personalized, community-specific, and location-aware updates matching your preferences and spiritual alignment.")}
           </p>
         </div>
         <div className="flex gap-2 self-start md:self-center shrink-0">
           {(isSuperAdmin || canDo("FEED", "CREATE")) && (
             <Button onClick={() => setComposeOpen(true)} className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold h-10 px-5 shadow-md" data-testid="feed-compose">
-              <PenSquare className="h-4 w-4 mr-2" /> Compose Post
+              <PenSquare className="h-4 w-4 mr-2" /> {t("action.add", "Compose Post")}
             </Button>
           )}
           <Button variant="outline" onClick={() => setSavedOnly(!savedOnly)} className={savedOnly ? "bg-white text-purple-800 font-bold border-white" : "bg-purple-900/40 text-white border-purple-600 hover:bg-purple-900/60"}>
-            <BookmarkCheck className="h-4 w-4 mr-2" /> {savedOnly ? "Saved Feed Active" : "View Saved Feed"}
+            <BookmarkCheck className="h-4 w-4 mr-2" /> {savedOnly ? t("feed.savedActive", "Saved Feed Active") : t("feed.viewSaved", "View Saved Feed")}
           </Button>
         </div>
+      </div>
+
+      {/* Mode Sub-Navigation Tabs */}
+      <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+        {[
+          { key: "all", labelKey: "nav.feedManagement", defaultLabel: "Feed Management" },
+          { key: "scheduled", labelKey: "nav.scheduledPosts", defaultLabel: "Scheduled Posts" },
+          { key: "featured", labelKey: "nav.featuredPosts", defaultLabel: "Featured Posts" },
+          { key: "reported", labelKey: "nav.reportedPosts", defaultLabel: "Reported Posts" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+              activeTab === tab.key
+                ? "bg-white text-purple-800 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            {t(tab.labelKey, tab.defaultLabel)}
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-12 gap-5">
         {/* Left Side: Filter & Options Panel */}
         <div className="col-span-12 lg:col-span-3 space-y-4">
           <Card className="p-4 border border-slate-200 bg-white rounded-xl shadow-sm">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">🔍 Search Feed</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t("🔍 Search Feed")}</h3>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search keywords, temples..."
+                placeholder={t("Search keywords, temples...")}
                 className="pl-8 text-xs bg-slate-50 border-slate-200 h-9 rounded-lg"
               />
             </div>
@@ -322,14 +362,14 @@ export default function FeedPage() {
 
           <Card className="p-4 border border-slate-200 bg-white rounded-xl shadow-sm space-y-4">
             <div>
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">📋 Feed Filters</h3>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t("📋 Feed Filters")}</h3>
               <div className="space-y-1.5">
                 {[
-                  { key: "myTemples", label: "My Followed Temples" },
-                  { key: "myJainCentres", label: "My Jain Centres" },
-                  { key: "myMonks", label: "My Followed Monks" },
-                  { key: "nearby", label: "Nearby Updates (20KM)" },
-                  { key: "myCommunity", label: "My Community Sect" }
+                  { key: "myTemples", label: t("My Followed Temples") },
+                  { key: "myJainCentres", label: t("My Jain Centres") },
+                  { key: "myMonks", label: t("My Followed Monks") },
+                  { key: "nearby", label: t("Nearby Updates (20KM)") },
+                  { key: "myCommunity", label: t("My Community Sect") }
                 ].map(f => (
                   <label key={f.key} className="flex items-center gap-2.5 text-xs text-slate-600 cursor-pointer py-1 hover:text-slate-900 transition-colors">
                     <input
@@ -338,7 +378,7 @@ export default function FeedPage() {
                       onChange={() => toggleFilter(f.key)}
                       className="rounded border-slate-300 text-purple-600 focus:ring-purple-500 h-3.5 w-3.5"
                     />
-                    <span>{f.label}</span>
+                    <span>{t(f.label)}</span>
                   </label>
                 ))}
               </div>
@@ -347,13 +387,13 @@ export default function FeedPage() {
             <hr className="border-slate-100" />
 
             <div>
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">🏷️ Core Types</h3>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t("🏷️ Core Types")}</h3>
               <div className="space-y-1.5">
                 {[
-                  { key: "events", label: "Events & Pravachans" },
-                  { key: "tours", label: "Jatras / Tours" },
-                  { key: "notices", label: "Notices & Maryadas" },
-                  { key: "offers", label: "Offers & Benefits" }
+                  { key: "events", label: t("Events & Pravachans") },
+                  { key: "tours", label: t("Jatras / Tours") },
+                  { key: "notices", label: t("Notices & Maryadas") },
+                  { key: "offers", label: t("Offers & Benefits") }
                 ].map(f => (
                   <label key={f.key} className="flex items-center gap-2.5 text-xs text-slate-600 cursor-pointer py-1 hover:text-slate-900 transition-colors">
                     <input
@@ -362,7 +402,7 @@ export default function FeedPage() {
                       onChange={() => toggleFilter(f.key)}
                       className="rounded border-slate-300 text-purple-600 focus:ring-purple-500 h-3.5 w-3.5"
                     />
-                    <span>{f.label}</span>
+                    <span>{t(f.label)}</span>
                   </label>
                 ))}
               </div>
@@ -382,7 +422,7 @@ export default function FeedPage() {
                   : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
               }`}
             >
-              🌟 All Updates
+              {t("🌟 All Updates")}
             </button>
             {categories.map((cat) => (
               <button
@@ -417,8 +457,8 @@ export default function FeedPage() {
             </div>
           ) : items.length === 0 ? (
             <EmptyState
-              title={savedOnly ? "Saved Feed is empty" : "No updates matches criteria"}
-              description="Be the first to create a manual feed announcement or filter search preferences to refresh results."
+              title={savedOnly ? t("Saved Feed is empty") : t("No updates matches criteria")}
+              description={t("Be the first to create a manual feed announcement or filter search preferences to refresh results.")}
               icon={PenSquare}
             />
           ) : (
@@ -429,18 +469,18 @@ export default function FeedPage() {
                   return (
                     <Card key={`ad-${ad.id}-${idx}`} className="p-4 border-2 border-indigo-200 bg-indigo-50/50 rounded-2xl shadow-sm relative overflow-hidden">
                       <div className="absolute right-3 top-3 px-2 py-0.5 rounded bg-indigo-200 text-indigo-800 font-bold text-[9px] uppercase tracking-wider">
-                        Sponsored
+                        {t("Sponsored")}
                       </div>
                       <div className="flex flex-col md:flex-row gap-4 items-center">
                         {ad.bannerUrl && (
-                          <img src={ad.bannerUrl} alt="Ad banner" className="w-full md:w-44 h-24 object-cover rounded-xl border" />
+                          <img src={ad.bannerUrl} alt={t("Ad banner")} className="w-full md:w-44 h-24 object-cover rounded-xl border" />
                         )}
                         <div className="flex-1 space-y-1.5 text-center md:text-left">
-                          <h4 className="font-bold text-slate-800 text-sm">Exclusive Jain Community Partner</h4>
-                          <p className="text-xs text-slate-500">Discover premium offers and events aligned with our community ethics.</p>
+                          <h4 className="font-bold text-slate-800 text-sm">{t("Exclusive Jain Community Partner")}</h4>
+                          <p className="text-xs text-slate-500">{t("Discover premium offers and events aligned with our community ethics.")}</p>
                           {ad.targetLink && (
                             <a href={ad.targetLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-indigo-700 font-bold hover:underline mt-1">
-                              Learn More <ExternalLink className="h-3 w-3" />
+                              {t("Learn More")} <ExternalLink className="h-3 w-3" />
                             </a>
                           )}
                         </div>
@@ -466,7 +506,7 @@ export default function FeedPage() {
                   >
                     {isPinned && (
                       <div className="absolute right-4 top-4 flex items-center gap-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
-                        <Pin className="h-2.5 w-2.5" /> Pinned Post
+                        <Pin className="h-2.5 w-2.5" /> {t("Pinned Post")}
                       </div>
                     )}
 
@@ -502,7 +542,7 @@ export default function FeedPage() {
                     {/* Media Attachments */}
                     {p.coverUrl && (
                       <div className="mb-4 rounded-xl overflow-hidden border border-slate-100 shadow-sm max-h-80">
-                        <img src={p.coverUrl} alt="Cover" className="w-full object-cover h-64 hover:scale-[1.02] transition-transform duration-300" />
+                        <img src={p.coverUrl} alt={t("Cover")} className="w-full object-cover h-64 hover:scale-[1.02] transition-transform duration-300" />
                       </div>
                     )}
 
@@ -538,7 +578,7 @@ export default function FeedPage() {
                                 onClick={async () => {
                                   try {
                                     await api.post(`/feed/polls/${p.poll.id}/vote`, { optionIndex: oIdx });
-                                    toast.success("Vote recorded successfully!");
+                                    toast.success(t("Vote recorded successfully!"));
                                     loadFeed(true);
                                   } catch (e) {
                                     toast.error(extractErrorMessage(e));
@@ -549,7 +589,7 @@ export default function FeedPage() {
                                 <div className="absolute left-0 top-0 bottom-0 bg-purple-100/60 transition-all" style={{ width: `${optPct}%` }}></div>
                                 <div className="relative flex justify-between items-center font-semibold text-slate-700">
                                   <span>{opt}</span>
-                                  <span className="text-[10px] text-slate-400 font-mono-num">{optPct}% ({optVotes} votes)</span>
+                                  <span className="text-[10px] text-slate-400 font-mono-num">{optPct}% ({optVotes} {t("votes)")}</span>
                                 </div>
                               </button>
                             );
@@ -562,34 +602,34 @@ export default function FeedPage() {
                     <div className="flex flex-wrap gap-2 mb-4 border-b pb-4 border-slate-100">
                       {p.pdfUrl && (
                         <a href={p.pdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-[11px] px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors">
-                          <FileText className="h-3.5 w-3.5 text-red-500" /> View PDF Announcement
+                          <FileText className="h-3.5 w-3.5 text-red-500" /> {t("View PDF Announcement")}
                         </a>
                       )}
                       {p.videoUrl && (
                         <a href={p.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-[11px] px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors">
-                          <Video className="h-3.5 w-3.5 text-blue-500" /> Watch Video Attachment
+                          <Video className="h-3.5 w-3.5 text-blue-500" /> {t("Watch Video Attachment")}
                         </a>
                       )}
                       {p.externalLink && (
                         <a href={p.externalLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-[11px] px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors">
-                          <ExternalLink className="h-3.5 w-3.5 text-purple-500" /> Visit Web link
+                          <ExternalLink className="h-3.5 w-3.5 text-purple-500" /> {t("Visit Web link")}
                         </a>
                       )}
 
                       {/* Contextual Action Redirects */}
                       {p.category?.name === "Events" && p.sourceId && (
                         <a href={`/events`} className="inline-flex items-center gap-1.5 bg-orange-500 text-white font-bold text-[11px] px-4 py-1.5 rounded-lg hover:bg-orange-600 transition-colors shadow-sm ml-auto">
-                          View Event Detail
+                          {t("View Event Detail")}
                         </a>
                       )}
                       {p.category?.name === "Tours" && p.sourceId && (
                         <a href={`/tours`} className="inline-flex items-center gap-1.5 bg-emerald-600 text-white font-bold text-[11px] px-4 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm ml-auto">
-                          Book Now
+                          {t("Book Now")}
                         </a>
                       )}
                       {p.category?.name === "Offers & Benefits" && p.sourceId && (
                         <a href={`/offers`} className="inline-flex items-center gap-1.5 bg-indigo-600 text-white font-bold text-[11px] px-4 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm ml-auto">
-                          Claim Offer
+                          {t("Claim Offer")}
                         </a>
                       )}
                     </div>
@@ -598,17 +638,17 @@ export default function FeedPage() {
                     <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
                       <div className="flex items-center gap-4">
                         <button type="button" onClick={() => handleBookmarkToggle(p, idx)} className="flex items-center gap-1.5 hover:text-purple-800 transition-colors">
-                          <Bookmark className={`h-4 w-4 ${p.saves?.some(s => s.memberId === user?.id) || p.isBookmarkedByMe ? "fill-purple-700 text-purple-700" : ""}`} /> Bookmark
+                          <Bookmark className={`h-4 w-4 ${p.saves?.some(s => s.memberId === user?.id) || p.isBookmarkedByMe ? "fill-purple-700 text-purple-700" : ""}`} /> {t("Bookmark")}
                         </button>
                         <button type="button" onClick={() => handleShareTrigger(p)} className="flex items-center gap-1.5 hover:text-slate-800 transition-colors">
-                          <Share2 className="h-4 w-4" /> Share
+                          <Share2 className="h-4 w-4" /> {t("Share")}
                         </button>
                       </div>
 
                       {/* Admin Analytics Click */}
                       {(isSuperAdmin || (p.organizationId && user?.organizationIds?.includes(p.organizationId))) && (
                         <button type="button" onClick={() => handleViewAnalytics(p)} className="flex items-center gap-1 bg-slate-50 text-slate-600 hover:text-purple-800 border px-3 py-1 rounded-lg transition-all text-[11px]">
-                          <BarChart2 className="h-3.5 w-3.5" /> Stats Dashboard
+                          <BarChart2 className="h-3.5 w-3.5" /> {t("Stats Dashboard")}
                         </button>
                       )}
                     </div>
@@ -619,7 +659,7 @@ export default function FeedPage() {
               {hasMore && (
                 <div className="flex justify-center pt-4">
                   <Button onClick={handleLoadMore} disabled={loading} className="bg-purple-800 hover:bg-purple-900 text-white font-bold px-6 shadow-sm">
-                    {loading ? "Loading Feed..." : "Load More Posts"}
+                    {loading ? t("Loading Feed...") : t("Load More Posts")}
                   </Button>
                 </div>
               )}
@@ -634,21 +674,21 @@ export default function FeedPage() {
           <form onSubmit={handleComposeSubmit}>
             <DialogHeader>
               <DialogTitle className="text-slate-800 flex items-center gap-2">
-                🪶 Compose New Feed Announcement
+                {t("🪶 Compose New Feed Announcement")}
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4 py-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Post Title *</Label>
-                  <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Mahaparva Paryushan Celebrations" className="mt-1 h-9 bg-white" required />
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Post Title *")}</Label>
+                  <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder={t("e.g. Mahaparva Paryushan Celebrations")} className="mt-1 h-9 bg-white" required />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Category *</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Category *")}</Label>
                   <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
                     value={formData.categoryId} onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })} required>
-                    <option value="">Select category...</option>
+                    <option value="">{t("Select category...")}</option>
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
@@ -657,54 +697,54 @@ export default function FeedPage() {
               </div>
 
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Post Body Description</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Post Body Description")}</Label>
                 <textarea rows={4} className="w-full mt-1 rounded-md border border-slate-205 bg-white px-3 py-2 text-sm focus:outline-none"
-                  value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Write your announcement body details..." />
+                  value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder={t("Write your announcement body details...")} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Publish/Start Date</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Publish/Start Date")}</Label>
                   <Input type="datetime-local" value={formData.startAt} onChange={(e) => setFormData({ ...formData, startAt: e.target.value })} className="mt-1 h-9 bg-white" />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Expiry/End Date</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Expiry/End Date")}</Label>
                   <Input type="datetime-local" value={formData.endAt} onChange={(e) => setFormData({ ...formData, endAt: e.target.value })} className="mt-1 h-9 bg-white" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Cover Image URL</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Cover Image URL")}</Label>
                   <Input value={formData.coverUrl} onChange={(e) => setFormData({ ...formData, coverUrl: e.target.value })} placeholder="https://image-link.com" className="mt-1 h-9 bg-white" />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Gallery Images URLs (comma-separated)</Label>
-                  <Input value={formData.images} onChange={(e) => setFormData({ ...formData, images: e.target.value })} placeholder="img1.jpg, img2.jpg" className="mt-1 h-9 bg-white" />
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Gallery Images URLs (comma-separated)")}</Label>
+                  <Input value={formData.images} onChange={(e) => setFormData({ ...formData, images: e.target.value })} placeholder={t("img1.jpg, img2.jpg")} className="mt-1 h-9 bg-white" />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Video Link</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Video Link")}</Label>
                   <Input value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} placeholder="https://youtube.com/..." className="mt-1 h-9 bg-white" />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">PDF Attachment Link</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("PDF Attachment Link")}</Label>
                   <Input value={formData.pdfUrl} onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })} placeholder="https://announcement.pdf" className="mt-1 h-9 bg-white" />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">External URL Redirect</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("External URL Redirect")}</Label>
                   <Input value={formData.externalLink} onChange={(e) => setFormData({ ...formData, externalLink: e.target.value })} placeholder="https://website.com" className="mt-1 h-9 bg-white" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Post On Behalf Of Org</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Post On Behalf Of Org")}</Label>
                   <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
                     value={formData.organizationId} onChange={(e) => setFormData({ ...formData, organizationId: e.target.value })}>
-                    <option value="">JiNANAM Official Feed</option>
+                    <option value="">{t("JiNANAM Official Feed")}</option>
                     {myOrgs.map(o => (
                       <option key={o.id} value={o.id}>{o.name}</option>
                     ))}
@@ -718,42 +758,42 @@ export default function FeedPage() {
                     onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
                     className="rounded border-slate-300 text-purple-600 focus:ring-purple-500 h-4 w-4"
                   />
-                  <Label htmlFor="isPinned" className="text-xs font-bold text-slate-700 cursor-pointer">Pin post to top of feed</Label>
+                  <Label htmlFor="isPinned" className="text-xs font-bold text-slate-700 cursor-pointer">{t("Pin post to top of feed")}</Label>
                 </div>
               </div>
 
               {/* Visibility Engine Setup */}
               <div className="border p-3.5 rounded-xl bg-slate-50 space-y-3">
                 <h4 className="font-bold text-slate-700 text-xs flex items-center gap-1.5">
-                  <Globe className="h-4 w-4 text-purple-700" /> Feed Visibility Targeting Engine
+                  <Globe className="h-4 w-4 text-purple-700" /> {t("Feed Visibility Targeting Engine")}
                 </h4>
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-500">Target Country</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-500">{t("Target Country")}</Label>
                     <Input value={formData.visibilityConfig.geo.country} onChange={(e) => setFormData({
                       ...formData,
                       visibilityConfig: {
                         ...formData.visibilityConfig,
                         geo: { ...formData.visibilityConfig.geo, country: e.target.value }
                       }
-                    })} placeholder="e.g. India" className="h-9 bg-white mt-1" />
+                    })} placeholder={t("e.g. India")} className="h-9 bg-white mt-1" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-500">Target State</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-500">{t("Target State")}</Label>
                     <Input value={formData.visibilityConfig.geo.state} onChange={(e) => setFormData({
                       ...formData,
                       visibilityConfig: {
                         ...formData.visibilityConfig,
                         geo: { ...formData.visibilityConfig.geo, state: e.target.value }
                       }
-                    })} placeholder="e.g. Gujarat" className="h-9 bg-white mt-1" />
+                    })} placeholder={t("e.g. Gujarat")} className="h-9 bg-white mt-1" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-500">Target Community Sect</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-500">{t("Target Community Sect")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
                       value={formData.visibilityConfig.community.communityIds?.[0] || ""}
                       onChange={(e) => setFormData({
@@ -766,12 +806,12 @@ export default function FeedPage() {
                           }
                         }
                       })}>
-                      <option value="">All Sects</option>
+                      <option value="">{t("All Sects")}</option>
                       {communities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-500">Sub Community</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-500">{t("Sub Community")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
                       value={formData.visibilityConfig.community.subCommunityIds?.[0] || ""}
                       onChange={(e) => setFormData({
@@ -784,12 +824,12 @@ export default function FeedPage() {
                           }
                         }
                       })}>
-                      <option value="">All Sub-Sects</option>
+                      <option value="">{t("All Sub-Sects")}</option>
                       {subCommunities.map(sc => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-500">Target Gaccha</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-500">{t("Target Gaccha")}</Label>
                     <select className="w-full mt-1 h-9 rounded-md border border-slate-205 bg-white px-3 text-sm focus:outline-none"
                       value={formData.visibilityConfig.community.gacchaIds?.[0] || ""}
                       onChange={(e) => setFormData({
@@ -802,7 +842,7 @@ export default function FeedPage() {
                           }
                         }
                       })}>
-                      <option value="">All Gacchas</option>
+                      <option value="">{t("All Gacchas")}</option>
                       {gacchas.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
                   </div>
@@ -811,9 +851,9 @@ export default function FeedPage() {
             </div>
 
             <DialogFooter className="gap-2 pt-2">
-              <Button type="button" variant="ghost" onClick={() => setComposeOpen(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => setComposeOpen(false)}>{t("Cancel")}</Button>
               <Button type="submit" disabled={composeSaving} className="bg-purple-800 hover:bg-purple-900 text-white font-bold">
-                {composeSaving ? "Publishing Announcement..." : "Publish Post"}
+                {composeSaving ? t("Publishing Announcement...") : t("Publish Post")}
               </Button>
             </DialogFooter>
           </form>
@@ -825,11 +865,11 @@ export default function FeedPage() {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-slate-800 flex items-center gap-1.5">
-              <Share2 className="h-5 w-5 text-purple-700" /> Share Announcement
+              <Share2 className="h-5 w-5 text-purple-700" /> {t("Share Announcement")}
             </DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-3">
-            <p className="text-xs text-slate-500">Share this post with family and friends through Jain community deep links.</p>
+            <p className="text-xs text-slate-500">{t("Share this post with family and friends through Jain community deep links.")}</p>
             
             <div className="grid grid-cols-2 gap-2">
               <a
@@ -838,7 +878,7 @@ export default function FeedPage() {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 text-xs font-bold text-slate-700 transition-all"
               >
-                🟢 WhatsApp
+                {t("🟢 WhatsApp")}
               </a>
               <a
                 href={`https://t.me/share/url?url=https://jinanam.com/feed/posts/${sharePost?.id}`}
@@ -846,12 +886,12 @@ export default function FeedPage() {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 text-xs font-bold text-slate-700 transition-all"
               >
-                🔵 Telegram
+                {t("🔵 Telegram")}
               </a>
             </div>
             
             <Button onClick={() => copyShareLink(sharePost)} className="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs">
-              🔗 Copy Deep Link
+              {t("🔗 Copy Deep Link")}
             </Button>
           </div>
         </DialogContent>
@@ -862,20 +902,20 @@ export default function FeedPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-slate-800 flex items-center gap-2">
-              <BarChart2 className="h-5 w-5 text-purple-700" /> Feed Card Performance Report
+              <BarChart2 className="h-5 w-5 text-purple-700" /> {t("Feed Card Performance Report")}
             </DialogTitle>
           </DialogHeader>
           {analyticsLoading ? (
             <div className="py-8 space-y-2 text-center">
               <div className="h-8 w-8 rounded-full border-2 border-purple-700 border-t-transparent animate-spin mx-auto mb-2" />
-              <p className="text-xs text-slate-400">Loading performance metrics...</p>
+              <p className="text-xs text-slate-400">{t("Loading performance metrics...")}</p>
             </div>
           ) : (
             <div className="py-4 space-y-4">
               <div className="grid grid-cols-2 gap-3 text-center">
                 <Card className="p-3 border border-slate-100 bg-slate-50/50 space-y-1">
                   <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1">
-                    <Eye className="h-3 w-3" /> Total Views
+                    <Eye className="h-3 w-3" /> {t("Total Views")}
                   </div>
                   <div className="text-xl font-bold font-mono text-purple-800">
                     {analyticsData?.viewCount || 0}
@@ -883,7 +923,7 @@ export default function FeedPage() {
                 </Card>
                 <Card className="p-3 border border-slate-100 bg-slate-50/50 space-y-1">
                   <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1">
-                    <MousePointerClick className="h-3 w-3" /> Link Clicks
+                    <MousePointerClick className="h-3 w-3" /> {t("Link Clicks")}
                   </div>
                   <div className="text-xl font-bold font-mono text-indigo-700">
                     {analyticsData?.clickCount || 0}
@@ -891,7 +931,7 @@ export default function FeedPage() {
                 </Card>
                 <Card className="p-3 border border-slate-100 bg-slate-50/50 space-y-1">
                   <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1">
-                    <BookmarkCheck className="h-3 w-3" /> Bookmarks
+                    <BookmarkCheck className="h-3 w-3" /> {t("Bookmarks")}
                   </div>
                   <div className="text-xl font-bold font-mono text-emerald-600">
                     {analyticsData?.bookmarkCount || 0}
@@ -899,7 +939,7 @@ export default function FeedPage() {
                 </Card>
                 <Card className="p-3 border border-slate-100 bg-slate-50/50 space-y-1">
                   <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1">
-                    <Share2 className="h-3 w-3" /> Reach
+                    <Share2 className="h-3 w-3" /> {t("Reach")}
                   </div>
                   <div className="text-xl font-bold font-mono text-amber-600">
                     {analyticsData?.reach || 0}
@@ -908,11 +948,11 @@ export default function FeedPage() {
               </div>
 
               <div className="p-3.5 border rounded-xl bg-purple-50/50 text-[11px] text-purple-900 leading-relaxed">
-                📢 **Reach Factor**: This card is getting 25% higher visual visibility index due to matching target geography and followers preferences.
+                {t("📢 **Reach Factor**: This card is getting 25% higher visual visibility index due to matching target geography and followers preferences.")}
               </div>
 
               <Button onClick={() => window.open(`/api/feed/analytics/report?format=csv&organizationId=${analyticsPost?.organizationId}`, "_blank")} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border font-bold text-xs">
-                📥 Export Organization Report (CSV)
+                {t("📥 Export Organization Report (CSV)")}
               </Button>
             </div>
           )}

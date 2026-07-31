@@ -1,10 +1,12 @@
 import { Landmark } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * "Supported by Community Partners" banner shown at the bottom of pages,
  * matching the Vihaar-style community footer.
  */
 export function PartnerFooter() {
+  const { t } = useLanguage();
   const partners = ["Lotus Foundation", "Seva Partner", "Dharma Support", "Shanti Welfare", "Jain Care"];
 
   return (
@@ -23,10 +25,10 @@ export function PartnerFooter() {
           </div>
           <div className="leading-tight">
             <div className="text-[10px] uppercase tracking-[0.2em] text-yellow-300/90">
-              Supported by
+              {t("Supported by")}
             </div>
             <div className="font-heading text-base md:text-lg font-semibold">
-              Community Partners
+              {t("Community Partners")}
             </div>
           </div>
         </div>
@@ -38,7 +40,7 @@ export function PartnerFooter() {
             >
               <div className="leading-tight">
                 <div className="text-[8px] md:text-[9px] uppercase tracking-widest text-muted-foreground">
-                  Your
+                  {t("Your")}
                 </div>
                 <div className="text-[11px] md:text-xs font-bold text-primary">LOGO</div>
                 <div className="text-[8px] md:text-[9px] uppercase tracking-widest text-muted-foreground truncate">

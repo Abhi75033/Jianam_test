@@ -3,11 +3,13 @@ import { Html5Qrcode } from "html5-qrcode";
 import { Camera, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Browser-camera QR scanner. Renders a video preview and calls onScan(qrText) when detected.
  */
 export function QrScanner({ onScan, onClose, testId = "qr-scanner" }) {
+  const { t } = useLanguage();
   const containerRef = useRef(null);
   const qrRef = useRef(null);
   const [starting, setStarting] = useState(true);
@@ -53,7 +55,7 @@ export function QrScanner({ onScan, onClose, testId = "qr-scanner" }) {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Camera className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold">Scan Ticket QR</span>
+            <span className="text-sm font-semibold">{t("Scan Ticket QR")}</span>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} data-testid="qr-scanner-close">
             <X className="h-4 w-4" />
@@ -63,7 +65,7 @@ export function QrScanner({ onScan, onClose, testId = "qr-scanner" }) {
           <div id="qr-scanner-reader" ref={containerRef} className="w-full" />
           {starting && (
             <div className="absolute inset-0 flex items-center justify-center text-white/80 text-sm">
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" /> Starting camera…
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" /> {t("Starting camera…")}
             </div>
           )}
           {error && (
@@ -73,7 +75,7 @@ export function QrScanner({ onScan, onClose, testId = "qr-scanner" }) {
           )}
         </div>
         <div className="p-3 text-[11px] text-muted-foreground text-center">
-          Position the QR inside the frame. Detection is automatic.
+          {t("Position the QR inside the frame. Detection is automatic.")}
         </div>
       </div>
     </div>

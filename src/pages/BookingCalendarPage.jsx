@@ -11,8 +11,10 @@ import { CalendarDays, Home, ChevronLeft, ChevronRight, Check, Plus, Calendar, B
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function BookingCalendarPage() {
+  const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const orgId = user?.organizationIds?.[0];
@@ -44,7 +46,7 @@ export default function BookingCalendarPage() {
       setByDay(res.data.data.byDay || {});
       setBookingsList(res.data.data.bookings || []);
     } catch (e) {
-      toast.error("Failed to load booking calendar.");
+      toast.error(t("Failed to load booking calendar."));
     } finally {
       setLoading(false);
     }
@@ -94,14 +96,14 @@ export default function BookingCalendarPage() {
   return (
     <div className="space-y-4" data-testid="booking-calendar-page">
       <PageHeader
-        title="Reservations Calendar"
-        subtitle="Visual grid view tracking all temple halls, bhojanshalas, and room booking requests."
+        title={t("Reservations Calendar")}
+        subtitle={t("Visual grid view tracking all temple halls, bhojanshalas, and room booking requests.")}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <StatCard label="Total Bookings This Month" value={bookingsList.length} icon={CalendarDays} tone="warning" />
-        <StatCard label="Dharamshala Bookings" value={`${dharamshalaCount} Rooms`} icon={Home} tone="default" />
-        <StatCard label="Halls Confirmed" value={`${hallsCount} Reservation(s)`} icon={Check} tone="info" />
+        <StatCard label={t("Total Bookings This Month")} value={bookingsList.length} icon={CalendarDays} tone="warning" />
+        <StatCard label={t("Dharamshala Bookings")} value={`${dharamshalaCount} Rooms`} icon={Home} tone="default" />
+        <StatCard label={t("Halls Confirmed")} value={`${hallsCount} Reservation(s)`} icon={Check} tone="info" />
       </div>
 
       <Card className="p-5 border border-slate-200 bg-white shadow-sm space-y-4">
@@ -154,7 +156,7 @@ export default function BookingCalendarPage() {
                     </div>
                   ))}
                   {dayBookings.length > 2 && (
-                    <div className="text-[8px] font-bold text-orange-700">+{dayBookings.length - 2} more</div>
+                    <div className="text-[8px] font-bold text-orange-700">+{dayBookings.length - 2} {t("more")}</div>
                   )}
                 </div>
 
@@ -176,7 +178,7 @@ export default function BookingCalendarPage() {
             <DialogTitle className="flex items-center justify-between font-bold text-slate-850">
               <span className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-orange-600" />
-                Actions for {selectedClickedDate?.formattedDate}
+                {t("Actions for")} {selectedClickedDate?.formattedDate}
               </span>
               <StatusBadge status={selectedClickedDate?.status || "AVAILABLE"} />
             </DialogTitle>
@@ -184,7 +186,7 @@ export default function BookingCalendarPage() {
 
           <div className="space-y-3 pt-2">
             <p className="text-slate-500 text-[11px]">
-              Select an operational action to perform on <strong className="text-slate-800">{selectedClickedDate?.formattedDate}</strong>:
+              {t("Select an operational action to perform on")} <strong className="text-slate-800">{selectedClickedDate?.formattedDate}</strong>:
             </p>
 
             <div className="grid grid-cols-1 gap-2.5">
@@ -201,8 +203,8 @@ export default function BookingCalendarPage() {
                     <Calendar className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="font-bold text-slate-800 text-xs">Submit New Booking Request</div>
-                    <div className="text-[10px] text-slate-400">Pre-fill booking start date for {selectedClickedDate?.formattedDate}</div>
+                    <div className="font-bold text-slate-800 text-xs">{t("Submit New Booking Request")}</div>
+                    <div className="text-[10px] text-slate-400">{t("Pre-fill booking start date for")} {selectedClickedDate?.formattedDate}</div>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-orange-600" />
@@ -221,8 +223,8 @@ export default function BookingCalendarPage() {
                     <Ban className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="font-bold text-slate-800 text-xs">Add Internal Reservation / Block</div>
-                    <div className="text-[10px] text-slate-400">Reserve unit for VIP, Monk, Trust, or Private event</div>
+                    <div className="font-bold text-slate-800 text-xs">{t("Add Internal Reservation / Block")}</div>
+                    <div className="text-[10px] text-slate-400">{t("Reserve unit for VIP, Monk, Trust, or Private event")}</div>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-amber-600" />
@@ -241,8 +243,8 @@ export default function BookingCalendarPage() {
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="font-bold text-slate-800 text-xs">Mark Maintenance / Blackout Date</div>
-                    <div className="text-[10px] text-slate-400">Block facility for repairs or cleaning blackout</div>
+                    <div className="font-bold text-slate-800 text-xs">{t("Mark Maintenance / Blackout Date")}</div>
+                    <div className="text-[10px] text-slate-400">{t("Block facility for repairs or cleaning blackout")}</div>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600" />
@@ -261,8 +263,8 @@ export default function BookingCalendarPage() {
                     <Search className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="font-bold text-slate-800 text-xs">View Ledger Requests on This Date</div>
-                    <div className="text-[10px] text-slate-400">Filter and audit bookings for {selectedClickedDate?.formattedDate}</div>
+                    <div className="font-bold text-slate-800 text-xs">{t("View Ledger Requests on This Date")}</div>
+                    <div className="text-[10px] text-slate-400">{t("Filter and audit bookings for")} {selectedClickedDate?.formattedDate}</div>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-600" />
@@ -271,7 +273,7 @@ export default function BookingCalendarPage() {
           </div>
 
           <DialogFooter className="pt-2">
-            <Button variant="ghost" onClick={() => setDateOptionsOpen(false)}>Close</Button>
+            <Button variant="ghost" onClick={() => setDateOptionsOpen(false)}>{t("Close")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

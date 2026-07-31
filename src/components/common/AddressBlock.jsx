@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import CountryDropdown from "./CountryDropdown";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * AddressBlock — Standard address form used across member + org forms.
@@ -29,6 +30,7 @@ export default function AddressBlock({
   label,
   className = "",
 }) {
+  const { t } = useLanguage();
   const update = (key, val) => onChange?.({ ...value, [key]: val });
 
   return (
@@ -41,10 +43,10 @@ export default function AddressBlock({
 
       {/* 1. Address */}
       <div>
-        <Label className="text-xs">Address</Label>
+        <Label className="text-xs">{t("Address")}</Label>
         <Input
           className="mt-1 bg-white"
-          placeholder="Flat/House No., Street, Locality"
+          placeholder={t("Flat/House No., Street, Locality")}
           value={value.address || value.line1 || ""}
           onChange={(e) => update("address", e.target.value)}
           data-testid={`${prefix}-address`}
@@ -53,7 +55,7 @@ export default function AddressBlock({
 
       {/* 2. Country */}
       <div>
-        <Label className="text-xs">Country</Label>
+        <Label className="text-xs">{t("Country")}</Label>
         <CountryDropdown
           value={value.country || "India"}
           onValueChange={(v) => update("country", v)}
@@ -63,10 +65,10 @@ export default function AddressBlock({
 
       {/* 3. Pincode */}
       <div>
-        <Label className="text-xs">Pincode / ZIP Code</Label>
+        <Label className="text-xs">{t("Pincode / ZIP Code")}</Label>
         <Input
           className="mt-1 bg-white"
-          placeholder="e.g. 400001"
+          placeholder={t("e.g. 400001")}
           value={value.pincode || ""}
           onChange={(e) => update("pincode", e.target.value)}
           data-testid={`${prefix}-pincode`}
@@ -75,10 +77,10 @@ export default function AddressBlock({
 
       {/* 4. Area */}
       <div>
-        <Label className="text-xs">Area</Label>
+        <Label className="text-xs">{t("Area")}</Label>
         <Input
           className="mt-1 bg-white"
-          placeholder="e.g. Thane East / Thane West"
+          placeholder={t("e.g. Thane East / Thane West")}
           value={value.area || ""}
           onChange={(e) => update("area", e.target.value)}
           data-testid={`${prefix}-area`}
@@ -88,20 +90,20 @@ export default function AddressBlock({
       {/* 5 & 6. City + District */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs">City</Label>
+          <Label className="text-xs">{t("City")}</Label>
           <Input
             className="mt-1 bg-white"
-            placeholder="e.g. Mumbai"
+            placeholder={t("e.g. Mumbai")}
             value={value.city || ""}
             onChange={(e) => update("city", e.target.value)}
             data-testid={`${prefix}-city`}
           />
         </div>
         <div>
-          <Label className="text-xs">District</Label>
+          <Label className="text-xs">{t("District")}</Label>
           <Input
             className="mt-1 bg-white"
-            placeholder="e.g. Mumbai Suburban"
+            placeholder={t("e.g. Mumbai Suburban")}
             value={value.district || ""}
             onChange={(e) => update("district", e.target.value)}
             data-testid={`${prefix}-district`}
@@ -111,10 +113,10 @@ export default function AddressBlock({
 
       {/* 7. State */}
       <div>
-        <Label className="text-xs">State / Province</Label>
+        <Label className="text-xs">{t("State / Province")}</Label>
         <Input
           className="mt-1 bg-white"
-          placeholder="e.g. Maharashtra"
+          placeholder={t("e.g. Maharashtra")}
           value={value.state || ""}
           onChange={(e) => update("state", e.target.value)}
           data-testid={`${prefix}-state`}

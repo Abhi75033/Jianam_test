@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Loader2, Bell, MessageSquare, Mail, Smartphone, MessagesSquare } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const CHANNELS = [
   { key: "PUSH", label: "Push Notifications", icon: Smartphone, hint: "In-app + mobile push" },
@@ -21,6 +22,7 @@ const CATEGORIES = [
 ];
 
 export default function NotificationPreferencesPage() {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   // prefs shape: { CATEGORY: { CHANNEL: boolean } }
@@ -59,7 +61,7 @@ export default function NotificationPreferencesPage() {
         });
       });
       await Promise.all(puts);
-      toast.success("Preferences saved.");
+      toast.success(t("Preferences saved."));
     } catch (e) {
       toast.error(extractErrorMessage(e));
     } finally {
@@ -70,23 +72,23 @@ export default function NotificationPreferencesPage() {
   return (
     <div data-testid="notif-prefs-page">
       <PageHeader
-        title="Notification Preferences"
-        subtitle="Choose how you want to hear from JiNANAM — per category, per channel."
+        title={t("Notification Preferences")}
+        subtitle={t("Choose how you want to hear from JiNANAM — per category, per channel.")}
         actions={
           <Button onClick={save} disabled={saving} data-testid="notif-prefs-save">
-            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Save preferences
+            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {t("Save preferences")}
           </Button>
         }
       />
 
       {loading ? (
-        <div className="text-sm text-muted-foreground">Loading…</div>
+        <div className="text-sm text-muted-foreground">{t("Loading…")}</div>
       ) : (
         <div className="space-y-6">
           {CATEGORIES.map((cat) => (
             <Card key={cat.key} className="p-5 rounded-xl border-border" data-testid={`notif-prefs-cat-${cat.key}`}>
               <div className="mb-4">
-                <h3 className="font-heading text-base font-semibold">{cat.label}</h3>
+                <h3 className="font-heading text-base font-semibold">{t(cat.label)}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">{cat.hint}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -99,7 +101,7 @@ export default function NotificationPreferencesPage() {
                           <ch.icon className="h-4 w-4" />
                         </div>
                         <div>
-                          <div className="text-sm font-medium">{ch.label}</div>
+                          <div className="text-sm font-medium">{t(ch.label)}</div>
                           <div className="text-[11px] text-muted-foreground">{ch.hint}</div>
                         </div>
                       </div>

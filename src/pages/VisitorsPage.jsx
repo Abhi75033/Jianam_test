@@ -42,8 +42,10 @@ import { useOrgs } from "@/hooks/useOrgs";
 import { OrgSelect } from "@/components/common/OrgSelect";
 import { useSocket } from "@/hooks/useSocket";
 import { LiveBadge } from "@/components/common/LiveBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function VisitorsPage() {
+  const { t } = useLanguage();
   const { canDo, user, isSuperAdmin } = useAuth();
   const { orgs } = useOrgs();
   const [selectedOrg, setSelectedOrg] = useState("");
@@ -199,7 +201,7 @@ export default function VisitorsPage() {
       setAnalytics(analyticsRes.data?.data || null);
       setMyHistory(memberHistoryRes.data?.data || []);
     } catch (e) {
-      toast.error("Failed to load visitor records");
+      toast.error(t("Failed to load visitor records"));
     } finally {
       setLoading(false);
     }
@@ -216,10 +218,10 @@ export default function VisitorsPage() {
     if (!checked) {
       // Reconnected! Automatically trigger background sync
       if (offlineQueue.length === 0) {
-        toast.success("Connection restored. No offline items to sync.");
+        toast.success(t("Connection restored. No offline items to sync."));
         return;
       }
-      toast.loading("Internet restored. Synchronizing offline entries...", { id: "sync" });
+      toast.loading(t("Internet restored. Synchronizing offline entries..."), { id: "sync" });
       try {
         const payload = { entries: offlineQueue };
         const res = await api.post("/visitors/sync", payload);
@@ -230,15 +232,15 @@ export default function VisitorsPage() {
         setOfflineQueue([]);
         setReload(k => k + 1);
       } catch (err) {
-        toast.error("Offline sync failed. Will retry in background.", { id: "sync" });
+        toast.error(t("Offline sync failed. Will retry in background."), { id: "sync" });
       }
     } else {
-      toast.warning("Offline Mode activated. Entries will be stored locally.");
+      toast.warning(t("Offline Mode activated. Entries will be stored locally."));
     }
   };
 
   const handleLookup = async () => {
-    if (!memberPublicId.trim()) { toast.error("Please enter a Member ID."); return; }
+    if (!memberPublicId.trim()) { toast.error(t("Please enter a Member ID.")); return; }
     setLookupLoading(true);
     setLookupResult(null);
     try {
@@ -254,11 +256,11 @@ export default function VisitorsPage() {
 
   const handleCheckInSubmit = async (e) => {
     e.preventDefault();
-    if (!orgId) { toast.error("Please select an organization first."); return; }
+    if (!orgId) { toast.error(t("Please select an organization first.")); return; }
     
     // Validations
     if (!vehicleNumber.trim()) {
-      toast.error("Vehicle Number is required. Enter Walk-In if on foot.");
+      toast.error(t("Vehicle Number is required. Enter Walk-In if on foot."));
       return;
     }
 
@@ -299,7 +301,7 @@ export default function VisitorsPage() {
       };
 
       setOfflineQueue(prev => [...prev, offlineEntry]);
-      toast.success("Visitor Checked In Locally (Offline Mode Saved)");
+      toast.success(t("Visitor Checked In Locally (Offline Mode Saved)"));
       setCheckInOpen(false);
       resetForm();
       setSubmitting(false);
@@ -320,7 +322,7 @@ export default function VisitorsPage() {
       payload.photoUrl = uploadedPhotoUrl || undefined;
 
       await api.post(`/visitors/check-in`, payload);
-      toast.success("Visitor Checked In successfully!");
+      toast.success(t("Visitor Checked In successfully!"));
       setCheckInOpen(false);
       resetForm();
       setReload((k) => k + 1);
@@ -343,13 +345,13 @@ export default function VisitorsPage() {
         return item;
       }).filter(item => !item.checkOutAt)); // Remove from currently inside list
       
-      toast.success("Visitor Checked Out Locally (Offline Saved)");
+      toast.success(t("Visitor Checked Out Locally (Offline Saved)"));
       return;
     }
 
     try {
       await api.post(`/visitors/check-out/${entryId}`);
-      toast.success("Checked out successfully.");
+      toast.success(t("Checked out successfully."));
       setReload((k) => k + 1);
     } catch (e) {
       toast.error(extractErrorMessage(e));
@@ -357,7 +359,7 @@ export default function VisitorsPage() {
   };
 
   const doExport = async (format) => {
-    if (!orgId) { toast.error("Please select an organization first."); return; }
+    if (!orgId) { toast.error(t("Please select an organization first.")); return; }
     setExporting(true);
     try {
       const token = localStorage.getItem("jinanam_access_token");
@@ -370,9 +372,9 @@ export default function VisitorsPage() {
       a.href = URL.createObjectURL(blob);
       a.download = `visitor-entries-${orgId}-${new Date().toISOString().slice(0, 10)}.${format === "xlsx" ? "xlsx" : "csv"}`;
       a.click();
-      toast.success("Visitor report exported successfully.");
+      toast.success(t("Visitor report exported successfully."));
     } catch (e) {
-      toast.error("Export failed");
+      toast.error(t("Export failed"));
     } finally {
       setExporting(false);
     }
@@ -402,20 +404,20 @@ export default function VisitorsPage() {
   const liveColumns = [
     {
       key: "publicId",
-      header: "Entry ID",
+      header: t("Entry ID"),
       render: (r) => (
         <div className="flex flex-col gap-1">
           <Badge variant="outline" className="font-mono text-[9px] w-fit">{r.publicId || "—"}</Badge>
           {r.syncStatus === "PENDING_SYNC" && (
-            <Badge className="bg-amber-100 text-amber-800 text-[8px] border-amber-300 w-fit">Offline Saved</Badge>
+            <Badge className="bg-amber-100 text-amber-800 text-[8px] border-amber-300 w-fit">{t("Offline Saved")}</Badge>
           )}
         </div>
       )
     },
-    { key: "type", header: "Type", render: (r) => <Badge className="text-[10px] font-bold" variant="secondary">{r.entryType || "MEMBER"}</Badge> },
+    { key: "type", header: t("Type"), render: (r) => <Badge className="text-[10px] font-bold" variant="secondary">{r.entryType || "MEMBER"}</Badge> },
     {
       key: "name",
-      header: "Name",
+      header: t("Name"),
       render: (r) => (
         <div>
           <div className="font-semibold text-slate-800 text-sm">{r.member?.fullName || r.visitorName || "—"}</div>
@@ -423,20 +425,20 @@ export default function VisitorsPage() {
         </div>
       )
     },
-    { key: "vehicle", header: "Vehicle", render: (r) => (
+    { key: "vehicle", header: t("Vehicle"), render: (r) => (
       <div>
         <div className="font-bold text-slate-700 text-xs">{r.vehicleNumber || "—"}</div>
         <div className="text-[9px] text-slate-400">{r.vehicleType || "—"}</div>
       </div>
     )},
-    { key: "visitType", header: "Stay", render: (r) => (
+    { key: "visitType", header: t("Stay"), render: (r) => (
       <Badge variant="outline" className={r.visitType === "Stay" ? "border-indigo-200 text-indigo-700 bg-indigo-50" : "border-slate-200 text-slate-600 bg-slate-50"}>
         {r.visitType || "Day Visit"}
       </Badge>
     )},
     {
       key: "checkIn",
-      header: "Check-In At",
+      header: t("Check-In At"),
       render: (r) => (
         <div className="text-xs text-slate-500 font-medium">
           {formatDateTime(r.checkInAt)}
@@ -445,7 +447,7 @@ export default function VisitorsPage() {
     },
     {
       key: "actions",
-      header: "Action",
+      header: t("Action"),
       render: (r) => (
         <Button
           size="sm"
@@ -460,11 +462,11 @@ export default function VisitorsPage() {
   ];
 
   const historyColumns = [
-    { key: "publicId", header: "Entry ID", render: (r) => <Badge variant="outline" className="font-mono text-[9px]">{r.publicId || "—"}</Badge> },
-    { key: "type", header: "Type", render: (r) => <Badge variant="secondary" className="text-[10px]">{r.entryType || "MEMBER"}</Badge> },
+    { key: "publicId", header: t("Entry ID"), render: (r) => <Badge variant="outline" className="font-mono text-[9px]">{r.publicId || "—"}</Badge> },
+    { key: "type", header: t("Type"), render: (r) => <Badge variant="secondary" className="text-[10px]">{r.entryType || "MEMBER"}</Badge> },
     {
       key: "name",
-      header: "Name",
+      header: t("Name"),
       render: (r) => (
         <div>
           <div className="font-semibold text-slate-850 text-xs">{r.member?.fullName || r.visitorName || "—"}</div>
@@ -472,20 +474,20 @@ export default function VisitorsPage() {
         </div>
       )
     },
-    { key: "vehicle", header: "Vehicle", render: (r) => <span className="font-bold text-slate-700 text-xs font-mono">{r.vehicleNumber || "—"}</span> },
+    { key: "vehicle", header: t("Vehicle"), render: (r) => <span className="font-bold text-slate-700 text-xs font-mono">{r.vehicleNumber || "—"}</span> },
     {
       key: "checkIn",
-      header: "Checked In",
+      header: t("Checked In"),
       render: (r) => <span className="text-xs font-medium text-slate-500">{formatDateTime(r.checkInAt)}</span>
     },
     {
       key: "checkOut",
-      header: "Checked Out",
+      header: t("Checked Out"),
       render: (r) => <span className="text-xs font-medium text-slate-500">{r.checkOutAt ? formatDateTime(r.checkOutAt) : "—"}</span>
     },
     {
       key: "duration",
-      header: "Duration",
+      header: t("Duration"),
       render: (r) => (
         <span className="font-semibold text-xs text-indigo-700 font-mono-num">
           {r.visitDuration ? `${r.visitDuration} mins` : "—"}
@@ -501,10 +503,10 @@ export default function VisitorsPage() {
         <div>
           <div className="flex items-center gap-2">
             <Building className="h-6 w-6 text-amber-200" />
-            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">Visitor Management Registry</h1>
+            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">{t("Visitor Management Registry")}</h1>
           </div>
           <p className="text-orange-100 text-xs mt-1 max-w-lg">
-            Polymorphic Visitor tracking across Temples, Dharamshalas, Jain Centres, and trust premises.
+            {t("Polymorphic Visitor tracking across Temples, Dharamshalas, Jain Centres, and trust premises.")}
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 flex-wrap">
@@ -516,7 +518,7 @@ export default function VisitorsPage() {
               <Wifi className="h-4 w-4 text-emerald-300" />
             )}
             <span className="text-xs font-bold text-white uppercase tracking-wider">
-              {isOffline ? "Offline Sim Active" : "Online Mode"}
+              {isOffline ? t("Offline Sim Active") : t("Online Mode")}
             </span>
             <input
               type="checkbox"
@@ -534,7 +536,7 @@ export default function VisitorsPage() {
               data-testid="visitors-checkin-button"
               className="bg-white hover:bg-orange-50 text-orange-700 font-bold h-10 px-5 shadow-md border border-white"
             >
-              <ScanLine className="h-4 w-4 mr-2" /> New Check-In
+              <ScanLine className="h-4 w-4 mr-2" /> {t("New Check-In")}
             </Button>
           )}
         </div>
@@ -542,39 +544,39 @@ export default function VisitorsPage() {
 
       {isSuperAdmin && (
         <div className="max-w-xs">
-          <OrgSelect value={orgId} onChange={setSelectedOrg} label="Select Active Facility Location" testId="visitors-org-select" />
+          <OrgSelect value={orgId} onChange={setSelectedOrg} label={t("Select Active Facility Location")} testId="visitors-org-select" />
         </div>
       )}
 
       {/* Main Mode Tabs: Security Guard Console vs Temple Admin Dashboard */}
       <Tabs defaultValue="guard_console">
         <TabsList className="mb-4 bg-slate-100 p-1 rounded-xl">
-          <TabsTrigger value="guard_console" className="px-5 py-2 font-bold text-xs rounded-lg">🛡️ Security Guard Console</TabsTrigger>
-          <TabsTrigger value="admin_portal" className="px-5 py-2 font-bold text-xs rounded-lg">📊 Temple Admin Portal</TabsTrigger>
-          <TabsTrigger value="member_history" className="px-5 py-2 font-bold text-xs rounded-lg">👤 My Visit History</TabsTrigger>
+          <TabsTrigger value="guard_console" className="px-5 py-2 font-bold text-xs rounded-lg">{t("🛡️ Security Guard Console")}</TabsTrigger>
+          <TabsTrigger value="admin_portal" className="px-5 py-2 font-bold text-xs rounded-lg">{t("📊 Temple Admin Portal")}</TabsTrigger>
+          <TabsTrigger value="member_history" className="px-5 py-2 font-bold text-xs rounded-lg">{t("👤 My Visit History")}</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Security Guard Console View */}
         <TabsContent value="guard_console" className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard label="Visitors Currently Inside" value={combinedLive.reduce((acc, curr) => acc + (curr.numberOfVisitors || 1), 0).toString()} icon={Users} tone="green" />
-            <StatCard label="Active Vehicles Inside" value={combinedLive.filter(v => v.vehicleNumber && !['walk-in', 'no vehicle', 'none', ''].includes(v.vehicleNumber.toLowerCase().trim())).length.toString()} icon={Car} tone="primary" />
-            <StatCard label="Today's Check-Ins" value={analytics?.todaysCheckIns?.toString() || "0"} icon={UserCheck} tone="default" />
-            <StatCard label="Pending Offline Sync" value={offlineQueue.length.toString()} icon={AlertTriangle} tone={offlineQueue.length > 0 ? "warning" : "default"} />
+            <StatCard label={t("Visitors Currently Inside")} value={combinedLive.reduce((acc, curr) => acc + (curr.numberOfVisitors || 1), 0).toString()} icon={Users} tone="green" />
+            <StatCard label={t("Active Vehicles Inside")} value={combinedLive.filter(v => v.vehicleNumber && !['walk-in', 'no vehicle', 'none', ''].includes(v.vehicleNumber.toLowerCase().trim())).length.toString()} icon={Car} tone="primary" />
+            <StatCard label={t("Today's Check-Ins")} value={analytics?.todaysCheckIns?.toString() || "0"} icon={UserCheck} tone="default" />
+            <StatCard label={t("Pending Offline Sync")} value={offlineQueue.length.toString()} icon={AlertTriangle} tone={offlineQueue.length > 0 ? "warning" : "default"} />
           </div>
 
           <Card className="p-4 border border-slate-200 bg-white rounded-xl shadow-sm">
             <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
               <div>
-                <h3 className="font-bold text-sm text-slate-800">Live Active Premises Feed</h3>
-                <p className="text-[11px] text-slate-400">Scan or search visitor check-ins currently inside the gate.</p>
+                <h3 className="font-bold text-sm text-slate-800">{t("Live Active Premises Feed")}</h3>
+                <p className="text-[11px] text-slate-400">{t("Scan or search visitor check-ins currently inside the gate.")}</p>
               </div>
               <div className="relative max-w-xs w-full">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Quick search vehicle, ID..."
+                  placeholder={t("Quick search vehicle, ID...")}
                   className="pl-8 text-xs bg-slate-50 border-slate-200 h-9 rounded-lg"
                 />
               </div>
@@ -585,8 +587,8 @@ export default function VisitorsPage() {
               rows={filteredLive}
               loading={loading}
               testId="visitors-live-table"
-              emptyTitle="No visitors inside"
-              emptyDescription="Gate is clear. Select New Check-In to record arriving visitors."
+              emptyTitle={t("No visitors inside")}
+              emptyDescription={t("Gate is clear. Select New Check-In to record arriving visitors.")}
             />
           </Card>
         </TabsContent>
@@ -595,19 +597,19 @@ export default function VisitorsPage() {
         <TabsContent value="admin_portal" className="space-y-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
             <div className="p-3 text-center space-y-1 border-r last:border-0 border-slate-100">
-              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1"><Clock className="h-3 w-3" /> Peak Visiting Hour</div>
+              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1"><Clock className="h-3 w-3" /> {t("Peak Visiting Hour")}</div>
               <div className="text-xl font-black text-slate-800">{analytics?.peakVisitingHour || "—"}</div>
             </div>
             <div className="p-3 text-center space-y-1 border-r last:border-0 border-slate-100">
-              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1"><ArrowRightLeft className="h-3 w-3 text-indigo-500" /> Avg Stays Duration</div>
+              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1"><ArrowRightLeft className="h-3 w-3 text-indigo-500" /> {t("Avg Stays Duration")}</div>
               <div className="text-xl font-black text-indigo-700">{analytics?.avgDurationMinutes ? `${analytics.avgDurationMinutes} mins` : "—"}</div>
             </div>
             <div className="p-3 text-center space-y-1 border-r last:border-0 border-slate-100">
-              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1"><UserCheck className="h-3 w-3 text-emerald-500" /> Repeat Devotees</div>
+              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1"><UserCheck className="h-3 w-3 text-emerald-500" /> {t("Repeat Devotees")}</div>
               <div className="text-xl font-black text-emerald-700">{analytics?.repeatVisitors || "0"}</div>
             </div>
             <div className="p-3 text-center space-y-1 border-r last:border-0 border-slate-100">
-              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1"><Users className="h-3 w-3 text-amber-500" /> Monthly Total</div>
+              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center justify-center gap-1"><Users className="h-3 w-3 text-amber-500" /> {t("Monthly Total")}</div>
               <div className="text-xl font-black text-slate-800">{history.length}</div>
             </div>
           </div>
@@ -615,89 +617,89 @@ export default function VisitorsPage() {
           <div className="grid grid-cols-12 gap-4">
             {/* Filters panel */}
             <Card className="col-span-12 md:col-span-3 p-4 border border-slate-200 bg-white rounded-xl space-y-4">
-              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">📋 Filters & Exports</h3>
+              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">{t("📋 Filters & Exports")}</h3>
               
               <div className="space-y-3 text-xs">
                 <div>
-                  <Label className="text-[10px] text-slate-400 uppercase font-bold">Category</Label>
+                  <Label className="text-[10px] text-slate-400 uppercase font-bold">{t("Category")}</Label>
                   <SearchableSelect
                     value={filterCategory}
                     onValueChange={setFilterCategory}
-                    options={[{ value: "all", label: "All Categories" }, ...toOptions(["Non Member", "VIP", "Vendor", "Contractor", "Staff", "Delivery", "Unknown Visitor", "Others"])]}
-                    placeholder="All Categories"
+                    options={[{ value: "all", label: t("All Categories") }, ...toOptions(["Non Member", "VIP", "Vendor", "Contractor", "Staff", "Delivery", "Unknown Visitor", "Others"])]}
+                    placeholder={t("All Categories")}
                     className="h-8 text-xs mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label className="text-[10px] text-slate-400 uppercase font-bold">Stay Visit Type</Label>
+                  <Label className="text-[10px] text-slate-400 uppercase font-bold">{t("Stay Visit Type")}</Label>
                   <SearchableSelect
                     value={filterVisitType}
                     onValueChange={setFilterVisitType}
                     options={[
-                      { value: "all", label: "All Types" },
-                      { value: "Day Visit", label: "Day Visit" },
-                      { value: "Stay", label: "Stay" },
+                      { value: "all", label: t("All Types") },
+                      { value: "Day Visit", label: t("Day Visit") },
+                      { value: "Stay", label: t("Stay") },
                     ]}
-                    placeholder="All Types"
+                    placeholder={t("All Types")}
                     className="h-8 text-xs mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label className="text-[10px] text-slate-400 uppercase font-bold">Vehicle Type</Label>
+                  <Label className="text-[10px] text-slate-400 uppercase font-bold">{t("Vehicle Type")}</Label>
                   <SearchableSelect
                     value={filterVehicleType}
                     onValueChange={setFilterVehicleType}
-                    options={[{ value: "all", label: "All Vehicles" }, ...toOptions(["Car", "Bike", "Auto", "Bus", "Taxi", "Other"])]}
-                    placeholder="All Vehicles"
+                    options={[{ value: "all", label: t("All Vehicles") }, ...toOptions(["Car", "Bike", "Auto", "Bus", "Taxi", "Other"])]}
+                    placeholder={t("All Vehicles")}
                     className="h-8 text-xs mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label className="text-[10px] text-slate-400 uppercase font-bold">Status</Label>
+                  <Label className="text-[10px] text-slate-400 uppercase font-bold">{t("Status")}</Label>
                   <SearchableSelect
                     value={filterVisitStatus}
                     onValueChange={setFilterVisitStatus}
                     options={[
-                      { value: "all", label: "All Status" },
-                      { value: "Inside", label: "Currently Inside" },
-                      { value: "Checked Out", label: "Checked Out" },
+                      { value: "all", label: t("All Status") },
+                      { value: "Inside", label: t("Currently Inside") },
+                      { value: "Checked Out", label: t("Checked Out") },
                     ]}
-                    placeholder="All Status"
+                    placeholder={t("All Status")}
                     className="h-8 text-xs mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label className="text-[10px] text-slate-400 uppercase font-bold">Verification</Label>
+                  <Label className="text-[10px] text-slate-400 uppercase font-bold">{t("Verification")}</Label>
                   <SearchableSelect
                     value={filterVerification}
                     onValueChange={setFilterVerification}
                     options={[
-                      { value: "all", label: "All Verification" },
-                      { value: "Verified", label: "Verified JiNANAM Member" },
-                      { value: "Manual", label: "Manual Visitor" },
+                      { value: "all", label: t("All Verification") },
+                      { value: "Verified", label: t("Verified JiNANAM Member") },
+                      { value: "Manual", label: t("Manual Visitor") },
                     ]}
-                    placeholder="All Verification"
+                    placeholder={t("All Verification")}
                     className="h-8 text-xs mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label className="text-[10px] text-slate-400 uppercase font-bold">Date Range</Label>
+                  <Label className="text-[10px] text-slate-400 uppercase font-bold">{t("Date Range")}</Label>
                   <SearchableSelect
                     value={filterDateRange}
                     onValueChange={setFilterDateRange}
                     options={[
-                      { value: "all", label: "All Time" },
-                      { value: "today", label: "Today" },
-                      { value: "yesterday", label: "Yesterday" },
-                      { value: "week", label: "Past 7 Days" },
-                      { value: "month", label: "Past 30 Days" },
+                      { value: "all", label: t("All Time") },
+                      { value: "today", label: t("Today") },
+                      { value: "yesterday", label: t("Yesterday") },
+                      { value: "week", label: t("Past 7 Days") },
+                      { value: "month", label: t("Past 30 Days") },
                     ]}
-                    placeholder="All Time"
+                    placeholder={t("All Time")}
                     className="h-8 text-xs mt-1"
                   />
                 </div>
@@ -707,10 +709,10 @@ export default function VisitorsPage() {
               
               <div className="flex flex-col gap-2 pt-2">
                 <Button onClick={() => doExport("xlsx")} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 text-xs w-full">
-                  <Download className="h-3 w-3 mr-1.5" /> Export Excel (XLSX)
+                  <Download className="h-3 w-3 mr-1.5" /> {t("Export Excel (XLSX)")}
                 </Button>
                 <Button onClick={() => doExport("csv")} className="bg-slate-800 hover:bg-slate-900 text-white font-bold h-8 text-xs w-full">
-                  <Download className="h-3 w-3 mr-1.5" /> Export CSV Report
+                  <Download className="h-3 w-3 mr-1.5" /> {t("Export CSV Report")}
                 </Button>
               </div>
             </Card>
@@ -719,15 +721,15 @@ export default function VisitorsPage() {
             <Card className="col-span-12 md:col-span-9 p-4 border border-slate-200 bg-white rounded-xl shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-sm text-slate-800">Historical Visitor Registry & Audits</h3>
-                  <p className="text-[11px] text-slate-400">Complete search and audit history of location check-ins.</p>
+                  <h3 className="font-bold text-sm text-slate-800">{t("Historical Visitor Registry & Audits")}</h3>
+                  <p className="text-[11px] text-slate-400">{t("Complete search and audit history of location check-ins.")}</p>
                 </div>
                 <div className="relative max-w-xs w-full">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search history by name, vehicle..."
+                    placeholder={t("Search history by name, vehicle...")}
                     className="pl-8 text-xs bg-slate-50 border-slate-200 h-9 rounded-lg"
                   />
                 </div>
@@ -738,8 +740,8 @@ export default function VisitorsPage() {
                 rows={filteredHistory}
                 loading={loading}
                 testId="visitors-history-table"
-                emptyTitle="No past entries found"
-                emptyDescription="Historical records matching current filters will appear here."
+                emptyTitle={t("No past entries found")}
+                emptyDescription={t("Historical records matching current filters will appear here.")}
               />
             </Card>
           </div>
@@ -749,22 +751,22 @@ export default function VisitorsPage() {
         <TabsContent value="member_history" className="space-y-4">
           <Card className="p-4 border border-slate-200 bg-white rounded-xl shadow-sm space-y-4">
             <div>
-              <h3 className="font-bold text-sm text-slate-800">My Facility Stays & Yatra Visits</h3>
-              <p className="text-[11px] text-slate-400">Complete history logs of your visits on JiNANAM premises.</p>
+              <h3 className="font-bold text-sm text-slate-800">{t("My Facility Stays & Yatra Visits")}</h3>
+              <p className="text-[11px] text-slate-400">{t("Complete history logs of your visits on JiNANAM premises.")}</p>
             </div>
             
             <DataTable
               columns={[
-                { key: "organization", header: "Location Name", render: (r) => <span className="font-bold text-slate-800 text-xs">{r.organization?.name || "—"}</span> },
-                { key: "checkIn", header: "Check In", render: (r) => <span className="text-slate-500 font-mono text-xs">{formatDateTime(r.checkInAt)}</span> },
-                { key: "checkOut", header: "Check Out", render: (r) => <span className="text-slate-500 font-mono text-xs">{r.checkOutAt ? formatDateTime(r.checkOutAt) : <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300">Currently Inside</Badge>}</span> },
-                { key: "vehicle", header: "Vehicle", render: (r) => <span className="text-slate-600 font-bold text-xs">{r.vehicleNumber || "—"}</span> },
-                { key: "duration", header: "Stay Duration", render: (r) => <span className="text-indigo-750 font-bold text-xs font-mono">{r.durationMinutes ? `${r.durationMinutes} mins` : "—"}</span> }
+                { key: "organization", header: t("Location Name"), render: (r) => <span className="font-bold text-slate-800 text-xs">{r.organization?.name || "—"}</span> },
+                { key: "checkIn", header: t("Check In"), render: (r) => <span className="text-slate-500 font-mono text-xs">{formatDateTime(r.checkInAt)}</span> },
+                { key: "checkOut", header: t("Check Out"), render: (r) => <span className="text-slate-500 font-mono text-xs">{r.checkOutAt ? formatDateTime(r.checkOutAt) : <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300">{t("Currently Inside")}</Badge>}</span> },
+                { key: "vehicle", header: t("Vehicle"), render: (r) => <span className="text-slate-600 font-bold text-xs">{r.vehicleNumber || "—"}</span> },
+                { key: "duration", header: t("Stay Duration"), render: (r) => <span className="text-indigo-750 font-bold text-xs font-mono">{r.durationMinutes ? `${r.durationMinutes} mins` : "—"}</span> }
               ]}
               rows={myHistory}
               loading={loading}
-              emptyTitle="No visits recorded"
-              emptyDescription="Your verified visits logged by security guards will appear here."
+              emptyTitle={t("No visits recorded")}
+              emptyDescription={t("Your verified visits logged by security guards will appear here.")}
             />
           </Card>
         </TabsContent>
@@ -775,19 +777,19 @@ export default function VisitorsPage() {
         <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-800">
-              <ScanLine className="h-5 w-5 text-orange-600" /> New Visitor Check In
+              <ScanLine className="h-5 w-5 text-orange-600" /> {t("New Visitor Check In")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCheckInSubmit} className="space-y-4 pt-2 text-xs">
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Visitor Identification Type *</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Visitor Identification Type *")}</Label>
               <div className="flex gap-2 mt-1 bg-slate-100 p-1 rounded-lg">
-                {["MEMBER", "NON_MEMBER"].map((t) => (
-                  <button key={t} type="button" onClick={() => { setEntryType(t); setLookupResult(null); }}
+                {["MEMBER", "NON_MEMBER"].map((tItem) => (
+                  <button key={tItem} type="button" onClick={() => { setEntryType(tItem); setLookupResult(null); }}
                     className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                      entryType === t ? "bg-white text-orange-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                      entryType === tItem ? "bg-white text-orange-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
                     }`}>
-                    {t === "MEMBER" ? "Verified JiNANAM Member" : "Manual Visitor Entry"}
+                    {tItem === "MEMBER" ? t("Verified JiNANAM Member") : t("Manual Visitor Entry")}
                   </button>
                 ))}
               </div>
@@ -797,11 +799,11 @@ export default function VisitorsPage() {
             {entryType === "MEMBER" && (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Enter Member ID / Scan QR Code *</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Enter Member ID / Scan QR Code *")}</Label>
                   <div className="flex gap-2 mt-1">
-                    <Input value={memberPublicId} onChange={(e) => setMemberPublicId(e.target.value)} placeholder="e.g. JFJM101" required className="h-9 bg-white" />
+                    <Input value={memberPublicId} onChange={(e) => setMemberPublicId(e.target.value)} placeholder={t("e.g. JFJM101")} required className="h-9 bg-white" />
                     <Button type="button" variant="outline" onClick={handleLookup} disabled={lookupLoading} className="h-9">
-                      {lookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify Identity"}
+                      {lookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("Verify Identity")}
                     </Button>
                   </div>
                 </div>
@@ -817,11 +819,11 @@ export default function VisitorsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[9px] uppercase font-black tracking-widest text-emerald-800 flex items-center gap-1">
-                        ✓ Verified Active Member
+                        {t("✓ Verified Active Member")}
                       </div>
                       <div className="text-sm font-bold text-slate-800 truncate">{lookupResult.fullName}</div>
                       <div className="text-[10px] text-slate-400 font-mono-num font-semibold mt-0.5">
-                        ID: {lookupResult.publicId} | Address: {lookupResult.visitorAddress || "Verified Profile Address"}
+                        {t("ID:")} {lookupResult.publicId} {t("| Address:")} {lookupResult.visitorAddress || "Verified Profile Address"}
                       </div>
                     </div>
                   </div>
@@ -829,8 +831,8 @@ export default function VisitorsPage() {
 
                 {/* Multiple Member IDs Passenger field */}
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Additional Member IDs (Optional - Travel Companions)</Label>
-                  <Input value={passengerPublicIds} onChange={(e) => setPassengerPublicIds(e.target.value)} placeholder="e.g. JFJM102, JFNJM501" className="mt-1 h-9 bg-white" />
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Additional Member IDs (Optional - Travel Companions)")}</Label>
+                  <Input value={passengerPublicIds} onChange={(e) => setPassengerPublicIds(e.target.value)} placeholder={t("e.g. JFJM102, JFNJM501")} className="mt-1 h-9 bg-white" />
                 </div>
               </div>
             )}
@@ -840,62 +842,62 @@ export default function VisitorsPage() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Visitor Category *</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Visitor Category *")}</Label>
                     <SearchableSelect
                       value={visitorCategory}
                       onValueChange={setVisitorCategory}
                       options={toOptions(["Non Member", "VIP", "Vendor", "Contractor", "Staff", "Delivery", "Unknown Visitor", "Others"])}
-                      placeholder="Select category"
+                      placeholder={t("Select category")}
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Full Visitor Name *</Label>
-                    <Input value={visitorName} onChange={(e) => setVisitorName(e.target.value)} placeholder="e.g. Ramesh Shah" required className="h-9 bg-white" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Full Visitor Name *")}</Label>
+                    <Input value={visitorName} onChange={(e) => setVisitorName(e.target.value)} placeholder={t("e.g. Ramesh Shah")} required className="h-9 bg-white" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Mobile Number (Optional)</Label>
-                    <Input value={visitorMobile} onChange={(e) => setVisitorMobile(e.target.value)} placeholder="e.g. 9876543210" className="h-9 bg-white" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Mobile Number (Optional)")}</Label>
+                    <Input value={visitorMobile} onChange={(e) => setVisitorMobile(e.target.value)} placeholder={t("e.g. 9876543210")} className="h-9 bg-white" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Street Address</Label>
-                    <Input value={visitorAddress} onChange={(e) => setVisitorAddress(e.target.value)} placeholder="e.g. 101, Shanti Sadan" className="h-9 bg-white" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Street Address")}</Label>
+                    <Input value={visitorAddress} onChange={(e) => setVisitorAddress(e.target.value)} placeholder={t("e.g. 101, Shanti Sadan")} className="h-9 bg-white" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-4 gap-2">
                   <div className="col-span-2">
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Area</Label>
-                    <Input value={visitorArea} onChange={(e) => setVisitorArea(e.target.value)} placeholder="e.g. Palitana Gate" className="h-9 bg-white" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Area")}</Label>
+                    <Input value={visitorArea} onChange={(e) => setVisitorArea(e.target.value)} placeholder={t("e.g. Palitana Gate")} className="h-9 bg-white" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">City</Label>
-                    <Input value={visitorCity} onChange={(e) => setVisitorCity(e.target.value)} placeholder="e.g. Bhavnagar" className="h-9 bg-white" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">{t("City")}</Label>
+                    <Input value={visitorCity} onChange={(e) => setVisitorCity(e.target.value)} placeholder={t("e.g. Bhavnagar")} className="h-9 bg-white" />
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">State</Label>
-                    <Input value={visitorState} onChange={(e) => setVisitorState(e.target.value)} placeholder="Gujarat" className="h-9 bg-white" />
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">{t("State")}</Label>
+                    <Input value={visitorState} onChange={(e) => setVisitorState(e.target.value)} placeholder={t("Gujarat")} className="h-9 bg-white" />
                   </div>
                 </div>
 
                 {/* Optional Manual Photo Upload */}
                 {["Vendor", "Contractor", "Unknown Visitor", "Others"].includes(visitorCategory) && (
                   <div>
-                    <Label className="text-[10px] uppercase font-bold text-slate-400">Capture Visitor Photo</Label>
+                    <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Capture Visitor Photo")}</Label>
                     <div className="flex items-center gap-3 mt-1.5">
                       <div className="h-16 w-16 rounded-xl bg-slate-50 border flex items-center justify-center overflow-hidden">
                         {photoPreview ? (
-                          <img src={photoPreview} alt="preview" className="h-full w-full object-cover" />
+                          <img src={photoPreview} alt={t("preview")} className="h-full w-full object-cover" />
                         ) : (
                           <Camera className="h-5 w-5 text-slate-400" />
                         )}
                       </div>
                       <div className="flex flex-col gap-1">
                         <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="h-8 text-[11px] font-bold">
-                          Select Image File
+                          {t("Select Image File")}
                         </Button>
                         <input ref={fileRef} type="file" accept="image/*" className="hidden"
                           onChange={(e) => {
@@ -920,21 +922,21 @@ export default function VisitorsPage() {
             {/* COMMON VEHICLE & VISIT DATA */}
             <div className="border-t pt-3.5 space-y-3.5">
               <h4 className="font-bold text-slate-700 text-xs flex items-center gap-1.5">
-                <Car className="h-4 w-4 text-orange-600" /> Vehicle & Stay Particulars
+                <Car className="h-4 w-4 text-orange-600" /> {t("Vehicle & Stay Particulars")}
               </h4>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Vehicle Plate Number *</Label>
-                  <Input value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} placeholder="e.g. GJ01AB1234 or Walk-In" required className="h-9 bg-white" />
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Vehicle Plate Number *")}</Label>
+                  <Input value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} placeholder={t("e.g. GJ01AB1234 or Walk-In")} required className="h-9 bg-white" />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Vehicle Classification *</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Vehicle Classification *")}</Label>
                   <SearchableSelect
                     value={vehicleType}
                     onValueChange={setVehicleType}
                     options={toOptions(["Car", "Bike", "Auto", "Bus", "Taxi", "Other"])}
-                    placeholder="Select vehicle type"
+                    placeholder={t("Select vehicle type")}
                     className="mt-1"
                   />
                 </div>
@@ -942,33 +944,33 @@ export default function VisitorsPage() {
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Visit Type *</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Visit Type *")}</Label>
                   <SearchableSelect
                     value={visitType}
                     onValueChange={setVisitType}
                     options={[
-                      { value: "Day Visit", label: "Day Visit" },
-                      { value: "Stay", label: "Stay (Overnight)" },
+                      { value: "Day Visit", label: t("Day Visit") },
+                      { value: "Stay", label: t("Stay (Overnight)") },
                     ]}
-                    placeholder="Select visit type"
+                    placeholder={t("Select visit type")}
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Visitor Count *</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Visitor Count *")}</Label>
                   <Input type="number" min={1} value={numberOfVisitors} onChange={(e) => setNumberOfVisitors(e.target.value)} required className="h-9 bg-white" />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Purpose</Label>
-                  <Input value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="e.g. Darshan / Meeting" className="h-9 bg-white" />
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Purpose")}</Label>
+                  <Input value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={t("e.g. Darshan / Meeting")} className="h-9 bg-white" />
                 </div>
               </div>
             </div>
 
             <DialogFooter className="gap-2 pt-2">
-              <Button type="button" variant="ghost" onClick={() => { setCheckInOpen(false); resetForm(); }}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => { setCheckInOpen(false); resetForm(); }}>{t("Cancel")}</Button>
               <Button type="submit" disabled={submitting || (entryType === "MEMBER" && !lookupResult && !isOffline)} className="bg-orange-600 hover:bg-orange-700 text-white font-bold">
-                {submitting ? "Processing Check In..." : "Confirm Gate Entry"}
+                {submitting ? t("Processing Check In...") : t("Confirm Gate Entry")}
               </Button>
             </DialogFooter>
           </form>

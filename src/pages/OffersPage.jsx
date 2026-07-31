@@ -39,12 +39,14 @@ import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { OFFER_CATEGORIES, OFFER_CATEGORY_OPTIONS } from "@/constants/dropdownOptions";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // OFFER_CATEGORIES imported from @/constants/dropdownOptions
 
 const standardDisclaimer = "Disclaimer: JiNANAM only provides a platform for businesses to showcase their offers. JiNANAM does not guarantee, endorse, verify, or take responsibility for the quality, availability, pricing, products, services, disputes, losses, damages, or claims arising from these offers. Members are advised to verify all information directly with the respective business before making any purchase or transaction.";
 
 export default function OffersPage() {
+  const { t } = useLanguage();
   const { canDo, user, isSuperAdmin } = useAuth();
   
   // Scoped authorization logic (§5.14)
@@ -112,7 +114,7 @@ export default function OffersPage() {
         setSavedOffersList(savedRes.data?.data || []);
       }
     } catch (e) {
-      toast.error("Failed to load offer boards");
+      toast.error(t("Failed to load offer boards"));
     } finally {
       setLoading(false);
     }
@@ -155,7 +157,7 @@ export default function OffersPage() {
       };
 
       await api.post("/offers", payload);
-      toast.success("New offer published and Visibility target rules scheduled!");
+      toast.success(t("New offer published and Visibility target rules scheduled!"));
       setCreateOpen(false);
       setReloadKey(k => k + 1);
       resetForm();
@@ -196,7 +198,7 @@ export default function OffersPage() {
       };
 
       await api.patch(`/offers/${editingOfferItem.id}`, payload);
-      toast.success("Offer details updated successfully.");
+      toast.success(t("Offer details updated successfully."));
       setEditOpen(false);
       setEditingOfferItem(null);
       setReloadKey(k => k + 1);
@@ -245,21 +247,21 @@ export default function OffersPage() {
     try {
       if (isSaved) {
         await api.post(`/offers/${offer.id}/unsave`);
-        toast.success("Offer removed from your Bookmarks list.");
+        toast.success(t("Offer removed from your Bookmarks list."));
       } else {
         await api.post(`/offers/${offer.id}/save`);
-        toast.success("Offer bookmarked! View under Saved Offers.");
+        toast.success(t("Offer bookmarked! View under Saved Offers."));
       }
       setReloadKey(k => k + 1);
     } catch (e) {
-      toast.error("Failed to update saved offers state");
+      toast.error(t("Failed to update saved offers state"));
     }
   };
 
   const handleShareOffer = (offer) => {
     const link = `https://jinanam.org/offers/${offer.publicId || offer.id}`;
     navigator.clipboard.writeText(link);
-    toast.success("JiNANAM Deep Link copied to clipboard!");
+    toast.success(t("JiNANAM Deep Link copied to clipboard!"));
     api.post(`/offers/${offer.id}/track/share`).catch(() => {});
   };
 
@@ -287,7 +289,7 @@ export default function OffersPage() {
     if (!confirm("Are you sure you want to archive/delete this offer?")) return;
     try {
       await api.patch(`/offers/${offerId}`, { deletedAt: new Date().toISOString() });
-      toast.success("Offer moved to Expired/Archived lists.");
+      toast.success(t("Offer moved to Expired/Archived lists."));
       setReloadKey(k => k + 1);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -315,15 +317,15 @@ export default function OffersPage() {
   });
 
   const columns = [
-    { key: "publicId", header: "Offer ID", render: (r) => <Badge variant="outline" className="font-mono text-[9px]">{r.publicId}</Badge> },
-    { key: "companyName", header: "Merchant", render: (r) => <span className="font-bold text-slate-800 text-xs">{r.companyName}</span> },
-    { key: "title", header: "Offer Title", render: (r) => <span className="text-slate-600 font-medium text-xs">{r.title}</span> },
-    { key: "category", header: "Category", render: (r) => <Badge variant="secondary" className="text-[9px]">{r.category?.name || "Others"}</Badge> },
-    { key: "startAt", header: "Start Date", render: (r) => <span className="text-slate-500 font-mono text-xs">{formatDate(r.startAt)}</span> },
-    { key: "endAt", header: "End Date", render: (r) => <span className="text-slate-500 font-mono text-xs">{formatDate(r.endAt)}</span> },
+    { key: "publicId", header: t("Offer ID"), render: (r) => <Badge variant="outline" className="font-mono text-[9px]">{r.publicId}</Badge> },
+    { key: "companyName", header: t("Merchant"), render: (r) => <span className="font-bold text-slate-800 text-xs">{r.companyName}</span> },
+    { key: "title", header: t("Offer Title"), render: (r) => <span className="text-slate-600 font-medium text-xs">{r.title}</span> },
+    { key: "category", header: t("Category"), render: (r) => <Badge variant="secondary" className="text-[9px]">{r.category?.name || "Others"}</Badge> },
+    { key: "startAt", header: t("Start Date"), render: (r) => <span className="text-slate-500 font-mono text-xs">{formatDate(r.startAt)}</span> },
+    { key: "endAt", header: t("End Date"), render: (r) => <span className="text-slate-500 font-mono text-xs">{formatDate(r.endAt)}</span> },
     {
       key: "metrics",
-      header: "Views / Clicks / Saves",
+      header: t("Views / Clicks / Saves"),
       render: (r) => (
         <span className="text-xs font-semibold text-slate-700 font-mono-num">
           👁️ {r.viewCount} | 🖱️ {r.clickCount} | 💾 {r._count?.saves ?? 0}
@@ -332,14 +334,14 @@ export default function OffersPage() {
     },
     {
       key: "actions",
-      header: "Actions",
+      header: t("Actions"),
       render: (r) => (
         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
           <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => openEditModal(r)}>
-            <Edit className="h-3 w-3 mr-1" /> Edit
+            <Edit className="h-3 w-3 mr-1" /> {t("Edit")}
           </Button>
           <Button size="sm" variant="outline" className="h-7 text-[10px] text-red-650 hover:bg-red-50" onClick={() => handleDeleteOffer(r.id)}>
-            <Trash2 className="h-3 w-3 mr-1" /> Delete
+            <Trash2 className="h-3 w-3 mr-1" /> {t("Delete")}
           </Button>
         </div>
       )
@@ -352,10 +354,10 @@ export default function OffersPage() {
         <div>
           <div className="flex items-center gap-2">
             <Percent className="h-6 w-6 text-rose-200" />
-            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">Offers & Exclusive Benefits</h1>
+            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">{t("Offers & Exclusive Benefits")}</h1>
           </div>
           <p className="text-rose-100 text-xs mt-1 max-w-lg">
-            Curated merchant discounts, exclusive community deals, travel offers, and health benefits.
+            {t("Curated merchant discounts, exclusive community deals, travel offers, and health benefits.")}
           </p>
         </div>
         {isAuthorizedAdmin && (
@@ -365,13 +367,13 @@ export default function OffersPage() {
               variant="outline"
               className="bg-rose-800/40 hover:bg-rose-800/60 text-white font-bold h-10 px-4 border border-rose-400/40"
             >
-              <Download className="h-4 w-4 mr-2" /> Export Reports
+              <Download className="h-4 w-4 mr-2" /> {t("Export Reports")}
             </Button>
             <Button
               onClick={() => { resetForm(); setCreateOpen(true); }}
               className="bg-white hover:bg-rose-50 text-rose-700 font-bold h-10 px-5 shadow-md border border-white"
             >
-              <Plus className="h-4 w-4 mr-2" /> Create New Offer
+              <Plus className="h-4 w-4 mr-2" /> {t("Create New Offer")}
             </Button>
           </div>
         )}
@@ -380,10 +382,10 @@ export default function OffersPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4 bg-slate-100 p-1 rounded-xl">
           {isAuthorizedAdmin && (
-            <TabsTrigger value="admin_dashboard" className="px-5 py-2 font-bold text-xs rounded-lg">🛡️ Super Admin Control Board</TabsTrigger>
+            <TabsTrigger value="admin_dashboard" className="px-5 py-2 font-bold text-xs rounded-lg">{t("🛡️ Super Admin Control Board")}</TabsTrigger>
           )}
-          <TabsTrigger value="browse_offers" className="px-5 py-2 font-bold text-xs rounded-lg">🎁 Browse Offers & Benefits</TabsTrigger>
-          <TabsTrigger value="saved_offers" className="px-5 py-2 font-bold text-xs rounded-lg">💾 Saved Bookmarks</TabsTrigger>
+          <TabsTrigger value="browse_offers" className="px-5 py-2 font-bold text-xs rounded-lg">{t("🎁 Browse Offers & Benefits")}</TabsTrigger>
+          <TabsTrigger value="saved_offers" className="px-5 py-2 font-bold text-xs rounded-lg">{t("💾 Saved Bookmarks")}</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Super Admin Controls */}
@@ -391,19 +393,19 @@ export default function OffersPage() {
           <TabsContent value="admin_dashboard" className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Card className="p-4 bg-white border rounded-xl shadow-sm">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Total Active deals</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Total Active deals")}</div>
                 <div className="text-2xl font-black text-slate-800 mt-1">{activeOffers.length}</div>
               </Card>
               <Card className="p-4 bg-white border rounded-xl shadow-sm">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Upcoming deals</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Upcoming deals")}</div>
                 <div className="text-2xl font-black text-indigo-750 mt-1">{upcomingOffers.length}</div>
               </Card>
               <Card className="p-4 bg-white border rounded-xl shadow-sm">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Expired / Archived</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Expired / Archived")}</div>
                 <div className="text-2xl font-black text-slate-500 mt-1">{expiredOffers.length}</div>
               </Card>
               <Card className="p-4 bg-white border rounded-xl shadow-sm">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Total Views & clicks</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">{t("Total Views & clicks")}</div>
                 <div className="text-xs font-bold text-slate-600 mt-2 font-mono">
                   👁️ {offers.reduce((acc, curr) => acc + (curr.viewCount || 0), 0)} | 🖱️ {offers.reduce((acc, curr) => acc + (curr.clickCount || 0), 0)}
                 </div>
@@ -413,12 +415,12 @@ export default function OffersPage() {
             <Card className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
               <div className="flex justify-between items-center flex-wrap gap-2">
                 <div>
-                  <h3 className="font-bold text-sm text-slate-800">Super Admin Offers Ledger</h3>
-                  <p className="text-[11px] text-slate-400">Track clicks, audit merchant visibility rules, and onboard new campaigns.</p>
+                  <h3 className="font-bold text-sm text-slate-800">{t("Super Admin Offers Ledger")}</h3>
+                  <p className="text-[11px] text-slate-400">{t("Track clicks, audit merchant visibility rules, and onboard new campaigns.")}</p>
                 </div>
-                <div className="relative max-w-xs w-full">
+                <div className="relative max-w-xs">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search..." className="pl-8 text-xs h-9" />
+                  <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("action.search", "Search...")} className="pl-8 text-xs h-9" />
                 </div>
               </div>
 
@@ -427,8 +429,8 @@ export default function OffersPage() {
                 rows={q ? offers.filter(o => o.title.toLowerCase().includes(q.toLowerCase())) : offers}
                 loading={loading}
                 testId="offers-table"
-                emptyTitle="No offers configured"
-                emptyDescription="Select Create New Offer to onboard promo banners."
+                emptyTitle={t("No offers configured")}
+                emptyDescription={t("Select Create New Offer to onboard promo banners.")}
               />
             </Card>
           </TabsContent>
@@ -439,7 +441,7 @@ export default function OffersPage() {
           {/* Banner Featured Carousels */}
           {activeOffers.length > 0 && (
             <div className="space-y-2">
-              <h3 className="font-bold text-sm text-slate-800 flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-pink-600" /> Featured Benefits</h3>
+              <h3 className="font-bold text-sm text-slate-800 flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-pink-600" /> {t("Featured Benefits")}</h3>
               <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
                 {activeOffers.slice(0, 4).map((offer, idx) => (
                   <Card key={idx} className="min-w-[280px] sm:min-w-[340px] max-w-sm rounded-xl overflow-hidden bg-white border shadow-sm shrink-0 snap-start relative"
@@ -447,7 +449,7 @@ export default function OffersPage() {
                     <div className="h-32 w-full bg-slate-100 overflow-hidden relative">
                       <img src={offer.bannerUrl || "/static/offers/banner.png"} alt="" className="h-full w-full object-cover" />
                       <div className="absolute top-2.5 left-2.5">
-                        <Badge className="bg-pink-600 text-white font-bold text-[9px] uppercase tracking-wider">Featured</Badge>
+                        <Badge className="bg-pink-600 text-white font-bold text-[9px] uppercase tracking-wider">{t("Featured")}</Badge>
                       </div>
                     </div>
                     <div className="p-3.5 space-y-2">
@@ -468,7 +470,7 @@ export default function OffersPage() {
 
           {/* Category Chips Selector */}
           <div className="space-y-2">
-            <Label className="text-[10px] uppercase font-bold text-slate-400">Merchant Categories</Label>
+            <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Merchant Categories")}</Label>
             <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide text-xs">
               <button
                 onClick={() => setSelectedCategory("all")}
@@ -476,7 +478,7 @@ export default function OffersPage() {
                   selectedCategory === "all" ? "bg-pink-600 border-pink-600 text-white" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                All Categories
+                {t("All Categories")}
               </button>
               {OFFER_CATEGORIES.map(cat => (
                 <button
@@ -495,20 +497,20 @@ export default function OffersPage() {
           <div className="grid grid-cols-12 gap-5 pt-2">
             {/* Filter Search side bar */}
             <Card className="col-span-12 md:col-span-3 p-4 bg-white border rounded-xl shadow-sm space-y-4 h-fit">
-              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">Search & Filters</h3>
+              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">{t("Search & Filters")}</h3>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search merchant, title..." className="pl-8 text-xs" />
+                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Search merchant, title...")} className="pl-8 text-xs" />
               </div>
 
               <div>
-                <Label className="text-[10px] text-slate-400 uppercase font-bold">Offer Scope Filter</Label>
+                <Label className="text-[10px] text-slate-400 uppercase font-bold">{t("Offer Scope Filter")}</Label>
                 <select className="w-full mt-1.5 h-8 rounded border text-xs px-2 bg-slate-50 focus:outline-none"
                   value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-                  <option value="all">Display All Active</option>
-                  <option value="nearby">Offers Near Me (GPS)</option>
-                  <option value="home-city">In My Home City</option>
-                  <option value="expiring-soon">Expiring Soon (7 Days)</option>
+                  <option value="all">{t("Display All Active")}</option>
+                  <option value="nearby">{t("Offers Near Me (GPS)")}</option>
+                  <option value="home-city">{t("In My Home City")}</option>
+                  <option value="expiring-soon">{t("Expiring Soon (7 Days)")}</option>
                 </select>
               </div>
             </Card>
@@ -517,7 +519,7 @@ export default function OffersPage() {
             <div className="col-span-12 md:col-span-9 grid grid-cols-1 sm:grid-cols-3 gap-4">
               {filteredOffersList.length === 0 ? (
                 <div className="col-span-12 p-10 text-center bg-white border border-dashed rounded-2xl text-slate-400">
-                  No active offers matches the selected categories and search queries.
+                  {t("No active offers matches the selected categories and search queries.")}
                 </div>
               ) : (
                 filteredOffersList.map((offer, idx) => (
@@ -542,9 +544,9 @@ export default function OffersPage() {
                     </div>
 
                     <div className="p-3 border-t flex items-center justify-between">
-                      <span className="text-[9px] text-slate-400 font-semibold font-mono-num">Valid: {formatDate(offer.endAt)}</span>
+                      <span className="text-[9px] text-slate-400 font-semibold font-mono-num">{t("Valid:")} {formatDate(offer.endAt)}</span>
                       <Button size="sm" variant="ghost" className="h-7 px-2.5 text-[10px]" onClick={(e) => { e.stopPropagation(); handleShareOffer(offer); }}>
-                        <Share2 className="h-3 w-3 mr-1" /> Share Deal
+                        <Share2 className="h-3 w-3 mr-1" /> {t("Share Deal")}
                       </Button>
                     </div>
                   </Card>
@@ -559,7 +561,7 @@ export default function OffersPage() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             {savedOffersList.length === 0 ? (
               <div className="col-span-4 p-10 text-center bg-white border border-dashed rounded-2xl text-slate-400">
-                No bookmarked offers. Select the bookmark tag on browse deals to save.
+                {t("No bookmarked offers. Select the bookmark tag on browse deals to save.")}
               </div>
             ) : (
               savedOffersList.map((offer, idx) => (
@@ -581,9 +583,9 @@ export default function OffersPage() {
                     </div>
                   </div>
                   <div className="p-3 border-t flex items-center justify-between bg-slate-50/50">
-                    <span className="text-[9px] text-slate-400 font-semibold font-mono-num">Valid: {formatDate(offer.endAt)}</span>
+                    <span className="text-[9px] text-slate-400 font-semibold font-mono-num">{t("Valid:")} {formatDate(offer.endAt)}</span>
                     <Button size="sm" variant="ghost" className="h-7 px-2.5 text-[10px]" onClick={(e) => { e.stopPropagation(); handleShareOffer(offer); }}>
-                      <Share2 className="h-3 w-3 mr-1" /> Share
+                      <Share2 className="h-3 w-3 mr-1" /> {t("Share")}
                     </Button>
                   </div>
                 </Card>
@@ -598,106 +600,106 @@ export default function OffersPage() {
         <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto text-xs bg-white rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-heading font-black text-slate-850">
-              <Percent className="h-5 w-5 text-pink-600" /> Configure Promotional Offer
+              <Percent className="h-5 w-5 text-pink-600" /> {t("Configure Promotional Offer")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateOffer} className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Merchant Company Name *</Label>
-                <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. Swiggy / MakeMyTrip" required className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Merchant Company Name *")}</Label>
+                <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder={t("e.g. Swiggy / MakeMyTrip")} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Offer Category *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Offer Category *")}</Label>
                 <SearchableSelect
                   value={offerCategory}
                   onValueChange={setOfferCategory}
                   options={OFFER_CATEGORY_OPTIONS}
-                  placeholder="Select Category"
+                  placeholder={t("Select Category")}
                   className="mt-1.5"
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Company Logo Image URL</Label>
-              <Input value={companyLogoUrl} onChange={(e) => setCompanyLogoUrl(e.target.value)} placeholder="/static/merchant/swiggy.png" className="h-9 mt-1" />
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Company Logo Image URL")}</Label>
+              <Input value={companyLogoUrl} onChange={(e) => setCompanyLogoUrl(e.target.value)} placeholder={t("/static/merchant/swiggy.png")} className="h-9 mt-1" />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Offer Promo Title *</Label>
-                <Input value={offerTitle} onChange={(e) => setOfferTitle(e.target.value)} placeholder="e.g. Flat 20% Off on Jain Meals" required className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Offer Promo Title *")}</Label>
+                <Input value={offerTitle} onChange={(e) => setOfferTitle(e.target.value)} placeholder={t("e.g. Flat 20% Off on Jain Meals")} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Promo Banner/Image URL</Label>
-                <Input value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} placeholder="/static/banners/offer1.png" className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Promo Banner/Image URL")}</Label>
+                <Input value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} placeholder={t("/static/banners/offer1.png")} className="h-9 mt-1" />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Offer Full Description</Label>
-              <Textarea value={offerDesc} onChange={(e) => setOfferDesc(e.target.value)} placeholder="Provide full details of the offer benefits, guidelines, minimum order, etc." className="mt-1" />
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Offer Full Description")}</Label>
+              <Textarea value={offerDesc} onChange={(e) => setOfferDesc(e.target.value)} placeholder={t("Provide full details of the offer benefits, guidelines, minimum order, etc.")} className="mt-1" />
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Redirect Landing Page URL</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Redirect Landing Page URL")}</Label>
                 <Input value={redirectUrl} onChange={(e) => setRedirectUrl(e.target.value)} placeholder="https://website.com/deal" className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Company Website</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Company Website")}</Label>
                 <Input value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} placeholder="https://swiggy.com" className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Contact Number</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Contact Number")}</Label>
                 <Input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} placeholder="9876543210" className="h-9 mt-1" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">WhatsApp Contact Number</Label>
-                <Input value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="e.g. 9876543210" className="h-9 mt-1" />
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("WhatsApp Contact Number")}</Label>
+                <Input value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder={t("e.g. 9876543210")} className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Google Maps Store Link</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Google Maps Store Link")}</Label>
                 <Input value={googleMapsLink} onChange={(e) => setGoogleMapsLink(e.target.value)} placeholder="https://maps.google.com/..." className="h-9 mt-1" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 border-t pt-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Start Date *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Start Date *")}</Label>
                 <Input type="date" value={startAt} onChange={(e) => setStartAt(e.target.value)} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">End Expiry Date *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("End Expiry Date *")}</Label>
                 <Input type="date" value={endAt} onChange={(e) => setEndAt(e.target.value)} required className="h-9 mt-1" />
               </div>
             </div>
 
             <div className="border-t pt-3 space-y-3">
-              <h4 className="font-bold text-slate-700 text-xs">Geo-Visibility Target Rules</h4>
+              <h4 className="font-bold text-slate-700 text-xs">{t("Geo-Visibility Target Rules")}</h4>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">Country</Label>
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Country")}</Label>
                   <Input value={geoCountry} onChange={(e) => setGeoCountry(e.target.value)} className="h-9 mt-1" />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">State Target</Label>
-                  <Input value={geoState} onChange={(e) => setGeoState(e.target.value)} placeholder="Gujarat" className="h-9 mt-1" />
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("State Target")}</Label>
+                  <Input value={geoState} onChange={(e) => setGeoState(e.target.value)} placeholder={t("Gujarat")} className="h-9 mt-1" />
                 </div>
                 <div>
-                  <Label className="text-[10px] uppercase font-bold text-slate-400">City Target</Label>
-                  <Input value={geoCity} onChange={(e) => setGeoCity(e.target.value)} placeholder="Palitana" className="h-9 mt-1" />
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">{t("City Target")}</Label>
+                  <Input value={geoCity} onChange={(e) => setGeoCity(e.target.value)} placeholder={t("Palitana")} className="h-9 mt-1" />
                 </div>
               </div>
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-pink-600 hover:bg-pink-700 text-white font-bold h-9">Publish Offer Campaign</Button>
+              <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-pink-600 hover:bg-pink-700 text-white font-bold h-9">{t("Publish Offer Campaign")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -707,21 +709,21 @@ export default function OffersPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto text-xs bg-white rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="font-heading font-black text-slate-805">Modify Promotional Offer</DialogTitle>
+            <DialogTitle className="font-heading font-black text-slate-805">{t("Modify Promotional Offer")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditOffer} className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Merchant Company Name *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Merchant Company Name *")}</Label>
                 <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Offer Category *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Offer Category *")}</Label>
                 <SearchableSelect
                   value={offerCategory}
                   onValueChange={setOfferCategory}
                   options={OFFER_CATEGORY_OPTIONS}
-                  placeholder="Select Category"
+                  placeholder={t("Select Category")}
                   className="mt-1.5"
                 />
               </div>
@@ -729,34 +731,34 @@ export default function OffersPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Offer Promo Title *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Offer Promo Title *")}</Label>
                 <Input value={offerTitle} onChange={(e) => setOfferTitle(e.target.value)} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Promo Banner/Image URL</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Promo Banner/Image URL")}</Label>
                 <Input value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} className="h-9 mt-1" />
               </div>
             </div>
 
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-400">Offer Full Description</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Offer Full Description")}</Label>
               <Textarea value={offerDesc} onChange={(e) => setOfferDesc(e.target.value)} className="mt-1" />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">Start Date *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Start Date *")}</Label>
                 <Input type="date" value={startAt} onChange={(e) => setStartAt(e.target.value)} required className="h-9 mt-1" />
               </div>
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-400">End Expiry Date *</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-400">{t("End Expiry Date *")}</Label>
                 <Input type="date" value={endAt} onChange={(e) => setEndAt(e.target.value)} required className="h-9 mt-1" />
               </div>
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-pink-650 hover:bg-pink-700 text-white font-bold h-9">Save Offer Changes</Button>
+              <Button type="button" variant="ghost" onClick={() => setEditOpen(false)}>{t("Cancel")}</Button>
+              <Button type="submit" className="bg-pink-650 hover:bg-pink-700 text-white font-bold h-9">{t("Save Offer Changes")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -782,13 +784,13 @@ export default function OffersPage() {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-[9px] uppercase font-bold text-slate-400">Deal Details</Label>
+                <Label className="text-[9px] uppercase font-bold text-slate-400">{t("Deal Details")}</Label>
                 <p className="text-slate-650 leading-relaxed bg-slate-50 p-3 rounded-lg border">{detailOffer.description || "No full description configured."}</p>
               </div>
 
               <div className="flex items-center justify-between text-[10px] text-slate-450 bg-slate-100 p-2.5 rounded-lg font-mono">
-                <span>Start: {formatDate(detailOffer.startAt)}</span>
-                <span>Expires: {formatDate(detailOffer.endAt)}</span>
+                <span>{t("Start:")} {formatDate(detailOffer.startAt)}</span>
+                <span>{t("Expires:")} {formatDate(detailOffer.endAt)}</span>
               </div>
 
               <div className="flex flex-wrap gap-2 pt-1.5 shrink-0 justify-between items-center border-t border-b py-3">
@@ -796,21 +798,21 @@ export default function OffersPage() {
                   {detailOffer.links?.whatsapp && (
                     <a href={`https://wa.me/${detailOffer.links.whatsapp}`} target="_blank" rel="noreferrer" onClick={() => trackClick(detailOffer)}>
                       <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 text-[11px]">
-                        <MessageSquare className="h-3.5 w-3.5 mr-1" /> WhatsApp
+                        <MessageSquare className="h-3.5 w-3.5 mr-1" /> {t("WhatsApp")}
                       </Button>
                     </a>
                   )}
                   {detailOffer.links?.website && (
                     <a href={detailOffer.links.website} target="_blank" rel="noreferrer" onClick={() => trackClick(detailOffer)}>
                       <Button size="sm" className="bg-pink-600 hover:bg-pink-700 text-white font-bold h-8 text-[11px]">
-                        <Globe className="h-3.5 w-3.5 mr-1" /> Website
+                        <Globe className="h-3.5 w-3.5 mr-1" /> {t("Website")}
                       </Button>
                     </a>
                   )}
                   {detailOffer.links?.maps && (
                     <a href={detailOffer.links.maps} target="_blank" rel="noreferrer">
                       <Button size="sm" variant="outline" className="h-8 text-[11px]">
-                        <MapPin className="h-3.5 w-3.5 mr-1" /> Map Location
+                        <MapPin className="h-3.5 w-3.5 mr-1" /> {t("Map Location")}
                       </Button>
                     </a>
                   )}
@@ -833,7 +835,7 @@ export default function OffersPage() {
               </div>
 
               <DialogFooter className="pt-1.5">
-                <Button variant="ghost" onClick={() => setDetailOffer(null)}>Close Deal View</Button>
+                <Button variant="ghost" onClick={() => setDetailOffer(null)}>{t("Close Deal View")}</Button>
               </DialogFooter>
             </div>
           )}

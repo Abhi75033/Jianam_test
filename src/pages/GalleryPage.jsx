@@ -16,8 +16,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOrgs } from "@/hooks/useOrgs";
 import { OrgSelect } from "@/components/common/OrgSelect";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function GalleryPage() {
+  const { t } = useLanguage();
   const { user, isSuperAdmin, canDo } = useAuth();
   const { orgs } = useOrgs();
   const [selectedOrg, setSelectedOrg] = useState("");
@@ -44,7 +46,7 @@ export default function GalleryPage() {
     setSaving(true);
     try {
       await api.post("/gallery/albums", { organizationId: orgId, name });
-      toast.success("Album created.");
+      toast.success(t("Album created."));
       setCreateOpen(false);
       setName("");
       setDescription("");
@@ -58,13 +60,13 @@ export default function GalleryPage() {
 
   const removeImage = async (imgId) => {
     if (!isSuperAdmin) {
-      toast.error("Only Super Admin can delete images.");
+      toast.error(t("Only Super Admin can delete images."));
       return;
     }
     if (!window.confirm("Delete this image?")) return;
     try {
       await api.delete(`/gallery/images/${imgId}`);
-      toast.success("Image deleted.");
+      toast.success(t("Image deleted."));
       setReloadKey((k) => k + 1);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -74,18 +76,18 @@ export default function GalleryPage() {
   return (
     <div data-testid="gallery-page">
       <PageHeader
-        title="Gallery"
-        subtitle="Photo albums organised by events, festivals, or seasons."
+        title={t("Gallery")}
+        subtitle={t("Photo albums organised by events, festivals, or seasons.")}
         actions={canDo("GALLERY", "CREATE") && (
           <Button onClick={() => setCreateOpen(true)} data-testid="gallery-create-album-btn">
-            <Plus className="h-4 w-4 mr-2" /> New Album
+            <Plus className="h-4 w-4 mr-2" /> {t("New Album")}
           </Button>
         )}
       />
 
       {isSuperAdmin && (
         <div className="mb-4">
-          <OrgSelect value={orgId} onChange={setSelectedOrg} label="Organization" testId="gallery-org-select" />
+          <OrgSelect value={orgId} onChange={setSelectedOrg} label={t("Organization")} testId="gallery-org-select" />
         </div>
       )}
 
@@ -94,7 +96,7 @@ export default function GalleryPage() {
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48" />)}
         </div>
       ) : albums.length === 0 ? (
-        <EmptyState title="No albums yet" description="Create your first album to start sharing photos." icon={ImageIcon} />
+        <EmptyState title={t("No albums yet")} description={t("Create your first album to start sharing photos.")} icon={ImageIcon} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {albums.map((a) => (
@@ -108,15 +110,15 @@ export default function GalleryPage() {
                 <div className="font-medium truncate">{a.name}</div>
                 <div className="text-xs text-muted-foreground mt-1 flex items-center justify-between">
                   <span>{formatDate(a.createdAt)}</span>
-                  <Badge variant="outline" className="text-[10px]">{a.images?.length ?? a.imageCount ?? 0} photos</Badge>
+                  <Badge variant="outline" className="text-[10px]">{a.images?.length ?? a.imageCount ?? 0} {t("photos")}</Badge>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   <Button size="sm" variant="outline" onClick={() => setUploadTo(a)} data-testid={`album-upload-${a.id}`}>
-                    <Upload className="h-3 w-3 mr-1" /> Upload
+                    <Upload className="h-3 w-3 mr-1" /> {t("Upload")}
                   </Button>
                   {isSuperAdmin && a.images?.[0] && (
                     <Button size="sm" variant="outline" onClick={() => removeImage(a.images[0].id)} data-testid={`album-del-first-${a.id}`}>
-                      <Trash2 className="h-3 w-3 mr-1 text-destructive" /> Delete first
+                      <Trash2 className="h-3 w-3 mr-1 text-destructive" /> {t("Delete first")}
                     </Button>
                   )}
                 </div>
@@ -128,19 +130,19 @@ export default function GalleryPage() {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md" data-testid="gallery-create-dialog">
-          <DialogHeader><DialogTitle>New album</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("New album")}</DialogTitle></DialogHeader>
           <form onSubmit={createAlbum} className="space-y-3">
             <div>
-              <Label className="text-xs">Album name</Label>
+              <Label className="text-xs">{t("Album name")}</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} required data-testid="album-name-input" />
             </div>
             <div>
-              <Label className="text-xs">Description</Label>
+              <Label className="text-xs">{t("Description")}</Label>
               <Input value={description} onChange={(e) => setDescription(e.target.value)} data-testid="album-desc-input" />
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving} data-testid="album-create-submit">Create</Button>
+              <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>{t("Cancel")}</Button>
+              <Button type="submit" disabled={saving} data-testid="album-create-submit">{t("Create")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -148,7 +150,7 @@ export default function GalleryPage() {
 
       <Dialog open={Boolean(uploadTo)} onOpenChange={() => setUploadTo(null)}>
         <DialogContent className="max-w-lg" data-testid="album-upload-dialog">
-          <DialogHeader><DialogTitle>Upload to · {uploadTo?.name}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("Upload to ·")} {uploadTo?.name}</DialogTitle></DialogHeader>
           <FileDropzone
             uploadEndpoint="/uploads"
             accept={{ "image/*": [] }}
@@ -159,7 +161,7 @@ export default function GalleryPage() {
               if (!imageUrls.length || !uploadTo) return;
               try {
                 await api.post(`/gallery/albums/${uploadTo.id}/images`, { imageUrls });
-                toast.success("Images added to album");
+                toast.success(t("Images added to album"));
                 setReloadKey((k) => k + 1);
                 setUploadTo(null);
               } catch (err) {
@@ -167,8 +169,8 @@ export default function GalleryPage() {
               }
             }}
             testId="album-upload-drop"
-            label="Drop images here"
-            hint="PNG, JPG up to 10MB · multiple files allowed"
+            label={t("Drop images here")}
+            hint={t("PNG, JPG up to 10MB · multiple files allowed")}
           />
         </DialogContent>
       </Dialog>

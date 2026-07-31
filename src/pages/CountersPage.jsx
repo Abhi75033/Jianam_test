@@ -13,10 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Users, TrendingUp, Trophy, LayoutGrid, Plus, RotateCcw, Sigma, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { initials } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const TILE_TONES = ["green", "orange", "purple", "red", "blue", "green", "orange", "purple"];
 
 export default function CountersPage() {
+  const { t } = useLanguage();
   const [counters, setCounters] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ export default function CountersPage() {
       const res = await api.get("/counters/admin/overview");
       setCounters(res.data?.data || []);
     } catch (e) {
-      toast.error("Failed to load counter dashboard data.");
+      toast.error(t("Failed to load counter dashboard data."));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export default function CountersPage() {
       const res = await api.get("/counters/leaderboard", { params });
       setLeaderboard(res.data?.data || []);
     } catch (e) {
-      toast.error("Failed to load leaderboard.");
+      toast.error(t("Failed to load leaderboard."));
     } finally {
       setLeaderboardLoading(false);
     }
@@ -75,13 +77,13 @@ export default function CountersPage() {
 
   const handleAddCounterType = async () => {
     if (!newTypeName.trim()) {
-      toast.error("Please enter a counter type name.");
+      toast.error(t("Please enter a counter type name."));
       return;
     }
     setSaving(true);
     try {
       await api.post("/counters/types", { name: newTypeName.trim() });
-      toast.success("Counter type added successfully.");
+      toast.success(t("Counter type added successfully."));
       setAddOpen(false);
       setNewTypeName("");
       setReload(k => k + 1);
@@ -118,31 +120,31 @@ export default function CountersPage() {
   return (
     <div data-testid="counters-page">
       <PageHeader
-        title="Spiritual Counting Management"
-        subtitle="Manage digital mala counters, member participation, and spiritual engagement analytics."
+        title={t("Spiritual Counting Management")}
+        subtitle={t("Manage digital mala counters, member participation, and spiritual engagement analytics.")}
         actions={
           <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setAddOpen(true)} data-testid="counters-add-btn">
-            <Plus className="h-4 w-4 mr-2" /> Add Counter Type
+            <Plus className="h-4 w-4 mr-2" /> {t("Add Counter Type")}
           </Button>
         }
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-        <StatCard label="Total Active Members" value={loading ? "..." : totalMembers.toLocaleString()} delta="Community wide" icon={Users} tone="green" />
-        <StatCard label="Total Counts Today" value={loading ? "..." : totalToday.toLocaleString()} delta="Aggregate today" icon={TrendingUp} tone="orange" />
-        <StatCard label="Most Active Counter" value={loading ? "..." : (mostActive?.name || "—")} delta={mostActive ? `${(mostActive.count || 0).toLocaleString()} counts` : "No data"} icon={Trophy} tone="purple" />
-        <StatCard label="Total Counter Types" value={loading ? "..." : counters.length} delta="Active types" icon={LayoutGrid} tone="blue" />
+        <StatCard label={t("Total Active Members")} value={loading ? "..." : totalMembers.toLocaleString()} delta={t("Community wide")} icon={Users} tone="green" />
+        <StatCard label={t("Total Counts Today")} value={loading ? "..." : totalToday.toLocaleString()} delta={t("Aggregate today")} icon={TrendingUp} tone="orange" />
+        <StatCard label={t("Most Active Counter")} value={loading ? "..." : (mostActive?.name || "—")} delta={mostActive ? `${(mostActive.count || 0).toLocaleString()} counts` : t("No data")} icon={Trophy} tone="purple" />
+        <StatCard label={t("Total Counter Types")} value={loading ? "..." : counters.length} delta={t("Active types")} icon={LayoutGrid} tone="blue" />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
         <Card className="xl:col-span-2 p-5 rounded-xl border-border bg-white shadow-sm">
-          <h2 className="font-heading text-base font-semibold mb-4">Counter Types Management</h2>
+          <h2 className="font-heading text-base font-semibold mb-4">{t("Counter Types Management")}</h2>
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
             </div>
           ) : counters.length === 0 ? (
-            <EmptyState title="No counters yet" description="Create counter types like Navkar Mantra, Samaik, Logas to track member spiritual engagement." icon={Sigma} className="border-0" />
+            <EmptyState title={t("No counters yet")} description={t("Create counter types like Navkar Mantra, Samaik, Logas to track member spiritual engagement.")} icon={Sigma} className="border-0" />
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {counters.map((c, i) => {
@@ -153,19 +155,19 @@ export default function CountersPage() {
                       <div className="flex items-start justify-between mb-3">
                         <div className={`p-2.5 rounded-lg bg-orange-50 text-orange-600 h-10 w-10 flex items-center justify-center`}><Sigma className="h-5 w-5" /></div>
                         <div className="flex gap-1.5">
-                          <button onClick={() => handleReset(c.id, c.name)} title="Reset counts" className="text-slate-400 hover:text-orange-500 transition-colors p-1"><RotateCcw className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => handleDelete(c.id, c.name)} title="Delete counter type" className="text-slate-400 hover:text-red-500 transition-colors p-1"><Trash2 className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => handleReset(c.id, c.name)} title={t("Reset counts")} className="text-slate-400 hover:text-orange-500 transition-colors p-1"><RotateCcw className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => handleDelete(c.id, c.name)} title={t("Delete counter type")} className="text-slate-400 hover:text-red-500 transition-colors p-1"><Trash2 className="h-3.5 w-3.5" /></button>
                         </div>
                       </div>
                       <div className="text-sm font-semibold text-slate-800">{c.name || "Counter"}</div>
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-1 text-[11px] border-t pt-2 border-slate-50">
                       <div>
-                        <div className="text-slate-400 font-medium">Total Counts</div>
+                        <div className="text-slate-400 font-medium">{t("Total Counts")}</div>
                         <div className="font-bold font-mono-num text-slate-800">{(c.count || 0).toLocaleString()}</div>
                       </div>
                       <div>
-                        <div className="text-slate-400 font-medium">Active Users</div>
+                        <div className="text-slate-400 font-medium">{t("Active Users")}</div>
                         <div className="font-bold font-mono-num text-slate-800">{c.memberCount || 0}</div>
                       </div>
                     </div>
@@ -179,7 +181,7 @@ export default function CountersPage() {
         <Card className="p-5 rounded-xl border-border bg-white shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-heading text-base font-semibold text-slate-800">Leaderboard</h2>
+              <h2 className="font-heading text-base font-semibold text-slate-800">{t("Leaderboard")}</h2>
             </div>
             <div className="flex gap-1.5 mb-4 flex-wrap">
               <button
@@ -188,7 +190,7 @@ export default function CountersPage() {
                   selectedTab === "top" ? "bg-orange-500 text-white" : "border border-border text-slate-600 bg-white hover:border-orange-200"
                 }`}
               >
-                Overall
+                {t("Overall")}
               </button>
               <button
                 onClick={() => setSelectedTab("today")}
@@ -196,7 +198,7 @@ export default function CountersPage() {
                   selectedTab === "today" ? "bg-orange-500 text-white" : "border border-border text-slate-600 bg-white hover:border-orange-200"
                 }`}
               >
-                Today
+                {t("Today")}
               </button>
               {counters.map((c) => (
                 <button
@@ -218,7 +220,7 @@ export default function CountersPage() {
                 ))}
               </div>
             ) : leaderboard.length === 0 ? (
-              <EmptyState title="No leaderboard data" description="Once members start counting, the leaderboard will populate." icon={Trophy} className="border-0 py-8" />
+              <EmptyState title={t("No leaderboard data")} description={t("Once members start counting, the leaderboard will populate.")} icon={Trophy} className="border-0 py-8" />
             ) : (
               <div className="space-y-3">
                 {leaderboard.slice(0, 5).map((l, i) => {
@@ -233,7 +235,7 @@ export default function CountersPage() {
                         <div className="text-[11px] text-slate-500 truncate">{l.counterType || "Counter"}</div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="text-[10px] text-slate-400">Total</div>
+                        <div className="text-[10px] text-slate-400">{t("Total")}</div>
                         <div className="text-sm font-bold font-mono-num text-slate-800">{(Number(l.count) || 0).toLocaleString()}</div>
                       </div>
                     </div>
@@ -249,18 +251,18 @@ export default function CountersPage() {
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader>
-            <DialogTitle>Add Counter Type</DialogTitle>
+            <DialogTitle>{t("Add Counter Type")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div>
-              <Label className="text-xs font-semibold text-slate-700">Counter Type Name *</Label>
-              <Input value={newTypeName} onChange={(e) => setNewTypeName(e.target.value)} placeholder="e.g. Navkar Mantra, Logas, Samaik" className="mt-1" />
+              <Label className="text-xs font-semibold text-slate-700">{t("Counter Type Name *")}</Label>
+              <Input value={newTypeName} onChange={(e) => setNewTypeName(e.target.value)} placeholder={t("e.g. Navkar Mantra, Logas, Samaik")} className="mt-1" />
             </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>{t("Cancel")}</Button>
             <Button onClick={handleAddCounterType} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              {saving ? "Saving..." : "Add Counter"}
+              {saving ? t("Saving...") : t("Add Counter")}
             </Button>
           </DialogFooter>
         </DialogContent>

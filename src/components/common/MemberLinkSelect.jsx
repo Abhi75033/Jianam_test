@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import { Search, X, Loader2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * MemberLinkSelect — Searchable dropdown to link members.
@@ -38,6 +39,7 @@ export default function MemberLinkSelect({
   id,
   returnValueType = "publicId",
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -235,7 +237,7 @@ export default function MemberLinkSelect({
                   type="text"
                   value={query}
                   onChange={handleQueryChange}
-                  placeholder="Search to change…"
+                  placeholder={t("Search to change…")}
                   className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
                   autoFocus
                 />
@@ -247,17 +249,17 @@ export default function MemberLinkSelect({
             {loading && (
               <div className="flex items-center justify-center py-6 text-muted-foreground text-sm gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Searching…
+                {t("Searching…")}
               </div>
             )}
             {!loading && query.length >= 2 && results.length === 0 && (
               <div className="py-6 text-center text-muted-foreground text-sm">
-                No members found for "{query}"
+                {t("No members found for \"")}{query}"
               </div>
             )}
             {!loading && query.length < 2 && results.length === 0 && (
               <div className="py-4 text-center text-muted-foreground text-xs">
-                Type at least 2 characters to search
+                {t("Type at least 2 characters to search")}
               </div>
             )}
             {results.map((m) => {

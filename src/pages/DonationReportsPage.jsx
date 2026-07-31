@@ -7,8 +7,10 @@ import { StatCard } from "@/components/common/StatCard";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function DonationReportsPage() {
+  const { t } = useLanguage();
   const { user } = useAuth();
   const orgId = user?.organizationIds?.[0];
 
@@ -27,7 +29,7 @@ export default function DonationReportsPage() {
       const res = await api.get(`/reports/summary/donations/org/${orgId}`);
       setData(res.data.data);
     } catch (e) {
-      toast.error("Failed to load donation analytics report.");
+      toast.error(t("Failed to load donation analytics report."));
     } finally {
       setLoading(false);
     }
@@ -51,18 +53,18 @@ export default function DonationReportsPage() {
   return (
     <div className="space-y-4" data-testid="donation-reports-page">
       <PageHeader
-        title="Donation Analytics Report"
-        subtitle="Historical collections breakdown comparing offline counter collections and online app pings."
+        title={t("Donation Analytics Report")}
+        subtitle={t("Historical collections breakdown comparing offline counter collections and online app pings.")}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <StatCard label="Online Contributions" value={loading ? "..." : formatRupee(data.totalOnline)} icon={TrendingUp} tone="warning" />
-        <StatCard label="Offline Counter Logs" value={loading ? "..." : formatRupee(data.totalOffline)} icon={HeartHandshake} tone="default" />
-        <StatCard label="Overall Collections" value={loading ? "..." : formatRupee(data.total)} icon={BadgeIndianRupee} tone="info" />
+        <StatCard label={t("Online Contributions")} value={loading ? "..." : formatRupee(data.totalOnline)} icon={TrendingUp} tone="warning" />
+        <StatCard label={t("Offline Counter Logs")} value={loading ? "..." : formatRupee(data.totalOffline)} icon={HeartHandshake} tone="default" />
+        <StatCard label={t("Overall Collections")} value={loading ? "..." : formatRupee(data.total)} icon={BadgeIndianRupee} tone="info" />
       </div>
 
       <Card className="p-4 border border-slate-200 bg-white">
-        <div className="text-sm font-semibold text-slate-800 mb-4">Donation velocity trend (last 6 months)</div>
+        <div className="text-sm font-semibold text-slate-800 mb-4">{t("Donation velocity trend (last 6 months)")}</div>
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data.chartData}>

@@ -9,6 +9,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Loader2 } from "lucide-react";
 import { api, extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Generic create/edit dialog driven by a `fields` schema.
@@ -32,6 +33,7 @@ export function EntityFormDialog({
   transform, // optional (payload) => payload, applied before sending
   onSubmit, // optional async (payload) => response-data, replaces the default request
 }) {
+  const { t } = useLanguage();
   const [values, setValues] = useState(() => ({ ...initial }));
   const [saving, setSaving] = useState(false);
 
@@ -83,7 +85,7 @@ export function EntityFormDialog({
           {fields.map((f) => (
             <div key={f.name}>
               <Label htmlFor={f.name} className="text-xs font-medium">
-                {f.label}
+                {t(f.label)}
                 {f.required && <span className="text-destructive"> *</span>}
               </Label>
               {f.type === "textarea" ? (
@@ -131,7 +133,7 @@ export function EntityFormDialog({
             </div>
           ))}
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>{t("Cancel")}</Button>
             <Button type="submit" disabled={saving} data-testid={`${testId}-submit`}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {submitLabel || "Save"}

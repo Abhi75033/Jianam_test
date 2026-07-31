@@ -8,8 +8,10 @@ import { StatCard } from "@/components/common/StatCard";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function LoginHistoryPage() {
+  const { t } = useLanguage();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, success: 0, failed: 0 });
@@ -37,7 +39,7 @@ export default function LoginHistoryPage() {
   const columns = [
     {
       key: "actor",
-      header: "Admin / User",
+      header: t("Admin / User"),
       render: (r) => (
         <div>
           <div className="font-semibold text-slate-800">{r.actorName || r.actorId || "Admin User"}</div>
@@ -47,7 +49,7 @@ export default function LoginHistoryPage() {
     },
     {
       key: "device",
-      header: "Device & Browser",
+      header: t("Device & Browser"),
       render: (r) => (
         <div className="flex items-center gap-1.5 text-xs text-slate-700">
           <Monitor className="h-3.5 w-3.5 text-slate-400" />
@@ -57,7 +59,7 @@ export default function LoginHistoryPage() {
     },
     {
       key: "status",
-      header: "Login Result",
+      header: t("Login Result"),
       render: (r) => (
         <Badge className={r.status === "FAILED" ? "bg-rose-100 text-rose-800 border-rose-200" : "bg-emerald-100 text-emerald-800 border-emerald-200"}>
           {r.status || "SUCCESS"}
@@ -66,7 +68,7 @@ export default function LoginHistoryPage() {
     },
     {
       key: "createdAt",
-      header: "Timestamp",
+      header: t("Timestamp"),
       render: (r) => formatDateTime(r.createdAt || new Date()),
     },
   ];
@@ -74,14 +76,14 @@ export default function LoginHistoryPage() {
   return (
     <div className="space-y-4" data-testid="login-history-page">
       <PageHeader
-        title="Login History"
-        subtitle="Security audit logs tracking administrator and user authentication attempts, IP addresses, and session details."
+        title={t("Login History")}
+        subtitle={t("Security audit logs tracking administrator and user authentication attempts, IP addresses, and session details.")}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <StatCard label="Total Logins Today" value={loading ? "..." : stats.total} icon={History} tone="blue" />
-        <StatCard label="Successful Logins" value={loading ? "..." : stats.success} icon={ShieldCheck} tone="green" />
-        <StatCard label="Failed Attempts" value={loading ? "..." : stats.failed} icon={ShieldAlert} tone="red" />
+        <StatCard label={t("Total Logins Today")} value={loading ? "..." : stats.total} icon={History} tone="blue" />
+        <StatCard label={t("Successful Logins")} value={loading ? "..." : stats.success} icon={ShieldCheck} tone="green" />
+        <StatCard label={t("Failed Attempts")} value={loading ? "..." : stats.failed} icon={ShieldAlert} tone="red" />
       </div>
 
       <Card className="p-4 border border-slate-200 bg-white">
@@ -89,8 +91,8 @@ export default function LoginHistoryPage() {
           columns={columns}
           rows={logs}
           loading={loading}
-          emptyTitle="No Login History Logs"
-          emptyDescription="Authentication logs will appear here."
+          emptyTitle={t("No Login History Logs")}
+          emptyDescription={t("Authentication logs will appear here.")}
         />
       </Card>
     </div>

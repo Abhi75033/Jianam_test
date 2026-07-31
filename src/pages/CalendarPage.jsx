@@ -16,8 +16,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { MONTHS, getYearOptions } from "@/constants/dropdownOptions";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function CalendarPage() {
+  const { t } = useLanguage();
   const { isSuperAdmin } = useAuth();
   const [today, setToday] = useState(null);
   const [month, setMonth] = useState([]);
@@ -88,7 +90,7 @@ export default function CalendarPage() {
         date: correctionFor?.gregorianDate,
         issue: `${correction.subject}${correction.description ? ` — ${correction.description}` : ""}`,
       });
-      toast.success("Correction ticket raised.");
+      toast.success(t("Correction ticket raised."));
       setCorrectionFor(null);
       setCorrection({ subject: "", description: "" });
     } catch (err) {
@@ -101,11 +103,11 @@ export default function CalendarPage() {
   return (
     <div data-testid="calendar-page">
       <PageHeader
-        title="Tithi Calendar"
-        subtitle="Jain lunar calendar (Tithi) — today's tithi and monthly view."
+        title={t("Tithi Calendar")}
+        subtitle={t("Jain lunar calendar (Tithi) — today's tithi and monthly view.")}
         actions={isSuperAdmin && (
           <Button onClick={() => setAddOpen(true)} data-testid="calendar-add-entry-btn">
-            <Plus className="h-4 w-4 mr-2" /> Add Entry
+            <Plus className="h-4 w-4 mr-2" /> {t("Add Entry")}
           </Button>
         )}
       />
@@ -115,7 +117,7 @@ export default function CalendarPage() {
       ) : (
         <Card className="p-6 rounded-xl border-border mb-4 bg-gradient-to-br from-primary/5 to-transparent">
           <div className="text-[11px] uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
-            <Sun className="h-3.5 w-3.5" /> Today
+            <Sun className="h-3.5 w-3.5" /> {t("Today")}
           </div>
           <div className="flex flex-col md:flex-row md:items-end gap-4">
             <div className="flex-1">
@@ -135,15 +137,15 @@ export default function CalendarPage() {
       <Card className="p-4 rounded-xl border border-border bg-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 font-sans">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold text-slate-800">Filter View</span>
+          <span className="text-sm font-semibold text-slate-800">{t("Filter View")}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <SearchableSelect
             value={selectedTypeId}
             onValueChange={setSelectedTypeId}
             options={types.map((t) => ({ value: t.id, label: t.name }))}
-            placeholder="Calendar Type"
-            searchPlaceholder="Search type…"
+            placeholder={t("Calendar Type")}
+            searchPlaceholder={t("Search type…")}
             className="w-44"
           />
 
@@ -151,7 +153,7 @@ export default function CalendarPage() {
             value={selectedMonth.toString()}
             onValueChange={(val) => setSelectedMonth(Number(val))}
             options={MONTHS}
-            placeholder="Month"
+            placeholder={t("Month")}
             className="w-32"
           />
 
@@ -159,7 +161,7 @@ export default function CalendarPage() {
             value={selectedYear.toString()}
             onValueChange={(val) => setSelectedYear(Number(val))}
             options={getYearOptions(3, 3)}
-            placeholder="Year"
+            placeholder={t("Year")}
             className="w-24"
           />
         </div>
@@ -197,7 +199,7 @@ export default function CalendarPage() {
                       setCorrectionFor(entry);
                     }}
                     className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500"
-                    title="Report incorrect tithi"
+                    title={t("Report incorrect tithi")}
                     data-testid={`calendar-report-${fullDateStr}`}
                   >
                     <AlertTriangle className="h-3.5 w-3.5" />
@@ -212,17 +214,17 @@ export default function CalendarPage() {
       <EntityFormDialog
         open={addOpen}
         onOpenChange={setAddOpen}
-        title="Add Tithi Entry"
+        title={t("Add Tithi Entry")}
         onSaved={() => setReloadKey((k) => k + 1)}
         testId="calendar-entry-form"
         fields={[
-          { name: "gregorianDate", label: "Gregorian date", type: "date", required: true },
-          { name: "tithiName", label: "Tithi name", required: true, placeholder: "e.g. Purnima" },
-          { name: "calendarTypeId", label: "Calendar type", type: "select", required: true,
+          { name: "gregorianDate", label: t("Gregorian date"), type: "date", required: true },
+          { name: "tithiName", label: t("Tithi name"), required: true, placeholder: t("e.g. Purnima") },
+          { name: "calendarTypeId", label: t("Calendar type"), type: "select", required: true,
             options: types.map((t) => ({ value: t.id, label: t.name })),
             defaultValue: selectedTypeId
           },
-          { name: "description", label: "Notes / festival", type: "textarea" },
+          { name: "description", label: t("Notes / festival"), type: "textarea" },
         ]}
         onSubmit={async (payload) => {
           // Backend upserts entries per calendar type + year in bulk
@@ -237,37 +239,37 @@ export default function CalendarPage() {
       <Dialog open={Boolean(correctionFor)} onOpenChange={() => setCorrectionFor(null)}>
         <DialogContent className="max-w-md" data-testid="calendar-correction-dialog">
           <DialogHeader>
-            <DialogTitle>Report incorrect tithi</DialogTitle>
+            <DialogTitle>{t("Report incorrect tithi")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={submitCorrection} className="space-y-3">
             <div className="text-xs text-muted-foreground">
-              Date: <span className="font-mono-num">{correctionFor?.gregorianDate}</span> · Current: <b>{correctionFor?.tithi}</b>
+              {t("Date:")} <span className="font-mono-num">{correctionFor?.gregorianDate}</span> {t("· Current:")} <b>{correctionFor?.tithi}</b>
             </div>
             <div>
-              <Label className="text-xs">Subject</Label>
+              <Label className="text-xs">{t("Subject")}</Label>
               <Input
                 value={correction.subject}
                 onChange={(e) => setCorrection({ ...correction, subject: e.target.value })}
                 required
-                placeholder="What is wrong?"
+                placeholder={t("What is wrong?")}
                 data-testid="correction-subject"
               />
             </div>
             <div>
-              <Label className="text-xs">Details</Label>
+              <Label className="text-xs">{t("Details")}</Label>
               <Textarea
                 value={correction.description}
                 onChange={(e) => setCorrection({ ...correction, description: e.target.value })}
                 required
-                placeholder="Provide the correct tithi / reference"
+                placeholder={t("Provide the correct tithi / reference")}
                 rows={4}
                 data-testid="correction-description"
               />
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setCorrectionFor(null)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => setCorrectionFor(null)}>{t("Cancel")}</Button>
               <Button type="submit" disabled={saving} data-testid="correction-submit">
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Raise ticket
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {t("Raise ticket")}
               </Button>
             </DialogFooter>
           </form>
@@ -278,33 +280,33 @@ export default function CalendarPage() {
       <Dialog open={Boolean(detailDay)} onOpenChange={() => setDetailDay(null)}>
         <DialogContent className="max-w-sm" data-testid="calendar-detail-dialog">
           <DialogHeader>
-            <DialogTitle className="font-heading">Tithi Details</DialogTitle>
+            <DialogTitle className="font-heading">{t("Tithi Details")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2 font-sans">
             <div className="flex justify-between items-center border-b pb-2">
-              <span className="text-xs text-muted-foreground">Gregorian Date</span>
+              <span className="text-xs text-muted-foreground">{t("Gregorian Date")}</span>
               <span className="text-sm font-semibold">{detailDay?.day?.toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between items-center border-b pb-2">
-              <span className="text-xs text-muted-foreground">Tithi</span>
+              <span className="text-xs text-muted-foreground">{t("Tithi")}</span>
               <span className="text-sm font-bold text-primary">{detailDay?.entry?.tithiName || detailDay?.entry?.tithi || "—"}</span>
             </div>
             {detailDay?.entry?.description ? (
               <div className="space-y-1 pt-1">
-                <span className="text-xs text-muted-foreground font-semibold">Notes / Festival</span>
+                <span className="text-xs text-muted-foreground font-semibold">{t("Notes / Festival")}</span>
                 <p className="text-xs bg-slate-50 border border-slate-100 rounded-md p-3 text-slate-600 font-medium">
                   {detailDay.entry.description}
                 </p>
               </div>
             ) : (
               <div className="text-center py-4 text-xs text-muted-foreground italic">
-                Nothing to show for this date.
+                {t("Nothing to show for this date.")}
               </div>
             )}
           </div>
           <DialogFooter>
             <Button onClick={() => setDetailDay(null)} className="w-full">
-              Close
+              {t("Close")}
             </Button>
           </DialogFooter>
         </DialogContent>

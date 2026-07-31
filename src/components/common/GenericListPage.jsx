@@ -5,6 +5,7 @@ import { DataTable } from "./DataTable";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * A reusable module-level list page powered by a single GET endpoint.
@@ -23,6 +24,7 @@ export default function GenericListPage({
   searchable = true,
   transformResponse,
 }) {
+  const { t } = useLanguage();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -81,7 +83,7 @@ export default function GenericListPage({
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Filter..."
+              placeholder={t("action.search", "Search...")}
               className="pl-9 bg-white"
               data-testid={`${testId}-filter-input`}
             />
@@ -92,7 +94,7 @@ export default function GenericListPage({
         columns={columns}
         rows={filtered}
         loading={loading}
-        emptyTitle={error ? "Unable to load data" : emptyTitle}
+        emptyTitle={error ? t("Unable to load data") : emptyTitle}
         emptyDescription={
           error ? error : emptyDescription || "Data will appear here once available."
         }

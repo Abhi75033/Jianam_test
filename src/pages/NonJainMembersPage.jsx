@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   GENDER_OPTIONS, NATIONALITY_OPTIONS, LANGUAGE_OPTIONS, DOC_TYPE_OPTIONS,
   COMMUNICATION_METHOD_OPTIONS, BLOOD_GROUP_OPTIONS,
@@ -44,6 +45,7 @@ function calculateAge(dobString) {
 }
 
 function RegisterNonJainDialog({ onCreated }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [subTab, setSubTab] = useState("personal");
   const [loading, setLoading] = useState(false);
@@ -108,11 +110,11 @@ function RegisterNonJainDialog({ onCreated }) {
   };
 
   const submit = async () => {
-    if (!form.firstName) { toast.error("First Name is required."); return; }
-    if (!form.mobile)    { toast.error("Mobile Number is required."); return; }
-    if (!form.currentAddress.country) { toast.error("Country is required."); return; }
+    if (!form.firstName) { toast.error(t("First Name is required.")); return; }
+    if (!form.mobile)    { toast.error(t("Mobile Number is required.")); return; }
+    if (!form.currentAddress.country) { toast.error(t("Country is required.")); return; }
     if (!form.agreeData || !form.agreeTerms || !form.agreePrivacy) {
-      toast.error("Please accept the mandatory consents & terms.");
+      toast.error(t("Please accept the mandatory consents & terms."));
       return;
     }
     setLoading(true);
@@ -198,20 +200,20 @@ function RegisterNonJainDialog({ onCreated }) {
   };
 
   const editTabs = [
-    { id: "personal", label: "👤 Personal Details" },
-    { id: "docs", label: "🆔 Identity & Documents" },
-    { id: "contact", label: "📱 Contacts & OTP" },
-    { id: "address", label: "📍 Addresses" },
-    { id: "interests", label: "🛕 Interests & Prefs" },
-    { id: "health", label: "🏥 Health & Volunteering" },
-    { id: "consent", label: "📝 Consents" }
+    { id: "personal", label: t("👤 Personal Details") },
+    { id: "docs", label: t("🆔 Identity & Documents") },
+    { id: "contact", label: t("📱 Contacts & OTP") },
+    { id: "address", label: t("📍 Addresses") },
+    { id: "interests", label: t("🛕 Interests & Prefs") },
+    { id: "health", label: t("🏥 Health & Volunteering") },
+    { id: "consent", label: t("📝 Consents") }
   ];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button data-testid="non-jain-add-button">
-          <UserPlus className="h-4 w-4 mr-2" /> Register Non-Jain Member
+          <UserPlus className="h-4 w-4 mr-2" /> {t("Register Non-Jain Member")}
         </Button>
       </DialogTrigger>
       <DialogContent className={`p-0 border-0 overflow-hidden rounded-2xl shadow-2xl bg-transparent transition-all duration-300 ${
@@ -223,34 +225,34 @@ function RegisterNonJainDialog({ onCreated }) {
               <CheckCircle2 className="h-9 w-9 text-green-500 animate-pulse" />
             </div>
             <div>
-              <div className="text-sm font-bold tracking-widest text-slate-400 uppercase">MEMBER REGISTERED</div>
+              <div className="text-sm font-bold tracking-widest text-slate-400 uppercase">{t("MEMBER REGISTERED")}</div>
               <div className="text-lg font-extrabold text-white mt-1">{createdId.fullName}</div>
             </div>
             <div className="bg-slate-950 rounded-xl px-8 py-4 w-full max-w-xs border border-slate-800">
-              <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Unique ID Generated</div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">{t("Unique ID Generated")}</div>
               <div className="font-mono text-3xl font-extrabold text-yellow-400 tracking-wider">{createdId.publicId}</div>
             </div>
             <Button
               className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-xs h-9 font-bold"
               onClick={() => {
                 navigator.clipboard.writeText(createdId.publicId);
-                toast.success("Member ID copied!");
+                toast.success(t("Member ID copied!"));
               }}
             >
-              Copy ID
+              {t("Copy ID")}
             </Button>
             <p className="text-xs text-slate-500">
-              Screen closes in <span className="font-bold text-slate-300">{countdown}</span>s.
+              {t("Screen closes in")} <span className="font-bold text-slate-300">{countdown}</span>{t("s.")}
             </p>
             <Button variant="outline" onClick={handleCloseSuccess} className="w-full max-w-xs border-slate-800 text-slate-300 hover:bg-slate-800">
-              Close
+              {t("Close")}
             </Button>
           </div>
         ) : (
           <div className="flex flex-col md:flex-row h-[75vh] w-full bg-white font-sans overflow-hidden">
             {/* Left panel tabs list */}
             <div className="w-full md:w-60 bg-slate-900 text-slate-300 p-4 flex flex-col gap-1 shrink-0 border-r border-slate-800">
-              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-2">Non-Jain Flow</div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-2">{t("Non-Jain Flow")}</div>
 
               {/* Progress gauge */}
               <div className="px-2 mb-4 bg-slate-950 p-2.5 rounded-lg border border-slate-850">
@@ -264,17 +266,17 @@ function RegisterNonJainDialog({ onCreated }) {
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-0.5">
-                {editTabs.map((t) => (
+                {editTabs.map((tItem) => (
                   <button
-                    key={t.id}
-                    onClick={() => setSubTab(t.id)}
+                    key={tItem.id}
+                    onClick={() => setSubTab(tItem.id)}
                     className={`w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
-                      subTab === t.id
+                      subTab === tItem.id
                         ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
                         : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                     }`}
                   >
-                    {t.label}
+                    {t(tItem.label)}
                   </button>
                 ))}
               </div>
@@ -287,34 +289,34 @@ function RegisterNonJainDialog({ onCreated }) {
                 {/* Personal Tab */}
                 {subTab === "personal" && (
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">👤 Personal Information</h3>
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("👤 Personal Information")}</h3>
                     <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <Label className="text-xs">First Name *</Label>
+                        <Label className="text-xs">{t("First Name *")}</Label>
                         <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} className="bg-white mt-1" />
                       </div>
                       <div>
-                        <Label className="text-xs">Middle Name</Label>
+                        <Label className="text-xs">{t("Middle Name")}</Label>
                         <Input value={form.middleName} onChange={(e) => setForm({ ...form, middleName: e.target.value })} className="bg-white mt-1" />
                       </div>
                       <div>
-                        <Label className="text-xs">Surname</Label>
+                        <Label className="text-xs">{t("Surname")}</Label>
                         <Input value={form.surname} onChange={(e) => setForm({ ...form, surname: e.target.value })} className="bg-white mt-1" />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs">Date of Birth</Label>
+                        <Label className="text-xs">{t("Date of Birth")}</Label>
                         <Input type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} className="bg-white mt-1" />
                       </div>
                       <div>
-                        <Label className="text-xs">Gender</Label>
+                        <Label className="text-xs">{t("Gender")}</Label>
                         <SearchableSelect
                           value={form.gender}
                           onValueChange={(v) => setForm({ ...form, gender: v })}
                           options={GENDER_OPTIONS}
-                          placeholder="Select gender"
+                          placeholder={t("Select gender")}
                           className="mt-1"
                         />
                       </div>
@@ -326,17 +328,17 @@ function RegisterNonJainDialog({ onCreated }) {
                           value={form.nationality}
                           onValueChange={(v) => setForm({ ...form, nationality: v })}
                           options={NATIONALITY_OPTIONS}
-                          placeholder="Select nationality"
+                          placeholder={t("Select nationality")}
                           className="mt-1"
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Preferred Language</Label>
+                        <Label className="text-xs">{t("Preferred Language")}</Label>
                         <SearchableSelect
                           value={form.preferredLanguage}
                           onValueChange={(v) => setForm({ ...form, preferredLanguage: v })}
                           options={LANGUAGE_OPTIONS}
-                          placeholder="Select language"
+                          placeholder={t("Select language")}
                           className="mt-1"
                         />
                       </div>
@@ -347,14 +349,14 @@ function RegisterNonJainDialog({ onCreated }) {
                 {/* Identity & Docs Tab */}
                 {subTab === "docs" && (
                   <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🆔 Government Identity Verification</h3>
-                    <p className="text-xs text-slate-400">Please provide details for any two government identity documents.</p>
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🆔 Government Identity Verification")}</h3>
+                    <p className="text-xs text-slate-400">{t("Please provide details for any two government identity documents.")}</p>
                     
                     {form.govtDocs.map((doc, idx) => (
                       <div key={idx} className="p-3 bg-white border border-slate-150 rounded-lg space-y-2">
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <Label className="text-xs font-semibold">Document Type</Label>
+                            <Label className="text-xs font-semibold">{t("Document Type")}</Label>
                             <SearchableSelect
                               value={doc.docType}
                               onValueChange={(v) => {
@@ -363,23 +365,23 @@ function RegisterNonJainDialog({ onCreated }) {
                                 setForm({ ...form, govtDocs: list });
                               }}
                               options={DOC_TYPE_OPTIONS}
-                              placeholder="Select document type"
+                              placeholder={t("Select document type")}
                               className="mt-1"
                             />
                           </div>
                           <div>
-                            <Label className="text-xs font-semibold">Document Number</Label>
+                            <Label className="text-xs font-semibold">{t("Document Number")}</Label>
                             <Input value={doc.docNumber} onChange={(e) => {
                               const list = [...form.govtDocs];
                               list[idx].docNumber = e.target.value;
                               setForm({ ...form, govtDocs: list });
-                            }} placeholder="Number" className="h-8 text-xs font-mono" />
+                            }} placeholder={t("Number")} className="h-8 text-xs font-mono" />
                           </div>
                         </div>
                         <div className="flex justify-between items-center text-[10px] text-slate-400">
-                          <span>Status: <span className="font-semibold text-orange-500">{doc.status}</span></span>
-                          <Button variant="ghost" size="xs" type="button" className="text-xs font-semibold text-orange-500" onClick={() => toast.success("Document photo attached.")}>
-                            Attach Image Upload
+                          <span>{t("Status:")} <span className="font-semibold text-orange-500">{doc.status}</span></span>
+                          <Button variant="ghost" size="xs" type="button" className="text-xs font-semibold text-orange-500" onClick={() => toast.success(t("Document photo attached."))}>
+                            {t("Attach Image Upload")}
                           </Button>
                         </div>
                       </div>
@@ -390,34 +392,34 @@ function RegisterNonJainDialog({ onCreated }) {
                 {/* Contacts Tab */}
                 {subTab === "contact" && (
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">📱 Contact & Verification</h3>
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("📱 Contact & Verification")}</h3>
                     
                     <div>
-                      <Label className="text-xs">Mobile Number *</Label>
+                      <Label className="text-xs">{t("Mobile Number *")}</Label>
                       <div className="flex gap-2 mt-1">
-                        <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="+91XXXXXXXXXX" className="bg-white flex-1" />
+                        <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white flex-1" />
                         <Button size="sm" variant={mobileVerified ? "outline" : "default"} type="button" onClick={() => verifyField("mobile")}>
-                          {mobileVerified ? "✓ Verified" : "Verify Mobile"}
+                          {mobileVerified ? t("✓ Verified") : t("Verify Mobile")}
                         </Button>
                       </div>
                     </div>
 
                     <div>
-                      <Label className="text-xs">WhatsApp Number</Label>
+                      <Label className="text-xs">{t("WhatsApp Number")}</Label>
                       <div className="flex gap-2 mt-1">
-                        <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="+91XXXXXXXXXX" className="bg-white flex-1" />
+                        <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white flex-1" />
                         <Button size="sm" variant={whatsappVerified ? "outline" : "default"} type="button" onClick={() => verifyField("whatsapp")}>
-                          {whatsappVerified ? "✓ Verified" : "Verify WhatsApp"}
+                          {whatsappVerified ? t("✓ Verified") : t("Verify WhatsApp")}
                         </Button>
                       </div>
                     </div>
 
                     <div>
-                      <Label className="text-xs">Email ID</Label>
+                      <Label className="text-xs">{t("Email ID")}</Label>
                       <div className="flex gap-2 mt-1">
                         <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@domain.com" className="bg-white flex-1" />
                         <Button size="sm" variant={emailVerified ? "outline" : "default"} type="button" onClick={() => verifyField("email")}>
-                          {emailVerified ? "✓ Verified" : "Verify Email"}
+                          {emailVerified ? t("✓ Verified") : t("Verify Email")}
                         </Button>
                       </div>
                     </div>
@@ -428,13 +430,13 @@ function RegisterNonJainDialog({ onCreated }) {
                           value={form.preferredCommunicationMethod}
                           onValueChange={(v) => setForm({ ...form, preferredCommunicationMethod: v })}
                           options={COMMUNICATION_METHOD_OPTIONS}
-                          placeholder="Select contact method"
+                          placeholder={t("Select contact method")}
                           className="mt-1"
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Alternate Phone Contact</Label>
-                        <Input value={form.alternateContact} onChange={(e) => setForm({ ...form, alternateContact: e.target.value })} placeholder="+91XXXXXXXXXX" className="bg-white mt-1" />
+                        <Label className="text-xs">{t("Alternate Phone Contact")}</Label>
+                        <Input value={form.alternateContact} onChange={(e) => setForm({ ...form, alternateContact: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white mt-1" />
                       </div>
                     </div>
                   </div>
@@ -445,22 +447,22 @@ function RegisterNonJainDialog({ onCreated }) {
                   <div className="space-y-4">
                     <div className="space-y-2.5">
                       <div className="flex justify-between items-center border-b pb-1">
-                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Current Address</h3>
-                        <Button variant="ghost" size="xs" type="button" className="text-orange-500 font-semibold text-[10px]" onClick={() => toast.success("GPS Location auto-detected dynamically.")}>
-                          Auto Detect GPS Location
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t("Current Address")}</h3>
+                        <Button variant="ghost" size="xs" type="button" className="text-orange-500 font-semibold text-[10px]" onClick={() => toast.success(t("GPS Location auto-detected dynamically."))}>
+                          {t("Auto Detect GPS Location")}
                         </Button>
                       </div>
                       <div>
-                        <Label className="text-xs">Full Address</Label>
+                        <Label className="text-xs">{t("Full Address")}</Label>
                         <Input value={form.currentAddress.line1} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, line1: e.target.value } })} className="bg-white mt-1" />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs">City</Label>
+                          <Label className="text-xs">{t("City")}</Label>
                           <Input value={form.currentAddress.city} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, city: e.target.value } })} className="bg-white mt-1" />
                         </div>
                         <div>
-                          <Label className="text-xs">State</Label>
+                          <Label className="text-xs">{t("State")}</Label>
                           <Input value={form.currentAddress.state} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, state: e.target.value } })} className="bg-white mt-1" />
                         </div>
                       </div>
@@ -470,12 +472,12 @@ function RegisterNonJainDialog({ onCreated }) {
                             value={form.currentAddress.country}
                             onValueChange={(v) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: v } })}
                             options={NATIONALITY_OPTIONS}
-                            placeholder="Select country"
+                            placeholder={t("Select country")}
                             className="mt-1"
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">Pin Code</Label>
+                          <Label className="text-xs">{t("Pin Code")}</Label>
                           <Input value={form.currentAddress.pincode} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, pincode: e.target.value } })} className="bg-white mt-1" />
                         </div>
                       </div>
@@ -483,7 +485,7 @@ function RegisterNonJainDialog({ onCreated }) {
 
                     <div className="space-y-2.5">
                       <div className="flex justify-between items-center border-b pb-1">
-                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Permanent Address</h3>
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t("Permanent Address")}</h3>
                         <div className="flex items-center gap-1">
                           <input type="checkbox" id="reg-nonjain-same" checked={form.sameAsPermanent} onChange={(e) => {
                             const checked = e.target.checked;
@@ -493,22 +495,22 @@ function RegisterNonJainDialog({ onCreated }) {
                               permanentAddress: checked ? { ...form.currentAddress } : { line1: "", city: "", state: "", country: "India", pincode: "" }
                             });
                           }} className="h-3.5 w-3.5 text-orange-500 rounded border-slate-350" />
-                          <label htmlFor="reg-nonjain-same" className="text-[10px] text-slate-500 font-semibold cursor-pointer">Same as Current</label>
+                          <label htmlFor="reg-nonjain-same" className="text-[10px] text-slate-500 font-semibold cursor-pointer">{t("Same as Current")}</label>
                         </div>
                       </div>
                       {!form.sameAsPermanent && (
                         <>
                           <div>
-                            <Label className="text-xs">Full Address</Label>
+                            <Label className="text-xs">{t("Full Address")}</Label>
                             <Input value={form.permanentAddress.line1} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, line1: e.target.value } })} className="bg-white mt-1" />
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <Label className="text-xs">City</Label>
+                              <Label className="text-xs">{t("City")}</Label>
                               <Input value={form.permanentAddress.city} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, city: e.target.value } })} className="bg-white mt-1" />
                             </div>
                             <div>
-                              <Label className="text-xs">State</Label>
+                              <Label className="text-xs">{t("State")}</Label>
                               <Input value={form.permanentAddress.state} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, state: e.target.value } })} className="bg-white mt-1" />
                             </div>
                           </div>
@@ -521,9 +523,9 @@ function RegisterNonJainDialog({ onCreated }) {
                 {/* Interests Tab */}
                 {subTab === "interests" && (
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🛕 Platform Interests & Preferences</h3>
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🛕 Platform Interests & Preferences")}</h3>
                     <div>
-                      <Label className="text-xs block mb-2 font-semibold text-slate-650">Select Interests (Multiple Selection)</Label>
+                      <Label className="text-xs block mb-2 font-semibold text-slate-650">{t("Select Interests (Multiple Selection)")}</Label>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         {[
                           "Temple Visits", "Spiritual Learning", "Events", "Tours", 
@@ -545,8 +547,8 @@ function RegisterNonJainDialog({ onCreated }) {
                     </div>
 
                     <div className="pt-2">
-                      <Label className="text-xs">Follow Temples / Favourites</Label>
-                      <Input value={form.favouriteTemples} onChange={(e) => setForm({ ...form, favouriteTemples: e.target.value })} placeholder="Search and select temples to follow..." className="bg-white mt-1" />
+                      <Label className="text-xs">{t("Follow Temples / Favourites")}</Label>
+                      <Input value={form.favouriteTemples} onChange={(e) => setForm({ ...form, favouriteTemples: e.target.value })} placeholder={t("Search and select temples to follow...")} className="bg-white mt-1" />
                     </div>
                   </div>
                 )}
@@ -554,39 +556,39 @@ function RegisterNonJainDialog({ onCreated }) {
                 {/* Health & Volunteering Tab */}
                 {subTab === "health" && (
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">🏥 Health, Emergency & Volunteering</h3>
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("🏥 Health, Emergency & Volunteering")}</h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <SearchableSelect
                           value={form.bloodGroup}
                           onValueChange={(v) => setForm({ ...form, bloodGroup: v })}
                           options={BLOOD_GROUP_OPTIONS}
-                          placeholder="Select blood group"
+                          placeholder={t("Select blood group")}
                           className="mt-1"
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Occupation / Profession</Label>
-                        <Input value={form.profession} onChange={(e) => setForm({ ...form, profession: e.target.value })} placeholder="e.g. Doctor" className="bg-white mt-1" />
+                        <Label className="text-xs">{t("Occupation / Profession")}</Label>
+                        <Input value={form.profession} onChange={(e) => setForm({ ...form, profession: e.target.value })} placeholder={t("e.g. Doctor")} className="bg-white mt-1" />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 border-t pt-2 mt-2">
-                      <div className="col-span-2 text-xs font-bold text-slate-800 uppercase tracking-wide">Emergency Contact</div>
+                      <div className="col-span-2 text-xs font-bold text-slate-800 uppercase tracking-wide">{t("Emergency Contact")}</div>
                       <div>
-                        <Label className="text-xs">Contact Name</Label>
-                        <Input value={form.emergencyName} onChange={(e) => setForm({ ...form, emergencyName: e.target.value })} placeholder="Ramesh Shah" className="bg-white mt-1" />
+                        <Label className="text-xs">{t("Contact Name")}</Label>
+                        <Input value={form.emergencyName} onChange={(e) => setForm({ ...form, emergencyName: e.target.value })} placeholder={t("Ramesh Shah")} className="bg-white mt-1" />
                       </div>
                       <div>
-                        <Label className="text-xs">Emergency Phone</Label>
-                        <Input value={form.emergencyMobile} onChange={(e) => setForm({ ...form, emergencyMobile: e.target.value })} placeholder="+91XXXXXXXXXX" className="bg-white mt-1" />
+                        <Label className="text-xs">{t("Emergency Phone")}</Label>
+                        <Input value={form.emergencyMobile} onChange={(e) => setForm({ ...form, emergencyMobile: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white mt-1" />
                       </div>
                     </div>
 
                     <div className="border-t pt-3 flex items-center justify-between p-3 bg-white rounded-xl border border-slate-205 shadow-sm">
                       <div>
-                        <div className="text-xs font-bold text-slate-800">Open for Volunteering</div>
-                        <div className="text-[10px] text-slate-400">Join helper teams for event and crowd coordination.</div>
+                        <div className="text-xs font-bold text-slate-800">{t("Open for Volunteering")}</div>
+                        <div className="text-[10px] text-slate-400">{t("Join helper teams for event and crowd coordination.")}</div>
                       </div>
                       <input type="checkbox" checked={form.isVolunteer} onChange={(e) => setForm({ ...form, isVolunteer: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350" />
                     </div>
@@ -613,27 +615,27 @@ function RegisterNonJainDialog({ onCreated }) {
                 {/* Consents Tab */}
                 {subTab === "consent" && (
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">📝 Mandatory Consents</h3>
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-1.5">{t("📝 Mandatory Consents")}</h3>
                     <div className="space-y-3 text-xs text-slate-650">
                       <label className="flex gap-2.5 items-start bg-white p-2.5 rounded-lg border border-slate-150 cursor-pointer font-medium">
                         <input type="checkbox" checked={form.agreeData} onChange={(e) => setForm({ ...form, agreeData: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350 shrink-0 mt-0.5" />
-                        <span>I agree to the collection and processing of my personal data for using the JiNANAM platform.*</span>
+                        <span>{t("I agree to the collection and processing of my personal data for using the JiNANAM platform.*")}</span>
                       </label>
                       <label className="flex gap-2.5 items-start bg-white p-2.5 rounded-lg border border-slate-150 cursor-pointer">
                         <input type="checkbox" checked={form.agreeTerms} onChange={(e) => setForm({ ...form, agreeTerms: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350 shrink-0 mt-0.5" />
-                        <span>I agree to the Terms & Conditions of the platform.*</span>
+                        <span>{t("I agree to the Terms & Conditions of the platform.*")}</span>
                       </label>
                       <label className="flex gap-2.5 items-start bg-white p-2.5 rounded-lg border border-slate-150 cursor-pointer">
                         <input type="checkbox" checked={form.agreePrivacy} onChange={(e) => setForm({ ...form, agreePrivacy: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350 shrink-0 mt-0.5" />
-                        <span>I agree to the Privacy Policy.*</span>
+                        <span>{t("I agree to the Privacy Policy.*")}</span>
                       </label>
                       <label className="flex gap-2.5 items-start bg-white p-2.5 rounded-lg border border-slate-150 cursor-pointer">
                         <input type="checkbox" checked={form.agreeService} onChange={(e) => setForm({ ...form, agreeService: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350 shrink-0 mt-0.5" />
-                        <span>I agree to receive service-related communications via SMS, WhatsApp, Email and Push.</span>
+                        <span>{t("I agree to receive service-related communications via SMS, WhatsApp, Email and Push.")}</span>
                       </label>
                       <label className="flex gap-2.5 items-start bg-white p-2.5 rounded-lg border border-slate-150 cursor-pointer font-medium">
                         <input type="checkbox" checked={form.agreePromotional} onChange={(e) => setForm({ ...form, agreePromotional: e.target.checked })} className="h-4 w-4 text-orange-500 rounded border-slate-350 shrink-0 mt-0.5" />
-                        <span>I agree to receive promotional updates regarding events, offers, and campaigns.</span>
+                        <span>{t("I agree to receive promotional updates regarding events, offers, and campaigns.")}</span>
                       </label>
                     </div>
                   </div>
@@ -644,10 +646,10 @@ function RegisterNonJainDialog({ onCreated }) {
               {/* Action Buttons footer bar */}
               <div className="flex gap-2 pt-4 mt-6 border-t border-slate-200 justify-end">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)} className="h-9 px-4 text-xs font-bold">
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button type="button" onClick={submit} disabled={loading} className="h-9 px-5 text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white animate-pulse">
-                  {loading ? "Registering…" : "Register Non-Jain Account"}
+                  {loading ? t("Registering…") : t("Register Non-Jain Account")}
                 </Button>
               </div>
             </div>
@@ -660,7 +662,8 @@ function RegisterNonJainDialog({ onCreated }) {
 }
 
 export default function NonJainMembersPage() {
-  const { isSuperAdmin } = useAuth();
+  const { t } = useLanguage();
+  const { isSuperAdmin, user } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -740,11 +743,11 @@ export default function NonJainMembersPage() {
 
   const columns = [
     {
-      key: "publicId", header: "Public ID", width: 120,
+      key: "publicId", header: t("Public ID"), width: 120,
       render: (r) => <Badge variant="outline" className="font-mono text-[10px] tracking-wider">{r.publicId || "—"}</Badge>
     },
     {
-      key: "name", header: "Name",
+      key: "name", header: t("Name"),
       render: (r) => (
         <div>
           <div className="font-medium">{r.fullName || [r.firstName, r.surname].filter(Boolean).join(" ") || "—"}</div>
@@ -753,15 +756,15 @@ export default function NonJainMembersPage() {
       )
     },
     {
-      key: "mobile", header: "Mobile",
+      key: "mobile", header: t("Mobile"),
       render: (r) => <span className="font-mono-num text-sm">{r.mobile || "—"}</span>
     },
     {
-      key: "city", header: "Location",
+      key: "city", header: t("Location"),
       render: (r) => r.currentAddress?.city || r.city || "—"
     },
     {
-      key: "status", header: "Status",
+      key: "status", header: t("Status"),
       render: (r) => (
         <StatusBadge
           status={r.isAutoCreated && r.status === "INACTIVE" ? "PENDING_ACTIVATION" : (r.status || "INACTIVE")}
@@ -777,8 +780,8 @@ export default function NonJainMembersPage() {
   return (
     <div data-testid="non-jain-members-page">
       <PageHeader
-        title="Non-Jain Members"
-        subtitle="Manage all registered Non-Jain community users and digital membership references."
+        title={t("Non-Jain Members")}
+        subtitle={t("Manage all registered Non-Jain community users and digital membership references.")}
         actions={<RegisterNonJainDialog onCreated={() => setReloadKey((k) => k + 1)} />}
       />
 
@@ -788,7 +791,7 @@ export default function NonJainMembersPage() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search non-jain members…"
+            placeholder={t("Search non-jain members…")}
             className="pl-9 bg-white"
           />
         </div>
@@ -801,8 +804,8 @@ export default function NonJainMembersPage() {
         testId="non-jain-members-table"
         onRowClick={openCard}
         rowClassName="cursor-pointer hover:bg-orange-50/60 transition-colors"
-        emptyTitle="No non-jain members yet"
-        emptyDescription="Register a non-jain member to get started."
+        emptyTitle={t("No non-jain members yet")}
+        emptyDescription={t("Register a non-jain member to get started.")}
       />
 
       <MemberIdCardDialog

@@ -7,8 +7,10 @@ import { Newspaper, BarChart2, Star, Share2, MousePointerClick, Download } from 
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from "recharts";
 import { StatCard } from "@/components/common/StatCard";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function FeedAnalyticsPage() {
+  const { t } = useLanguage();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,35 +36,35 @@ export default function FeedAnalyticsPage() {
 
   const handleDownloadReport = () => {
     window.open("/api/feed/analytics/report?format=csv", "_blank");
-    toast.success("Downloading CSV report...");
+    toast.success(t("Downloading CSV report..."));
   };
 
   return (
     <div className="space-y-4" data-testid="feed-analytics-page">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <PageHeader
-          title="Content Feed Analytics"
-          subtitle="Track view counters, profile clicks, bookmarks, and engagement on News and Announcements."
+          title={t("Content Feed Analytics")}
+          subtitle={t("Track view counters, profile clicks, bookmarks, and engagement on News and Announcements.")}
         />
         <Button onClick={handleDownloadReport} className="bg-purple-800 hover:bg-purple-900 text-white font-bold h-9">
-          <Download className="h-4 w-4 mr-2" /> Export CSV Report
+          <Download className="h-4 w-4 mr-2" /> {t("Export CSV Report")}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <StatCard label="Total Feed Views" value={totalViews.toString()} icon={Newspaper} tone="warning" />
-        <StatCard label="Total Saved Bookmarks" value={totalBookmarks.toString()} icon={Star} tone="default" />
-        <StatCard label="Total Shared Links" value={totalShares.toString()} icon={Share2} tone="info" />
-        <StatCard label="Total Action Clicks" value={totalClicks.toString()} icon={MousePointerClick} tone="success" />
+        <StatCard label={t("Total Feed Views")} value={totalViews.toString()} icon={Newspaper} tone="warning" />
+        <StatCard label={t("Total Saved Bookmarks")} value={totalBookmarks.toString()} icon={Star} tone="default" />
+        <StatCard label={t("Total Shared Links")} value={totalShares.toString()} icon={Share2} tone="info" />
+        <StatCard label={t("Total Action Clicks")} value={totalClicks.toString()} icon={MousePointerClick} tone="success" />
       </div>
 
       <Card className="p-4 border border-slate-200 bg-white rounded-xl shadow-sm">
-        <div className="text-sm font-semibold text-slate-800 mb-4">Post Performance (Views vs Engagement)</div>
+        <div className="text-sm font-semibold text-slate-800 mb-4">{t("Post Performance (Views vs Engagement)")}</div>
         <div className="h-80 w-full">
           {loading ? (
-            <div className="h-full w-full flex items-center justify-center text-xs text-slate-400">Loading chart analytics...</div>
+            <div className="h-full w-full flex items-center justify-center text-xs text-slate-400">{t("Loading chart analytics...")}</div>
           ) : chartData.length === 0 ? (
-            <div className="h-full w-full flex items-center justify-center text-xs text-slate-400">No feed items generated yet.</div>
+            <div className="h-full w-full flex items-center justify-center text-xs text-slate-400">{t("No feed items generated yet.")}</div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>

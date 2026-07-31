@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import CurrencySelect from "./CurrencySelect";
 import { FileDropzone } from "./FileDropzone";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * BankingDetailsForm — Shared banking details block.
@@ -30,6 +31,7 @@ import { cn } from "@/lib/utils";
  *   className  — string
  */
 export default function BankingDetailsForm({ value = {}, onChange, className = "" }) {
+  const { t } = useLanguage();
   const [qrPreview, setQrPreview] = useState(value.qrCodeUrl || null);
 
   const update = (key, val) => {
@@ -51,10 +53,10 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
     <div className={cn("space-y-4 overflow-y-auto max-h-[60vh] pr-1.5 scrollbar-thin", className)}>
       {/* 1. Bank Account Name */}
       <div>
-        <Label className="text-xs">Bank Account Name</Label>
+        <Label className="text-xs">{t("Bank Account Name")}</Label>
         <Input
           className="mt-1 bg-white"
-          placeholder="e.g. Shree Mahavir Temple Trust"
+          placeholder={t("e.g. Shree Mahavir Temple Trust")}
           value={value.accountName || ""}
           onChange={(e) => update("accountName", e.target.value)}
           data-testid="bank-account-name"
@@ -63,10 +65,10 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
 
       {/* 2. Bank Account Number */}
       <div>
-        <Label className="text-xs">Bank Account Number</Label>
+        <Label className="text-xs">{t("Bank Account Number")}</Label>
         <Input
           className="mt-1 bg-white font-mono tracking-wider"
-          placeholder="e.g. 123456789012"
+          placeholder={t("e.g. 123456789012")}
           value={value.accountNumber || ""}
           onChange={(e) => update("accountNumber", e.target.value)}
           data-testid="bank-account-number"
@@ -75,10 +77,10 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
 
       {/* 3. IFSC Code */}
       <div>
-        <Label className="text-xs">IFSC Code</Label>
+        <Label className="text-xs">{t("IFSC Code")}</Label>
         <Input
           className="mt-1 bg-white font-mono uppercase"
-          placeholder="e.g. SBIN0001234"
+          placeholder={t("e.g. SBIN0001234")}
           value={value.ifscCode || ""}
           onChange={(e) => update("ifscCode", e.target.value.toUpperCase())}
           data-testid="bank-ifsc"
@@ -87,10 +89,10 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
 
       {/* 4. Bank Name */}
       <div>
-        <Label className="text-xs">Bank Name</Label>
+        <Label className="text-xs">{t("Bank Name")}</Label>
         <Input
           className="mt-1 bg-white"
-          placeholder="e.g. State Bank of India"
+          placeholder={t("e.g. State Bank of India")}
           value={value.bankName || ""}
           onChange={(e) => update("bankName", e.target.value)}
           data-testid="bank-name"
@@ -99,10 +101,10 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
 
       {/* 5. Branch Address */}
       <div>
-        <Label className="text-xs">Branch Address</Label>
+        <Label className="text-xs">{t("Branch Address")}</Label>
         <Input
           className="mt-1 bg-white"
-          placeholder="e.g. MG Road Branch, Mumbai 400001"
+          placeholder={t("e.g. MG Road Branch, Mumbai 400001")}
           value={value.branchAddress || ""}
           onChange={(e) => update("branchAddress", e.target.value)}
           data-testid="bank-branch-address"
@@ -111,10 +113,10 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
 
       {/* 6. UPI ID */}
       <div>
-        <Label className="text-xs">UPI ID</Label>
+        <Label className="text-xs">{t("UPI ID")}</Label>
         <Input
           className="mt-1 bg-white"
-          placeholder="e.g. temple@sbi"
+          placeholder={t("e.g. temple@sbi")}
           value={value.upiId || ""}
           onChange={(e) => update("upiId", e.target.value)}
           data-testid="bank-upi-id"
@@ -123,7 +125,7 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
 
       {/* 7. Currency */}
       <div>
-        <Label className="text-xs">Currency</Label>
+        <Label className="text-xs">{t("Currency")}</Label>
         <CurrencySelect
           value={value.currency || "INR"}
           onValueChange={(v) => update("currency", v)}
@@ -133,23 +135,23 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
 
       {/* 8. QR Code Upload */}
       <div>
-        <Label className="text-xs">Payment QR Code</Label>
+        <Label className="text-xs">{t("Payment QR Code")}</Label>
         <div className="mt-1">
           {qrPreview ? (
             <div className="flex items-center gap-3">
               <img
                 src={qrPreview}
-                alt="QR Code"
+                alt={t("QR Code")}
                 className="h-24 w-24 rounded-lg border border-border object-contain bg-white p-1"
               />
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">QR code uploaded</span>
+                <span className="text-xs text-muted-foreground">{t("QR code uploaded")}</span>
                 <button
                   type="button"
                   className="text-xs text-destructive underline"
                   onClick={() => { setQrPreview(null); update("qrCodeUrl", null); }}
                 >
-                  Remove
+                  {t("Remove")}
                 </button>
               </div>
             </div>
@@ -157,7 +159,7 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
             <FileDropzone
               accept={{ "image/*": [".png", ".jpg", ".jpeg", ".svg"] }}
               onFile={handleQrUpload}
-              label="Upload QR code image (PNG/JPG)"
+              label={t("Upload QR code image (PNG/JPG)")}
               maxSize={2}
             />
           )}
@@ -174,7 +176,7 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
             data-testid="bank-80g-checkbox"
           />
           <Label htmlFor="bank-80g" className="text-xs font-medium cursor-pointer">
-            Eligible for 80G Tax Deductions
+            {t("Eligible for 80G Tax Deductions")}
           </Label>
         </div>
         <div className="flex items-center gap-2.5">
@@ -185,7 +187,7 @@ export default function BankingDetailsForm({ value = {}, onChange, className = "
             data-testid="bank-csr-checkbox"
           />
           <Label htmlFor="bank-csr" className="text-xs font-medium cursor-pointer">
-            Eligible for CSR Charity Funding
+            {t("Eligible for CSR Charity Funding")}
           </Label>
         </div>
       </div>

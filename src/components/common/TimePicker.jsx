@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * TimePicker — Clock-based time picker component.
@@ -24,6 +25,7 @@ export default function TimePicker({
   className = "",
   id,
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -81,7 +83,7 @@ export default function TimePicker({
         >
           {/* Hours */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">Hour</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">{t("Hour")}</span>
             <div className="h-48 overflow-y-auto scrollbar-thin flex flex-col gap-0.5 pr-1">
               {hours.map((h) => (
                 <button
@@ -106,7 +108,7 @@ export default function TimePicker({
 
           {/* Minutes */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">Min</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">{t("Min")}</span>
             <div className="h-48 overflow-y-auto scrollbar-thin flex flex-col gap-0.5 pr-1">
               {minutes.map((m) => (
                 <button
@@ -128,7 +130,7 @@ export default function TimePicker({
 
           {/* AM/PM */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">Period</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">{t("Period")}</span>
             <div className="flex flex-col gap-1.5 mt-1">
               {["AM", "PM"].map((p) => (
                 <button
@@ -151,7 +153,7 @@ export default function TimePicker({
               onClick={() => setOpen(false)}
               className="mt-4 text-[10px] font-bold text-orange-600 hover:underline"
             >
-              Done
+              {t("Done")}
             </button>
           </div>
         </div>

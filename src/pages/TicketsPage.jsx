@@ -16,8 +16,10 @@ import { Ticket, ScanLine, CheckCircle2, XCircle, Users, Armchair, Plus } from "
 import { toast } from "sonner";
 import { QRCodeCanvas } from "qrcode.react";
 import SeatingPage from "./SeatingPage";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function TicketsPage({ defaultTab }) {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = defaultTab || searchParams.get("tab") || "tickets";
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -53,7 +55,7 @@ export default function TicketsPage({ defaultTab }) {
   };
 
   const columns = [
-    { key: "publicId", header: "Ticket ID", width: 130, render: (r) => (
+    { key: "publicId", header: t("Ticket ID"), width: 130, render: (r) => (
       <button
         onClick={(e) => { e.stopPropagation(); setDetailTicket(r); }}
         className="font-mono text-[10px] text-primary hover:underline"
@@ -62,12 +64,12 @@ export default function TicketsPage({ defaultTab }) {
         <Badge variant="outline" className="font-mono text-[10px]">{r.publicId || "—"}</Badge>
       </button>
     ) },
-    { key: "event", header: "Event", render: (r) => r.event?.title || "—" },
-    { key: "category", header: "Category", render: (r) => r.category?.name || "—" },
-    { key: "holder", header: "Holder", render: (r) => r.holder?.mobile || r.buyerMobile || "—" },
-    { key: "amount", header: "Amount", render: (r) => `₹${r.amount ?? 0}` },
-    { key: "purchasedAt", header: "Purchased", render: (r) => formatDateTime(r.purchasedAt || r.createdAt) },
-    { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status || "PENDING_PAYMENT"} /> },
+    { key: "event", header: t("Event"), render: (r) => r.event?.title || "—" },
+    { key: "category", header: t("Category"), render: (r) => r.category?.name || "—" },
+    { key: "holder", header: t("Holder"), render: (r) => r.holder?.mobile || r.buyerMobile || "—" },
+    { key: "amount", header: t("Amount"), render: (r) => `₹${r.amount ?? 0}` },
+    { key: "purchasedAt", header: t("Purchased"), render: (r) => formatDateTime(r.purchasedAt || r.createdAt) },
+    { key: "status", header: t("Status"), render: (r) => <StatusBadge status={r.status || "PENDING_PAYMENT"} /> },
   ];
 
   const checkedInCount = rows.filter((r) => r.status === "CHECKED_IN").length;
@@ -76,12 +78,12 @@ export default function TicketsPage({ defaultTab }) {
   return (
     <div data-testid="tickets-page" className="space-y-4">
       <PageHeader
-        title="Tickets & Seating"
-        subtitle="Paid event tickets, QR check-in scanner, and venue seating chart manager."
+        title={t("Tickets & Seating")}
+        subtitle={t("Paid event tickets, QR check-in scanner, and venue seating chart manager.")}
         actions={
           activeTab === "tickets" && (
             <Button onClick={() => setScanOpen(true)} data-testid="tickets-scan-button" className="bg-orange-600 hover:bg-orange-700 text-white font-bold">
-              <ScanLine className="h-4 w-4 mr-2" /> Scan QR
+              <ScanLine className="h-4 w-4 mr-2" /> {t("Scan QR")}
             </Button>
           )
         }
@@ -90,19 +92,19 @@ export default function TicketsPage({ defaultTab }) {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md bg-slate-100 p-1 rounded-xl">
           <TabsTrigger value="tickets" className="font-bold flex items-center justify-center gap-2">
-            <Ticket className="h-4 w-4" /> Tickets & QR Check-In
+            <Ticket className="h-4 w-4" /> {t("Tickets & QR Check-In")}
           </TabsTrigger>
           <TabsTrigger value="seating" className="font-bold flex items-center justify-center gap-2">
-            <Armchair className="h-4 w-4" /> Seating Layout Builder
+            <Armchair className="h-4 w-4" /> {t("Seating Layout Builder")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tickets" className="space-y-4 mt-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <StatCard label="Total Tickets" value={rows.length} icon={Ticket} tone="blue" testId="stat-tickets-total" />
-            <StatCard label="Active" value={activeCount} icon={Users} tone="green" testId="stat-tickets-active" />
-            <StatCard label="Checked In" value={checkedInCount} icon={CheckCircle2} tone="green" testId="stat-tickets-in" />
-            <StatCard label="Cancelled" value={rows.filter((r) => r.status === "CANCELLED").length} icon={XCircle} tone="red" testId="stat-tickets-cancelled" />
+            <StatCard label={t("Total Tickets")} value={rows.length} icon={Ticket} tone="blue" testId="stat-tickets-total" />
+            <StatCard label={t("Active")} value={activeCount} icon={Users} tone="green" testId="stat-tickets-active" />
+            <StatCard label={t("Checked In")} value={checkedInCount} icon={CheckCircle2} tone="green" testId="stat-tickets-in" />
+            <StatCard label={t("Cancelled")} value={rows.filter((r) => r.status === "CANCELLED").length} icon={XCircle} tone="red" testId="stat-tickets-cancelled" />
           </div>
 
           <DataTable
@@ -110,8 +112,8 @@ export default function TicketsPage({ defaultTab }) {
             rows={rows}
             loading={loading}
             testId="tickets-table"
-            emptyTitle="No tickets yet"
-            emptyDescription="Purchased tickets will appear here."
+            emptyTitle={t("No tickets yet")}
+            emptyDescription={t("Purchased tickets will appear here.")}
           />
         </TabsContent>
 
@@ -125,7 +127,7 @@ export default function TicketsPage({ defaultTab }) {
       <Dialog open={Boolean(detailTicket)} onOpenChange={() => setDetailTicket(null)}>
         <DialogContent className="max-w-sm" data-testid="ticket-detail-dialog">
           <DialogHeader>
-            <DialogTitle>Ticket · {detailTicket?.publicId}</DialogTitle>
+            <DialogTitle>{t("Ticket ·")} {detailTicket?.publicId}</DialogTitle>
           </DialogHeader>
           {detailTicket && (
             <div className="flex flex-col items-center gap-3">
@@ -141,7 +143,7 @@ export default function TicketsPage({ defaultTab }) {
               </div>
               <StatusBadge status={detailTicket.status || "TICKET_GENERATED"} />
               <div className="text-[11px] text-muted-foreground">
-                Show this QR at the venue for check-in.
+                {t("Show this QR at the venue for check-in.")}
               </div>
             </div>
           )}

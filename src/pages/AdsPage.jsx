@@ -14,8 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function AdsPage() {
+  const { t } = useLanguage();
   const [ads, setAds] = useState([]);
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,7 @@ export default function AdsPage() {
 
   const handleSaveAd = async () => {
     if (!adForm.bannerUrl) {
-      toast.error("Banner image URL is required.");
+      toast.error(t("Banner image URL is required."));
       return;
     }
     setSavingAd(true);
@@ -66,7 +68,7 @@ export default function AdsPage() {
         priceRate: parseFloat(adForm.priceRate) || 0
       };
       await api.post("/ads", payload);
-      toast.success("Advertisement created successfully.");
+      toast.success(t("Advertisement created successfully."));
       setCreateOpen(false);
       setReload(k => k + 1);
     } catch (e) {
@@ -100,25 +102,25 @@ export default function AdsPage() {
   return (
     <div data-testid="ads-page">
       <PageHeader
-        title="Advertisement & Offers Management"
-        subtitle="Manage sponsors, support partners, banners, offers, and monetization."
-        actions={<Button onClick={() => setCreateOpen(true)} data-testid="ads-create-btn"><Plus className="h-4 w-4 mr-2" /> Create Advertisement</Button>}
+        title={t("Advertisement & Offers Management")}
+        subtitle={t("Manage sponsors, support partners, banners, offers, and monetization.")}
+        actions={<Button onClick={() => setCreateOpen(true)} data-testid="ads-create-btn"><Plus className="h-4 w-4 mr-2" /> {t("Create Advertisement")}</Button>}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-        <StatCard label="Active Ads" value={ads.length} delta="Across all platforms" icon={Megaphone} tone="green" />
-        <StatCard label="Community Partners" value={ads.filter(a=>a.isPartner).length || "—"} delta="Verified partners" icon={Store} tone="orange" />
-        <StatCard label="Total Banner Views" value={totalViews.toLocaleString()} delta="Across placements" icon={Eye} tone="purple" />
-        <StatCard label="Active Offers" value={offers.filter(o => o.status === "ACTIVE" || !o.status).length} delta="Live on offers page" icon={Tag} tone="red" />
+        <StatCard label={t("Active Ads")} value={ads.length} delta={t("Across all platforms")} icon={Megaphone} tone="green" />
+        <StatCard label={t("Community Partners")} value={ads.filter(a=>a.isPartner).length || "—"} delta={t("Verified partners")} icon={Store} tone="orange" />
+        <StatCard label={t("Total Banner Views")} value={totalViews.toLocaleString()} delta={t("Across placements")} icon={Eye} tone="purple" />
+        <StatCard label={t("Active Offers")} value={offers.filter(o => o.status === "ACTIVE" || !o.status).length} delta={t("Live on offers page")} icon={Tag} tone="red" />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
         <Card className="xl:col-span-2 p-5 rounded-xl border-border">
-          <h2 className="font-heading text-base font-semibold mb-4">Banner Management</h2>
+          <h2 className="font-heading text-base font-semibold mb-4">{t("Banner Management")}</h2>
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[1,2,3,4].map(i=><Skeleton key={i} className="h-40" />)}</div>
           ) : ads.length === 0 ? (
-            <EmptyState title="No ads yet" description="Create your first advertisement banner." icon={Megaphone} className="border-0" />
+            <EmptyState title={t("No ads yet")} description={t("Create your first advertisement banner.")} icon={Megaphone} className="border-0" />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {ads.slice(0, 4).map((b, i) => (
@@ -130,12 +132,12 @@ export default function AdsPage() {
                   <div className="p-3 flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                       <div className="text-sm font-semibold truncate">{b.title || b.name || b.slot}</div>
-                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[9px]">{b.isActive ? "Active" : "Inactive"}</Badge>
+                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[9px]">{b.isActive ? t("Active") : t("Inactive")}</Badge>
                     </div>
                     <div className="text-[11px] text-muted-foreground">{formatDate(b.startAt || b.startDate)} — {formatDate(b.endAt || b.endDate)}</div>
                     <div className="text-[10px] font-mono text-slate-500 mt-1 flex justify-between">
-                      <span>Rate: Rs. {b.priceRate || 0} ({b.pricingModel || "FLAT"})</span>
-                      <span className="font-bold text-slate-700">Cost: Rs. {b.totalCost || 0}</span>
+                      <span>{t("Rate: Rs.")} {b.priceRate || 0} ({b.pricingModel || "FLAT"})</span>
+                      <span className="font-bold text-slate-700">{t("Cost: Rs.")} {b.totalCost || 0}</span>
                     </div>
                   </div>
                 </div>
@@ -145,30 +147,30 @@ export default function AdsPage() {
         </Card>
 
         <Card className="p-5 rounded-xl border-border">
-          <h2 className="font-heading text-base font-semibold mb-4">Analytics</h2>
+          <h2 className="font-heading text-base font-semibold mb-4">{t("Analytics")}</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Impressions", value: totalViews.toLocaleString(), tone: "green" },
-              { label: "Clicks", value: totalClicks.toLocaleString(), tone: "blue" },
+              { label: t("Impressions"), value: totalViews.toLocaleString(), tone: "green" },
+              { label: t("Clicks"), value: totalClicks.toLocaleString(), tone: "blue" },
               { label: "CTR", value: `${ctr}%`, tone: "purple" },
-              { label: "Ads Live", value: ads.length, tone: "orange" },
+              { label: t("Ads Live"), value: ads.length, tone: "orange" },
             ].map((s, i) => (
               <div key={i} className="p-3 rounded-lg border border-border">
-                <div className="text-[11px] text-muted-foreground">{s.label}</div>
+                <div className="text-[11px] text-muted-foreground">{t(s.label)}</div>
                 <div className="font-bold text-xl font-mono-num mt-0.5">{s.value}</div>
               </div>
             ))}
           </div>
           <div className="mt-4 space-y-2">
             {[
-              { icon: Upload, label: "Upload Banner", tone: "green" },
-              { icon: RefreshCw, label: "Replace Logo", tone: "purple" },
-              { icon: Calendar, label: "Schedule Campaign", tone: "orange" },
-              { icon: BarChart3, label: "Export Analytics", tone: "red" },
+              { icon: Upload, label: t("Upload Banner"), tone: "green" },
+              { icon: RefreshCw, label: t("Replace Logo"), tone: "purple" },
+              { icon: Calendar, label: t("Schedule Campaign"), tone: "orange" },
+              { icon: BarChart3, label: t("Export Analytics"), tone: "red" },
             ].map((q, i) => (
               <button key={i} className="w-full p-3 rounded-lg text-white text-left flex items-center gap-2 transition-transform hover:scale-[1.01]" style={{background: `hsl(var(--c-${q.tone}))`}} data-testid={`ads-qa-${i}`}>
                 <q.icon className="h-4 w-4" />
-                <span className="text-xs font-semibold">{q.label}</span>
+                <span className="text-xs font-semibold">{t(q.label)}</span>
               </button>
             ))}
           </div>
@@ -178,13 +180,13 @@ export default function AdsPage() {
       {/* Offers */}
       <Card className="p-5 rounded-xl border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-heading text-base font-semibold">Offers Page Management</h2>
+          <h2 className="font-heading text-base font-semibold">{t("Offers Page Management")}</h2>
           <Button size="sm" onClick={() => setCreateOfferOpen(true)} data-testid="offers-create-btn">
-            <Plus className="h-4 w-4 mr-1.5" /> Add Offer
+            <Plus className="h-4 w-4 mr-1.5" /> {t("Add Offer")}
           </Button>
         </div>
         {offers.length === 0 ? (
-          <EmptyState title="No offers yet" description="Create offers from community partners." icon={Tag} className="border-0" />
+          <EmptyState title={t("No offers yet")} description={t("Create offers from community partners.")} icon={Tag} className="border-0" />
         ) : (
           <div className="space-y-2">
             {offers.map((o, i) => (
@@ -207,11 +209,11 @@ export default function AdsPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md" data-testid="ads-form-dialog">
           <DialogHeader>
-            <DialogTitle>Create Advertisement</DialogTitle>
+            <DialogTitle>{t("Create Advertisement")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div>
-              <Label className="text-xs">Banner Image URL *</Label>
+              <Label className="text-xs">{t("Banner Image URL *")}</Label>
               <Input
                 value={adForm.bannerUrl}
                 onChange={(e) => setAdForm({ ...adForm, bannerUrl: e.target.value })}
@@ -220,7 +222,7 @@ export default function AdsPage() {
               />
             </div>
             <div>
-              <Label className="text-xs">Click-through URL (Target Link)</Label>
+              <Label className="text-xs">{t("Click-through URL (Target Link)")}</Label>
               <Input
                 value={adForm.targetLink}
                 onChange={(e) => setAdForm({ ...adForm, targetLink: e.target.value })}
@@ -230,33 +232,33 @@ export default function AdsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Placement Slot *</Label>
+                <Label className="text-xs">{t("Placement Slot *")}</Label>
                 <select
                   className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none"
                   value={adForm.slot}
                   onChange={(e) => setAdForm({ ...adForm, slot: e.target.value })}
                 >
-                  <option value="TOP_BANNER">Top Banner</option>
-                  <option value="IN_FEED">In-Feed</option>
+                  <option value="TOP_BANNER">{t("Top Banner")}</option>
+                  <option value="IN_FEED">{t("In-Feed")}</option>
                 </select>
               </div>
               <div>
-                <Label className="text-xs">Pricing Model *</Label>
+                <Label className="text-xs">{t("Pricing Model *")}</Label>
                 <select
                   className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none"
                   value={adForm.pricingModel}
                   onChange={(e) => setAdForm({ ...adForm, pricingModel: e.target.value })}
                 >
-                  <option value="FLAT">Flat Rate (Per Day)</option>
-                  <option value="CPC">CPC (Per Click)</option>
-                  <option value="CPM">CPM (Per 1000 Views)</option>
+                  <option value="FLAT">{t("Flat Rate (Per Day)")}</option>
+                  <option value="CPC">{t("CPC (Per Click)")}</option>
+                  <option value="CPM">{t("CPM (Per 1000 Views)")}</option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-2">
-                <Label className="text-xs">Campaign Period *</Label>
+                <Label className="text-xs">{t("Campaign Period *")}</Label>
                 <div className="flex gap-1.5 mt-1">
                   <Input
                     type="date"
@@ -274,7 +276,7 @@ export default function AdsPage() {
                 </div>
               </div>
               <div>
-                <Label className="text-xs">Rate (Rs.) *</Label>
+                <Label className="text-xs">{t("Rate (Rs.) *")}</Label>
                 <Input
                   type="number"
                   className="mt-1 h-9"
@@ -293,9 +295,9 @@ export default function AdsPage() {
 
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>{t("Cancel")}</Button>
             <Button onClick={handleSaveAd} disabled={savingAd} className="bg-orange-600 hover:bg-orange-700 text-white font-bold">
-              {savingAd ? "Saving…" : "Create Ad"}
+              {savingAd ? t("Saving…") : t("Create Ad")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -304,18 +306,18 @@ export default function AdsPage() {
       <EntityFormDialog
         open={createOfferOpen}
         onOpenChange={setCreateOfferOpen}
-        title="Create Offer"
+        title={t("Create Offer")}
         endpoint="/offers"
         onSaved={() => setReload((k) => k + 1)}
         testId="offers-form"
         fields={[
-          { name: "title", label: "Title", required: true },
-          { name: "description", label: "Description", type: "textarea" },
-          { name: "companyName", label: "Merchant / Partner", required: true },
-          { name: "bannerUrl", label: "Banner URL" },
-          { name: "companyLogoUrl", label: "Logo URL" },
-          { name: "startAt", label: "Valid from", type: "date", required: true },
-          { name: "endAt", label: "Valid until", type: "date", required: true },
+          { name: "title", label: t("Title"), required: true },
+          { name: "description", label: t("Description"), type: "textarea" },
+          { name: "companyName", label: t("Merchant / Partner"), required: true },
+          { name: "bannerUrl", label: t("Banner URL") },
+          { name: "companyLogoUrl", label: t("Logo URL") },
+          { name: "startAt", label: t("Valid from"), type: "date", required: true },
+          { name: "endAt", label: t("Valid until"), type: "date", required: true },
         ]}
       />
     </div>

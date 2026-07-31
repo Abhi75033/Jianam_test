@@ -11,15 +11,32 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import MemberLinkSelect from "@/components/common/MemberLinkSelect";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { GENDER_OPTIONS } from "@/constants/dropdownOptions";
 import { UserPlus, Loader2, Users, Shield, IdCard } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { initials } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-/* ─── Add Family Member Dialog ─────────────────────────────────────── */
-function AddFamilyDialog({ open, onClose, onCreated }) {
+/* ─── Add Family Member Dialog ─────────────────────────────────────────
+ *
+ * Two ways to add someone:
+ *   "link"   — pick an EXISTING member and relate them to the anchor member.
+ *   "invite" — create a new person from name + mobile (original behaviour).
+ *
+ * Expected API contract (backend team — please match):
+ *   POST /family
+ *     link   → { anchorMemberPublicId?, relatedMemberPublicId, relationshipTypeId }
+ *     invite → { anchorMemberPublicId?, name, mobile, relationshipTypeId, category }
+ *   `anchorMemberPublicId` is omitted for "my family"; Super Admins send it to
+ *   link two arbitrary members under one family.
+ * ------------------------------------------------------------------ */
+function AddFamilyDialog({ open, onClose, onCreated, anchorPublicId, anchorLabel }) {
+  const { t } = useLanguage();
+  const [mode, setMode] = useState("link");
+  const [linkedMember, setLinkedMember] = useState("");
   const [form, setForm] = useState({
     firstName: "", surname: "", mobile: "", relationshipTypeId: "", dob: "", gender: "Male",
   });
@@ -34,21 +51,40 @@ function AddFamilyDialog({ open, onClose, onCreated }) {
     }
   }, [open]);
 
+  const reset = () => {
+    setForm({ firstName: "", surname: "", mobile: "", relationshipTypeId: "", dob: "", gender: "Male" });
+    setLinkedMember("");
+    setMode("link");
+  };
+
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.relationshipTypeId) { toast.error("Please select a relationship."); return; }
+    if (!form.relationshipTypeId) { toast.error(t("Please select a relationship.")); return; }
+    if (mode === "link" && !linkedMember) { toast.error(t("Please select a member to link.")); return; }
+    if (mode === "link" && anchorPublicId && linkedMember === anchorPublicId) {
+      toast.error(t("A member cannot be linked to themselves."));
+      return;
+    }
     setSaving(true);
     try {
-      await api.post("/family", {
-        name: `${form.firstName} ${form.surname}`.trim(),
-        mobile: form.mobile,
-        relationshipTypeId: form.relationshipTypeId,
-        category: "JAIN",
-      });
-      toast.success("Family member added.");
+      const payload = mode === "link"
+        ? {
+            ...(anchorPublicId ? { anchorMemberPublicId: anchorPublicId } : {}),
+            relatedMemberPublicId: linkedMember,
+            relationshipTypeId: form.relationshipTypeId,
+          }
+        : {
+            ...(anchorPublicId ? { anchorMemberPublicId: anchorPublicId } : {}),
+            name: `${form.firstName} ${form.surname}`.trim(),
+            mobile: form.mobile,
+            relationshipTypeId: form.relationshipTypeId,
+            category: "JAIN",
+          };
+      await api.post("/family", payload);
+      toast.success(mode === "link" ? t("Members linked into one family.") : t("Family member added."));
       onCreated();
       onClose();
-      setForm({ firstName: "", surname: "", mobile: "", relationshipTypeId: "", dob: "", gender: "Male" });
+      reset();
     } catch (err) {
       toast.error(extractErrorMessage(err));
     } finally {
@@ -60,52 +96,99 @@ function AddFamilyDialog({ open, onClose, onCreated }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md" data-testid="family-add-dialog">
         <DialogHeader>
-          <DialogTitle className="font-heading">Add Family Member</DialogTitle>
+          <DialogTitle className="font-heading">{t("Add Family Member")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">First Name *</Label>
-              <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} required data-testid="family-first-name" />
-            </div>
-            <div>
-              <Label className="text-xs">Surname</Label>
-              <Input value={form.surname} onChange={(e) => setForm({ ...form, surname: e.target.value })} data-testid="family-surname" />
-            </div>
+          {anchorLabel && (
+            <p className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1.5">
+              {t("Adding to the family of")} <span className="font-semibold text-slate-700">{anchorLabel}</span>
+            </p>
+          )}
+
+          {/* Link an existing member, or invite someone new */}
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { key: "link", label: t("Link Existing Member") },
+              { key: "invite", label: t("Invite New Person") },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setMode(opt.key)}
+                className={`text-xs font-semibold rounded-md border px-3 py-2 transition-colors ${
+                  mode === opt.key
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-orange-400"
+                }`}
+                data-testid={`family-mode-${opt.key}`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
+
+          {mode === "link" ? (
+            <div>
+              <Label className="text-xs">{t("Member to Link *")}</Label>
+              <MemberLinkSelect
+                value={linkedMember}
+                onChange={setLinkedMember}
+                placeholder={t("Search Jain / Non-Jain member by name or member ID (e.g. JFJM112)…")}
+              />
+              <p className="text-[10px] text-slate-500 mt-1">
+                {t("Both members will appear under the same family group.")}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">{t("First Name *")}</Label>
+                  <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} required={mode === "invite"} data-testid="family-first-name" />
+                </div>
+                <div>
+                  <Label className="text-xs">{t("Surname")}</Label>
+                  <Input value={form.surname} onChange={(e) => setForm({ ...form, surname: e.target.value })} data-testid="family-surname" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">{t("Mobile (+91…) *")}</Label>
+                <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder={t("+91XXXXXXXXXX")} required={mode === "invite"} data-testid="family-mobile" />
+              </div>
+            </>
+          )}
           <div>
-            <Label className="text-xs">Mobile (+91…) *</Label>
-            <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="+91XXXXXXXXXX" required data-testid="family-mobile" />
-          </div>
-          <div>
-            <Label className="text-xs">Relationship *</Label>
+            <Label className="text-xs">{t("Relationship *")}</Label>
             <SearchableSelect
               value={form.relationshipTypeId}
               onValueChange={(v) => setForm({ ...form, relationshipTypeId: v })}
               options={relTypes.map((r) => ({ value: r.id, label: r.name }))}
-              placeholder="Select relationship…"
-              searchPlaceholder="Search relationship…"
+              placeholder={t("Select relationship…")}
+              searchPlaceholder={t("Search relationship…")}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Date of Birth</Label>
-              <Input type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} data-testid="family-dob" />
+          {/* Only relevant when creating a brand-new person */}
+          {mode === "invite" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">{t("Date of Birth")}</Label>
+                <Input type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} data-testid="family-dob" />
+              </div>
+              <div>
+                <Label className="text-xs">{t("Gender")}</Label>
+                <SearchableSelect
+                  value={form.gender}
+                  onValueChange={(v) => setForm({ ...form, gender: v })}
+                  options={GENDER_OPTIONS}
+                  placeholder={t("Select gender")}
+                />
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Gender</Label>
-              <SearchableSelect
-                value={form.gender}
-                onValueChange={(v) => setForm({ ...form, gender: v })}
-                options={GENDER_OPTIONS}
-                placeholder="Select gender"
-              />
-            </div>
-          </div>
+          )}
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={onClose}>{t("Cancel")}</Button>
             <Button type="submit" disabled={saving} data-testid="family-add-submit">
-              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Send Invite
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {mode === "link" ? t("Link Member") : t("Send Invite")}
             </Button>
           </DialogFooter>
         </form>
@@ -116,6 +199,7 @@ function AddFamilyDialog({ open, onClose, onCreated }) {
 
 /* ─── Family Member Card ────────────────────────────────────────────── */
 function FamilyCard({ link, onClick }) {
+  const { t } = useLanguage();
   const m = link.member || {};
   const isActive = m.status === "ACTIVE";
 
@@ -151,7 +235,7 @@ function FamilyCard({ link, onClick }) {
       </div>
 
       <div className="text-right shrink-0">
-        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Relation</div>
+        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("Relation")}</div>
         <div className="text-xs font-semibold text-orange-600 mt-0.5">{link.relation || "Family"}</div>
         <IdCard className="h-3.5 w-3.5 text-muted-foreground mt-2 ml-auto group-hover:text-orange-500 transition-colors" />
       </div>
@@ -161,10 +245,16 @@ function FamilyCard({ link, onClick }) {
 
 /* ─── Main Page ─────────────────────────────────────────────────────── */
 export default function FamilyPage() {
+  const { t } = useLanguage();
   const { user, isSuperAdmin } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+
+  // Super Admin can view/manage any member's family group, not just their own.
+  // Empty = "my family" (GET /family/my).
+  // Expected API contract: GET /family/member/{publicId} → same shape as /family/my
+  const [anchorPublicId, setAnchorPublicId] = useState("");
 
   // ID card dialog
   const [selectedLink, setSelectedLink] = useState(null);
@@ -173,13 +263,14 @@ export default function FamilyPage() {
 
   const load = () => {
     setLoading(true);
-    api.get("/family/my")
+    const url = anchorPublicId ? `/family/member/${anchorPublicId}` : "/family/my";
+    api.get(url)
       .then((res) => setMembers(res.data?.data || []))
       .catch(() => setMembers([]))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [anchorPublicId]);
 
   /* Open card — fetch full member detail by publicId */
   const openCard = async (link) => {
@@ -229,11 +320,11 @@ export default function FamilyPage() {
 
   /* Remove family link */
   const handleRemove = async (linkId) => {
-    if (!isSuperAdmin) { toast.error("Only Super Admin can remove family links."); return; }
+    if (!isSuperAdmin) { toast.error(t("Only Super Admin can remove family links.")); return; }
     if (!window.confirm("Remove this family link?")) return;
     try {
       await api.delete(`/family/${linkId}`);
-      toast.success("Family link removed.");
+      toast.success(t("Family link removed."));
       load();
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -251,14 +342,38 @@ export default function FamilyPage() {
   return (
     <div data-testid="family-page">
       <PageHeader
-        title="My Family"
-        subtitle="See and manage your family tree. Adding a member sends them a signup invite via SMS."
+        title={anchorPublicId ? t("Family Group") : t("My Family")}
+        subtitle={t("See and manage your family tree. Adding a member sends them a signup invite via SMS.")}
         actions={
           <Button onClick={() => setAddOpen(true)} data-testid="family-add-btn">
-            <UserPlus className="h-4 w-4 mr-2" /> Add Family Member
+            <UserPlus className="h-4 w-4 mr-2" /> {t("Add Family Member")}
           </Button>
         }
       />
+
+      {/* Super Admin: pick whose family group to view / link members into */}
+      {isSuperAdmin && (
+        <Card className="p-4 rounded-xl border-border mb-4">
+          <Label className="text-xs font-semibold">{t("View Family Group Of")}</Label>
+          <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex-1">
+              <MemberLinkSelect
+                value={anchorPublicId}
+                onChange={setAnchorPublicId}
+                placeholder={t("Search Jain / Non-Jain member by name or member ID (e.g. JFJM112)…")}
+              />
+            </div>
+            {anchorPublicId && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setAnchorPublicId("")}>
+                {t("My Family")}
+              </Button>
+            )}
+          </div>
+          <p className="text-[10px] text-slate-500 mt-1.5">
+            {t("Pick any member to see their family group and link relatives under one family.")}
+          </p>
+        </Card>
+      )}
 
       {/* Your Card */}
       <Card className="p-5 rounded-xl border-border mb-6 bg-gradient-to-r from-orange-50 to-amber-50 border-orange-100">
@@ -269,7 +384,7 @@ export default function FamilyPage() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-[10px] uppercase tracking-widest text-orange-500 font-semibold mb-1">You</div>
+            <div className="text-[10px] uppercase tracking-widest text-orange-500 font-semibold mb-1">{t("You")}</div>
             <div className="font-heading font-bold text-xl">
               {user?.firstName || user?.fullName || "Super"}{" "}
               {user?.lastName || user?.surname || ""}
@@ -290,17 +405,17 @@ export default function FamilyPage() {
       {/* Family List */}
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-10 justify-center">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading family…
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading family…")}
         </div>
       ) : members.length === 0 ? (
         <Card className="p-10 rounded-xl border-dashed text-center">
           <Users className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-          <div className="font-semibold text-base">No family members yet</div>
+          <div className="font-semibold text-base">{t("No family members yet")}</div>
           <div className="text-sm text-muted-foreground mt-1">
-            Add your first family member — they'll receive a signup invite over SMS.
+            {t("Add your first family member — they'll receive a signup invite over SMS.")}
           </div>
           <Button className="mt-4" onClick={() => setAddOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" /> Add Family Member
+            <UserPlus className="h-4 w-4 mr-2" /> {t("Add Family Member")}
           </Button>
         </Card>
       ) : (
@@ -320,7 +435,7 @@ export default function FamilyPage() {
             </div>
           ))}
           <p className="text-xs text-muted-foreground text-center pt-2">
-            Click any card to view, edit, or upload a photo
+            {t("Click any card to view, edit, or upload a photo")}
           </p>
         </div>
       )}
@@ -330,6 +445,8 @@ export default function FamilyPage() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onCreated={load}
+        anchorPublicId={anchorPublicId}
+        anchorLabel={anchorPublicId || null}
       />
 
       {/* ID Card Dialog — with Add Image, Edit, Preview tabs */}

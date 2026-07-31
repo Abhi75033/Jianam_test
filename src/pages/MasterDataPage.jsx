@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/common/EmptyState";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -36,6 +37,7 @@ const LISTS = [
 ];
 
 function ListEditor({ listKey }) {
+  const { t } = useLanguage();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
@@ -66,7 +68,7 @@ function ListEditor({ listKey }) {
         payload.category = newCategory;
       }
       await api.post(`/master-data/${listKey}`, payload);
-      toast.success("Item added.");
+      toast.success(t("Item added."));
       setNewName("");
       load();
     } catch (e) { toast.error(extractErrorMessage(e)); }
@@ -88,7 +90,7 @@ function ListEditor({ listKey }) {
       const payload = { name: editName.trim() };
       if (listKey === "bhagwans") payload.category = editCategory;
       await api.patch(`/master-data/${listKey}/${editingItem.id}`, payload);
-      toast.success("Master data item updated successfully!");
+      toast.success(t("Master data item updated successfully!"));
       setEditModalOpen(false);
       load();
     } catch (e) {
@@ -101,7 +103,7 @@ function ListEditor({ listKey }) {
   const remove = async (id) => {
     try {
       await api.delete(`/master-data/${listKey}/${id}`);
-      toast.success("Item removed.");
+      toast.success(t("Item removed."));
       load();
     } catch (e) { toast.error(extractErrorMessage(e)); }
   };
@@ -109,22 +111,22 @@ function ListEditor({ listKey }) {
   return (
     <Card className="p-5 rounded-md border-border">
       <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-4">
-        <Input className="flex-1" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Add new item…" data-testid="master-data-name-input" />
+        <Input className="flex-1" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t("Add new item…")} data-testid="master-data-name-input" />
         {listKey === "bhagwans" && (
           <select className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-48"
             value={newCategory} onChange={(e) => setNewCategory(e.target.value)}>
-            <option value="24 Tirthankars">24 Tirthankars</option>
-            <option value="Others">Others</option>
+            <option value="24 Tirthankars">{t("24 Tirthankars")}</option>
+            <option value="Others">{t("Others")}</option>
           </select>
         )}
         <Button onClick={add} disabled={saving || !newName.trim()} data-testid="master-data-add-button" className="shrink-0 bg-purple-700 hover:bg-purple-800 text-white font-bold">
-          <Plus className="h-4 w-4 mr-2" /> Add
+          <Plus className="h-4 w-4 mr-2" /> {t("Add")}
         </Button>
       </div>
       {loading ? (
         <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
       ) : items.length === 0 ? (
-        <EmptyState title="No items yet" description="Add your first item using the input above." />
+        <EmptyState title={t("No items yet")} description={t("Add your first item using the input above.")} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {items.map((it) => (
@@ -139,8 +141,8 @@ function ListEditor({ listKey }) {
                 {it.code && <Badge variant="outline" className="text-[10px] mt-0.5">{it.code}</Badge>}
               </div>
               <div className="flex items-center gap-1">
-                <Button size="sm" variant="ghost" onClick={() => startEdit(it)} title="Edit Item Post Submission" data-testid={`master-data-edit-${it.id}`}>
-                  <span className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">Edit</span>
+                <Button size="sm" variant="ghost" onClick={() => startEdit(it)} title={t("Edit Item Post Submission")} data-testid={`master-data-edit-${it.id}`}>
+                  <span className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">{t("Edit")}</span>
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => remove(it.id)} data-testid={`master-data-delete-${it.id}`}>
                   <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-rose-600" />
@@ -155,36 +157,36 @@ function ListEditor({ listKey }) {
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="sm:max-w-md text-xs">
           <DialogHeader>
-            <DialogTitle className="font-bold text-slate-850">Correction & Post-Submission Edit</DialogTitle>
+            <DialogTitle className="font-bold text-slate-850">{t("Correction & Post-Submission Edit")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveEdit} className="space-y-4 pt-2">
             <div>
-              <Label className="text-[10px] uppercase font-bold text-slate-500">Item Name *</Label>
+              <Label className="text-[10px] uppercase font-bold text-slate-500">{t("Item Name *")}</Label>
               <Input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 required
                 className="mt-1"
-                placeholder="Item name"
+                placeholder={t("Item name")}
               />
             </div>
             {listKey === "bhagwans" && (
               <div>
-                <Label className="text-[10px] uppercase font-bold text-slate-500">Category</Label>
+                <Label className="text-[10px] uppercase font-bold text-slate-500">{t("Category")}</Label>
                 <select
                   className="w-full h-9 mt-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
                 >
-                  <option value="24 Tirthankars">24 Tirthankars</option>
-                  <option value="Others">Others</option>
+                  <option value="24 Tirthankars">{t("24 Tirthankars")}</option>
+                  <option value="Others">{t("Others")}</option>
                 </select>
               </div>
             )}
             <DialogFooter className="pt-2">
-              <Button type="button" variant="ghost" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => setEditModalOpen(false)}>{t("Cancel")}</Button>
               <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                Save Corrections
+                {t("Save Corrections")}
               </Button>
             </DialogFooter>
           </form>
@@ -195,11 +197,12 @@ function ListEditor({ listKey }) {
 }
 
 export default function MasterDataPage() {
+  const { t } = useLanguage();
   const [active, setActive] = useState(LISTS[0].key);
 
   return (
     <div data-testid="master-data-page">
-      <PageHeader title="Master Data" subtitle="Manage platform-wide lookup lists used across all modules." />
+      <PageHeader title={t("masterdata.title", "Master Data")} subtitle={t("Manage platform-wide lookup lists used across all modules.")} />
 
       <div className="grid grid-cols-12 gap-4">
         <Card className="col-span-12 md:col-span-4 lg:col-span-3 p-2 rounded-md border-border max-h-[70vh] overflow-y-auto">
@@ -215,7 +218,7 @@ export default function MasterDataPage() {
                 }`}
                 data-testid={`master-data-list-${l.key}`}
               >
-                {l.label}
+                {t(l.label)}
               </button>
             ))}
           </div>

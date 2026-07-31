@@ -11,12 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Trophy, PlusCircle, Download, ChevronLeft, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { STATIC_URL } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * TourJatraPage — deep flow: daily jatra count entry, milestone display, certificate download.
  * Route: /tours/:tourId/participants/:participantId
  */
 export default function TourJatraPage() {
+  const { t } = useLanguage();
   const { tourId, participantId } = useParams();
   const navigate = useNavigate();
   const [participant, setParticipant] = useState(null);
@@ -53,7 +55,7 @@ export default function TourJatraPage() {
         count: Number(count),
         date,
       });
-      toast.success("Jatra count recorded.");
+      toast.success(t("Jatra count recorded."));
       setCount("");
       load();
     } catch (err) {
@@ -77,7 +79,7 @@ export default function TourJatraPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      toast.error("Certificate not available yet. Complete jatra first.");
+      toast.error(t("Certificate not available yet. Complete jatra first."));
     } finally {
       setDownloading(false);
     }
@@ -92,17 +94,17 @@ export default function TourJatraPage() {
     <div data-testid="tour-jatra-page">
       <PageHeader
         title={`Jatra Progress · ${participant?.member?.firstName || "Participant"}`}
-        subtitle="Record daily jatra counts. Milestones and certificate unlock automatically."
+        subtitle={t("Record daily jatra counts. Milestones and certificate unlock automatically.")}
         actions={
           <Button variant="outline" onClick={() => navigate(`/tours`)}>
-            <ChevronLeft className="h-4 w-4 mr-1" /> Back to Tours
+            <ChevronLeft className="h-4 w-4 mr-1" /> {t("Back to Tours")}
           </Button>
         }
       />
 
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading progress…
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading progress…")}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -110,7 +112,7 @@ export default function TourJatraPage() {
           <Card className="lg:col-span-2 p-6 rounded-xl border-border">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Current milestone</div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">{t("Current milestone")}</div>
                 <div className="font-heading text-4xl font-bold mt-1 flex items-center gap-2">
                   <Trophy className="h-8 w-8 text-yellow-500" /> {currentMilestone}
                 </div>
@@ -119,7 +121,7 @@ export default function TourJatraPage() {
             </div>
             <div className="mb-6">
               <div className="flex items-center justify-between text-xs mb-2">
-                <span className="text-muted-foreground">Jatras completed</span>
+                <span className="text-muted-foreground">{t("Jatras completed")}</span>
                 <span className="font-mono-num font-semibold">{done} / {target}</span>
               </div>
               <Progress value={pct} className="h-3" data-testid="tour-jatra-progress" />
@@ -138,7 +140,7 @@ export default function TourJatraPage() {
                 >
                   <div className="font-bold text-lg">{m}%</div>
                   <div className="text-[10px] uppercase tracking-widest mt-0.5">
-                    {pct >= m ? "Reached" : "Locked"}
+                    {pct >= m ? t("Reached") : t("Locked")}
                   </div>
                 </div>
               ))}
@@ -152,7 +154,7 @@ export default function TourJatraPage() {
                 data-testid="tour-jatra-certificate-btn"
               >
                 {downloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-                Download Certificate (PDF + QR)
+                {t("Download Certificate (PDF + QR)")}
               </Button>
             )}
           </Card>
@@ -160,11 +162,11 @@ export default function TourJatraPage() {
           {/* Daily count entry */}
           <Card className="p-6 rounded-xl border-border">
             <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3">
-              Record daily jatra
+              {t("Record daily jatra")}
             </div>
             <form onSubmit={submitCount} className="space-y-4">
               <div>
-                <Label htmlFor="jatra-date" className="text-xs">Date</Label>
+                <Label htmlFor="jatra-date" className="text-xs">{t("Date")}</Label>
                 <div className="relative mt-1">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -179,7 +181,7 @@ export default function TourJatraPage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="jatra-count" className="text-xs">Number of jatras today</Label>
+                <Label htmlFor="jatra-count" className="text-xs">{t("Number of jatras today")}</Label>
                 <Input
                   id="jatra-count"
                   type="number"
@@ -187,7 +189,7 @@ export default function TourJatraPage() {
                   step={1}
                   value={count}
                   onChange={(e) => setCount(e.target.value)}
-                  placeholder="e.g. 3"
+                  placeholder={t("e.g. 3")}
                   className="mt-1"
                   required
                   data-testid="jatra-count-input"
@@ -195,12 +197,12 @@ export default function TourJatraPage() {
               </div>
               <Button type="submit" disabled={saving} className="w-full" data-testid="jatra-submit">
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PlusCircle className="h-4 w-4 mr-2" />}
-                Add to progress
+                {t("Add to progress")}
               </Button>
             </form>
             {STATIC_URL && (
               <div className="text-[10px] text-muted-foreground mt-4">
-                Static assets served from {STATIC_URL}
+                {t("Static assets served from")} {STATIC_URL}
               </div>
             )}
           </Card>

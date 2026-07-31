@@ -11,6 +11,7 @@ import { Shield, UserCheck, Save } from "lucide-react";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
 import { ALL_MODULES, ALL_ACTIONS, ROLE_LABELS } from "@/constants/modules";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ROLES = [
   "SUPER_ADMIN", "TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JAIN_CENTER_ADMIN",
@@ -18,6 +19,7 @@ const ROLES = [
 ];
 
 function RolePermissionMatrix() {
+  const { t } = useLanguage();
   const [selectedRole, setSelectedRole] = useState("TEMPLE_ADMIN");
   const [matrix, setMatrix] = useState({});
   const [loading, setLoading] = useState(false);
@@ -53,7 +55,7 @@ function RolePermissionMatrix() {
         }))
       );
       await api.put(`/settings/roles/${selectedRole}/permissions`, { permissions });
-      toast.success("Permissions saved successfully.");
+      toast.success(t("Permissions saved successfully."));
     } catch (e) {
       toast.error(extractErrorMessage(e));
     } finally { setSaving(false); }
@@ -63,9 +65,9 @@ function RolePermissionMatrix() {
     <Card className="p-5 rounded-md border-border bg-white shadow-sm">
       <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
         <div className="flex-1">
-          <h3 className="font-heading text-lg font-semibold text-slate-800">Role Permission Matrix</h3>
+          <h3 className="font-heading text-lg font-semibold text-slate-800">{t("Role Permission Matrix")}</h3>
           <p className="text-xs text-muted-foreground">
-            Configure module-level permissions for each platform role.
+            {t("Configure module-level permissions for each platform role.")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -92,7 +94,7 @@ function RolePermissionMatrix() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left text-[10px] uppercase tracking-widest text-slate-400 py-2 pr-4 w-56">Module</th>
+                <th className="text-left text-[10px] uppercase tracking-widest text-slate-400 py-2 pr-4 w-56">{t("Module")}</th>
                 {ALL_ACTIONS.map((a) => (
                   <th key={a} className="text-center text-[10px] uppercase tracking-widest text-slate-400 py-2 px-2 w-24">{a}</th>
                 ))}
@@ -124,7 +126,7 @@ function RolePermissionMatrix() {
       )}
       <div className="flex justify-end mt-4">
         <Button onClick={save} disabled={saving} className="bg-purple-700 hover:bg-purple-800 text-white font-bold">
-          <Save className="h-4 w-4 mr-2" /> {saving ? "Saving..." : "Save Matrix"}
+          <Save className="h-4 w-4 mr-2" /> {saving ? t("Saving...") : t("Save Matrix")}
         </Button>
       </div>
     </Card>
@@ -132,11 +134,12 @@ function RolePermissionMatrix() {
 }
 
 export default function RolesPermissionsPage() {
+  const { t } = useLanguage();
   return (
     <div className="space-y-4" data-testid="roles-permissions-page">
       <PageHeader
-        title="Roles & Permission Assignment"
-        subtitle="Manage access control matrices, module permissions, and user override rules across the platform."
+        title={t("Roles & Permission Assignment")}
+        subtitle={t("Manage access control matrices, module permissions, and user override rules across the platform.")}
       />
       <RolePermissionMatrix />
     </div>

@@ -5,8 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Smartphone, Zap, Clock, Loader2 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { StatCard } from "@/components/common/StatCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function AppUsagePage() {
+  const { t } = useLanguage();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,8 +32,8 @@ export default function AppUsagePage() {
   return (
     <div className="space-y-4" data-testid="app-usage-page">
       <PageHeader
-        title="App Usage Analytics"
-        subtitle="Monitor daily active mobile app logins (DAU), average session length, and api latency."
+        title={t("App Usage Analytics")}
+        subtitle={t("Monitor daily active mobile app logins (DAU), average session length, and api latency.")}
       />
 
       {loading ? (
@@ -41,13 +43,13 @@ export default function AppUsagePage() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <StatCard label="Daily Active Users" value={(stats?.dau || 890).toString()} icon={Smartphone} tone="warning" />
-            <StatCard label="Avg. Session Duration" value={`${stats?.avgSessionMins || 12} mins`} icon={Clock} tone="default" />
-            <StatCard label="API Request Latency" value={`${stats?.apiLatencyMs || 48} ms`} icon={Zap} tone="info" />
+            <StatCard label={t("Daily Active Users")} value={(stats?.dau || 890).toString()} icon={Smartphone} tone="warning" />
+            <StatCard label={t("Avg. Session Duration")} value={`${stats?.avgSessionMins || 12} mins`} icon={Clock} tone="default" />
+            <StatCard label={t("API Request Latency")} value={`${stats?.apiLatencyMs || 48} ms`} icon={Zap} tone="info" />
           </div>
 
           <Card className="p-4 border border-slate-200 bg-white">
-            <div className="text-sm font-semibold text-slate-800 mb-4">Weekly mobile usage trend (Active Sessions)</div>
+            <div className="text-sm font-semibold text-slate-800 mb-4">{t("Weekly mobile usage trend (Active Sessions)")}</div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>

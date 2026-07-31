@@ -4,6 +4,7 @@ import { UploadCloud, X, FileText, Image as ImageIcon, Loader2 } from "lucide-re
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Reusable drag-and-drop upload zone.
@@ -21,6 +22,7 @@ export function FileDropzone({
   label = "Drop files here or click to browse",
   hint = "PNG, JPG, PDF up to 10MB",
 }) {
+  const { t } = useLanguage();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
 
@@ -85,7 +87,7 @@ export function FileDropzone({
               )}
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-medium truncate">{f.name}</div>
-                <div className="text-[10px] text-muted-foreground">{(f.size / 1024).toFixed(1)} KB</div>
+                <div className="text-[10px] text-muted-foreground">{(f.size / 1024).toFixed(1)} {t("KB")}</div>
               </div>
               {uploading ? (
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />

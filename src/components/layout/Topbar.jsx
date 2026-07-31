@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { initials } from "@/lib/utils";
 import { ROLE_LABELS } from "@/constants/modules";
+import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 
 export default function Topbar({ onToggleSidebar }) {
   const { user, logout, isSuperAdmin } = useAuth();
@@ -65,6 +67,8 @@ export default function Topbar({ onToggleSidebar }) {
     user?.mobile ||
     "Admin";
 
+  const { t } = useLanguage();
+
   return (
     <header className="sticky top-0 z-30 h-16 md:h-20 bg-white border-b border-border flex items-center px-3 md:px-6 gap-2 md:gap-3">
       {/* Hamburger + Admin Name — Attendo-style left group */}
@@ -72,7 +76,7 @@ export default function Topbar({ onToggleSidebar }) {
         className="flex items-center gap-2.5 shrink-0 group hover:opacity-80 transition-opacity"
         onClick={onToggleSidebar}
         data-testid="topbar-menu-button"
-        aria-label="Toggle sidebar"
+        aria-label={t("Toggle sidebar")}
       >
         <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center bg-white group-hover:bg-slate-50 transition-colors">
           <Menu className="h-4.5 w-4.5 text-slate-700" style={{ width: 18, height: 18 }} />
@@ -96,7 +100,7 @@ export default function Topbar({ onToggleSidebar }) {
             }}
             onFocus={() => setShowResults(true)}
             onBlur={() => setTimeout(() => setShowResults(false), 200)}
-            placeholder="Search temples by name…"
+            placeholder={t("topbar.searchTemples", "Search temples by name…")}
             className="pl-8 pr-3 text-xs h-9 bg-slate-50 border-slate-200 rounded-lg w-full focus:bg-white transition-all focus:border-primary/40 focus:ring-0"
           />
 
@@ -139,9 +143,11 @@ export default function Topbar({ onToggleSidebar }) {
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
-            <span className="text-foreground">{activeAdmins} Active Admin{activeAdmins > 1 ? 's' : ''}</span>
+            <span className="text-foreground">{activeAdmins} {t("Active Admin")}{activeAdmins > 1 ? 's' : ''}</span>
           </div>
         )}
+
+        <LanguageSwitcher />
 
         <button
           className="relative h-9 w-9 md:h-10 md:w-10 rounded-full border border-border bg-white flex items-center justify-center hover:bg-secondary/60 transition-colors"
@@ -186,7 +192,7 @@ export default function Topbar({ onToggleSidebar }) {
               onClick={() => navigate("/settings")}
               data-testid="topbar-menu-settings"
             >
-              <UserIcon className="h-4 w-4 mr-2" /> Profile & Settings
+              <UserIcon className="h-4 w-4 mr-2" /> {t("Profile & Settings")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -196,7 +202,7 @@ export default function Topbar({ onToggleSidebar }) {
               }}
               data-testid="topbar-menu-logout"
             >
-              <LogOut className="h-4 w-4 mr-2" /> Logout
+              <LogOut className="h-4 w-4 mr-2" /> {t("Logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -211,6 +217,7 @@ const FILTER_CITIES = ["All Cities", "Ahmedabad", "Mumbai", "Surat", "Rajkot", "
 const FILTER_STATES = ["All States", "Gujarat", "Maharashtra", "Rajasthan", "Karnataka", "Tamil Nadu", "Uttar Pradesh"];
 
 function TempleFilterBar({ onFilter }) {
+  const { t } = useLanguage();
   const [area,  setArea]  = useState("");
   const [city,  setCity]  = useState("");
   const [state, setState] = useState("");
@@ -231,6 +238,13 @@ function TempleFilterBar({ onFilter }) {
   const selectCls =
     "h-9 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-600 px-2 pr-7 appearance-none cursor-pointer hover:bg-white focus:outline-none focus:border-primary/40 transition-colors font-medium";
 
+  const getFilterLabel = (val) => {
+    if (val === "All Areas") return t("topbar.allAreas", "All Areas");
+    if (val === "All Cities") return t("topbar.allCities", "All Cities");
+    if (val === "All States") return t("topbar.allStates", "All States");
+    return val;
+  };
+
   return (
     <div className="flex items-center gap-1.5 shrink-0">
       <div className="relative">
@@ -240,7 +254,7 @@ function TempleFilterBar({ onFilter }) {
           onChange={(e) => handleChange("area", e.target.value)}
           className={selectCls}
         >
-          {FILTER_AREAS.map((a) => <option key={a} value={a === "All Areas" ? "" : a}>{a}</option>)}
+          {FILTER_AREAS.map((a) => <option key={a} value={a === "All Areas" ? "" : a}>{getFilterLabel(a)}</option>)}
         </select>
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
       </div>
@@ -252,7 +266,7 @@ function TempleFilterBar({ onFilter }) {
           onChange={(e) => handleChange("city", e.target.value)}
           className={selectCls}
         >
-          {FILTER_CITIES.map((c) => <option key={c} value={c === "All Cities" ? "" : c}>{c}</option>)}
+          {FILTER_CITIES.map((c) => <option key={c} value={c === "All Cities" ? "" : c}>{getFilterLabel(c)}</option>)}
         </select>
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
       </div>
@@ -264,7 +278,7 @@ function TempleFilterBar({ onFilter }) {
           onChange={(e) => handleChange("state", e.target.value)}
           className={selectCls}
         >
-          {FILTER_STATES.map((s) => <option key={s} value={s === "All States" ? "" : s}>{s}</option>)}
+          {FILTER_STATES.map((s) => <option key={s} value={s === "All States" ? "" : s}>{getFilterLabel(s)}</option>)}
         </select>
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
       </div>

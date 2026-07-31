@@ -259,13 +259,13 @@ export const NESTED_NAV = [
         icon: Hotel,
         children: [
           { id: "d-mgt", label: "Dharamshala Management", route: "/dharamshalas" },
-          { id: "d-build", label: "Buildings", route: "/dharamshalas?tab=buildings", featureFlag: true },
-          { id: "d-floor", label: "Floors", route: "/dharamshalas?tab=floors", featureFlag: true },
-          { id: "d-room", label: "Rooms", route: "/dharamshalas?tab=rooms", featureFlag: true },
-          { id: "d-cat", label: "Room Categories", route: "/dharamshalas?tab=categories", featureFlag: true },
-          { id: "d-am", label: "Amenities", route: "/dharamshalas?tab=amenities", featureFlag: true },
-          { id: "d-pr", label: "Pricing", route: "/dharamshalas?tab=pricing", featureFlag: true },
-          { id: "d-fac", label: "Facilities", route: "/dharamshalas?tab=facilities", featureFlag: true },
+          { id: "d-build", label: "Buildings", route: "/coming-soon?module=Buildings", featureFlag: true },
+          { id: "d-floor", label: "Floors", route: "/coming-soon?module=Floors", featureFlag: true },
+          { id: "d-room", label: "Rooms", route: "/coming-soon?module=Dharamshala Rooms", featureFlag: true },
+          { id: "d-cat", label: "Room Categories", route: "/coming-soon?module=Room Categories", featureFlag: true },
+          { id: "d-am", label: "Amenities", route: "/coming-soon?module=Amenities", featureFlag: true },
+          { id: "d-pr", label: "Pricing", route: "/coming-soon?module=Room Pricing", featureFlag: true },
+          { id: "d-fac", label: "Facilities", route: "/coming-soon?module=Dharamshala Facilities", featureFlag: true },
           { id: "d-gal", label: "Gallery", route: "/gallery" },
           { id: "d-rule", label: "Rules", route: "/coming-soon?module=Dharamshala Rules", featureFlag: true }
         ]
@@ -317,10 +317,10 @@ export const NESTED_NAV = [
         icon: Newspaper,
         children: [
           { id: "fe-mgt", label: "Feed Management", route: "/feed" },
-          { id: "fe-create", label: "Create Post", route: "/feed?action=create", featureFlag: true },
-          { id: "fe-sched", label: "Scheduled Posts", route: "/feed?tab=scheduled", featureFlag: true },
-          { id: "fe-feat", label: "Featured Posts", route: "/feed?tab=featured", featureFlag: true },
-          { id: "fe-rep", label: "Reported Posts", route: "/feed?tab=reported", featureFlag: true },
+          { id: "fe-create", label: "Create Post", route: "/feed/create-post" },
+          { id: "fe-sched", label: "Scheduled Posts", route: "/community/scheduled-posts" },
+          { id: "fe-feat", label: "Featured Posts", route: "/community/featured-posts" },
+          { id: "fe-rep", label: "Reported Posts", route: "/community/reported-posts" },
           { id: "fe-an", label: "Feed Analytics", route: "/reports/feed-analytics" }
         ]
       },
@@ -455,8 +455,8 @@ export const NESTED_NAV = [
         label: "Booking Resources",
         icon: Landmark,
         children: [
-          { id: "br-rooms", label: "Rooms", route: "/dharamshalas?tab=rooms", featureFlag: true },
-          { id: "br-halls", label: "Halls", route: "/dharamshalas?tab=halls", featureFlag: true },
+          { id: "br-rooms", label: "Rooms", route: "/coming-soon?module=Booking Rooms", featureFlag: true },
+          { id: "br-halls", label: "Halls", route: "/coming-soon?module=Halls", featureFlag: true },
           { id: "br-bhoj", label: "Bhojanshala", route: "/coming-soon?module=Bhojanshala Resources", featureFlag: true },
           { id: "br-pooja", label: "Pooja Booking", route: "/coming-soon?module=Pooja Booking Resources", featureFlag: true },
           { id: "br-path", label: "Pathshala", route: "/coming-soon?module=Pathshala Resources", featureFlag: true },
@@ -474,7 +474,7 @@ export const NESTED_NAV = [
           { id: "bm-group", label: "Group Bookings", route: "/coming-soon?module=Group Bookings", featureFlag: true },
           { id: "bm-wait", label: "Waiting List", route: "/coming-soon?module=Booking Waiting List", featureFlag: true },
           { id: "bm-ext", label: "Booking Extensions", route: "/coming-soon?module=Booking Extensions", featureFlag: true },
-          { id: "bm-cancel", label: "Cancellations", route: "/bookings?tab=cancelled", featureFlag: true }
+          { id: "bm-cancel", label: "Cancellations", route: "/coming-soon?module=Cancellations", featureFlag: true }
         ]
       },
       {
@@ -515,9 +515,9 @@ export const NESTED_NAV = [
         icon: TrendingUp,
         children: [
           { id: "brp-book", label: "Booking", route: "/reports?tab=bookings", featureFlag: true },
-          { id: "brp-occ", label: "Occupancy", route: "/reports?tab=occupancy", featureFlag: true },
-          { id: "brp-cancel", label: "Cancellation", route: "/reports?tab=cancellations", featureFlag: true },
-          { id: "brp-rev", label: "Revenue", route: "/reports?tab=revenue", featureFlag: true }
+          { id: "brp-occ", label: "Occupancy", route: "/coming-soon?module=Occupancy Reports", featureFlag: true },
+          { id: "brp-cancel", label: "Cancellation", route: "/coming-soon?module=Cancellation Reports", featureFlag: true },
+          { id: "brp-rev", label: "Revenue", route: "/coming-soon?module=Revenue Reports", featureFlag: true }
         ]
       }
     ]
@@ -549,8 +549,8 @@ export const NESTED_NAV = [
         label: "Bank & Payment",
         icon: Wallet,
         children: [
-          { id: "bp-bank", label: "Bank Accounts", route: "/settings?tab=banking", featureFlag: true },
-          { id: "bp-upi", label: "UPI QR Codes", route: "/settings?tab=banking", featureFlag: true },
+          { id: "bp-bank", label: "Bank Accounts", route: "/coming-soon?module=Bank Accounts", featureFlag: true },
+          { id: "bp-upi", label: "UPI QR Codes", route: "/coming-soon?module=UPI QR Codes", featureFlag: true },
           { id: "bp-gw", label: "Payment Gateway", route: "/coming-soon?module=Payment Gateway", featureFlag: true },
           { id: "bp-tx", label: "Payment Transactions", route: "/coming-soon?module=Payment Transactions", featureFlag: true },
           { id: "bp-recon", label: "Payment Reconciliation", route: "/coming-soon?module=Payment Reconciliation", featureFlag: true }
@@ -703,12 +703,12 @@ export const NESTED_NAV = [
     children: [
       { id: "rp-exec", label: "Executive Dashboard", route: "/reports" },
       { id: "rp-people", label: "People Reports", route: "/reports/members" },
-      { id: "rp-org", label: "Organization Reports", route: "/reports?tab=organizations", featureFlag: true },
+      { id: "rp-org", label: "Organization Reports", route: "/coming-soon?module=Organization Reports", featureFlag: true },
       { id: "rp-comm", label: "Community Reports", route: "/reports/events" },
       { id: "rp-book", label: "Booking Reports", route: "/reports?tab=bookings", featureFlag: true },
       { id: "rp-fin", label: "Financial Reports", route: "/reports/donations" },
       { id: "rp-op", label: "Operations Reports", route: "/coming-soon?module=Operations Reports", featureFlag: true },
-      { id: "rp-export", label: "Export Center", route: "/reports?tab=export", featureFlag: true }
+      { id: "rp-export", label: "Export Center", route: "/coming-soon?module=Export Center", featureFlag: true }
     ]
   },
 

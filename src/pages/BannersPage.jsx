@@ -14,10 +14,12 @@ import {
 } from "@/components/ui/dialog";
 import { Image as BannerIcon, Plus, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const EMPTY_FORM = { title: "", imageUrl: "", deviceType: "MOBILE", redirectUrl: "", displayOrder: "0" };
 
 export default function BannersPage() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
@@ -78,7 +80,7 @@ export default function BannersPage() {
 
   const handleSave = async () => {
     if (!form.title || !form.imageUrl) {
-      toast.error("Title and Image URL are required.");
+      toast.error(t("Title and Image URL are required."));
       return;
     }
     setSaving(true);
@@ -99,10 +101,10 @@ export default function BannersPage() {
       };
       if (editing) {
         await api.patch(`/banners/${editing.id}`, payload);
-        toast.success("Banner updated.");
+        toast.success(t("Banner updated."));
       } else {
         await api.post("/banners", payload);
-        toast.success("Banner added.");
+        toast.success(t("Banner added."));
       }
       setOpenDialog(false);
       load();
@@ -117,7 +119,7 @@ export default function BannersPage() {
     setDeletingId(id);
     try {
       await api.delete(`/banners/${id}`);
-      toast.success("Banner removed.");
+      toast.success(t("Banner removed."));
       load();
     } catch (e) {
       toast.error(extractErrorMessage(e));
@@ -138,7 +140,7 @@ export default function BannersPage() {
 
   const columns = [
     {
-      key: "imageUrl", header: "Preview", width: 80,
+      key: "imageUrl", header: t("Preview"), width: 80,
       render: (r) => (
         <div className="h-10 w-16 bg-slate-100 rounded overflow-hidden">
           <img src={r.imageUrl} alt={r.title} className="h-full w-full object-cover" />
@@ -146,7 +148,7 @@ export default function BannersPage() {
       ),
     },
     {
-      key: "deviceType", header: "Target Device",
+      key: "deviceType", header: t("Target Device"),
       render: (r) => (
         <Badge variant="outline" className={r.deviceType === "DESKTOP" ? "border-blue-200 text-blue-700 bg-blue-50" : "border-orange-200 text-orange-700 bg-orange-50"}>
           {r.deviceType || "MOBILE"}
@@ -154,11 +156,11 @@ export default function BannersPage() {
       ),
     },
     {
-      key: "title", header: "Banner Title",
+      key: "title", header: t("Banner Title"),
       render: (r) => <span className="font-semibold text-slate-800">{r.title}</span>,
     },
     {
-      key: "redirectUrl", header: "Redirects To",
+      key: "redirectUrl", header: t("Redirects To"),
       render: (r) => r.redirectUrl ? (
         <span className="text-xs font-mono text-slate-500 flex items-center gap-1">
           <ExternalLink className="h-3 w-3" />{r.redirectUrl}
@@ -166,11 +168,11 @@ export default function BannersPage() {
       ) : <span className="text-muted-foreground text-xs">—</span>,
     },
     {
-      key: "order", header: "Position",
+      key: "order", header: t("Position"),
       render: (r) => <Badge variant="secondary">#{r.displayOrder}</Badge>,
     },
     {
-      key: "active", header: "Active",
+      key: "active", header: t("Active"),
       render: (r) => (
         <Switch checked={r.isActive} onCheckedChange={() => toggleActive(r)} />
       ),
@@ -197,11 +199,11 @@ export default function BannersPage() {
   return (
     <div data-testid="banners-page">
       <PageHeader
-        title="Promotional Banners"
-        subtitle="Configure hero slideshow banners displayed on the mobile app home screen."
+        title={t("Promotional Banners")}
+        subtitle={t("Configure hero slideshow banners displayed on the mobile app home screen.")}
         actions={
           <Button onClick={openCreate} data-testid="banners-create-btn">
-            <Plus className="h-4 w-4 mr-2" /> Add Banner
+            <Plus className="h-4 w-4 mr-2" /> {t("Add Banner")}
           </Button>
         }
       />
@@ -211,9 +213,9 @@ export default function BannersPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           icon={BannerIcon}
-          title="No banners configured"
-          description="Add your first promotional banner to show on the mobile app home screen."
-          action={<Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Add Banner</Button>}
+          title={t("No banners configured")}
+          description={t("Add your first promotional banner to show on the mobile app home screen.")}
+          action={<Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />{t("Add Banner")}</Button>}
         />
       ) : (
         <DataTable columns={columns} rows={rows} loading={false} testId="banners-table" />
@@ -223,20 +225,20 @@ export default function BannersPage() {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Banner" : "Add Home Screen Banner"}</DialogTitle>
+            <DialogTitle>{editing ? t("Edit Banner") : t("Add Home Screen Banner")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div>
-              <Label className="text-xs">Title *</Label>
+              <Label className="text-xs">{t("Title *")}</Label>
               <Input
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. Paryushan Special Live Streams"
+                placeholder={t("e.g. Paryushan Special Live Streams")}
                 data-testid="banner-title-input"
               />
             </div>
             <div>
-              <Label className="text-xs">Image URL *</Label>
+              <Label className="text-xs">{t("Image URL *")}</Label>
               <Input
                 value={form.imageUrl}
                 onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
@@ -245,35 +247,35 @@ export default function BannersPage() {
               />
             </div>
             <div>
-              <Label className="text-xs">Target Device / Layout Type *</Label>
+              <Label className="text-xs">{t("Target Device / Layout Type *")}</Label>
               <select
                 className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 value={form.deviceType || "MOBILE"}
                 onChange={(e) => setForm({ ...form, deviceType: e.target.value })}
               >
-                <option value="MOBILE">Mobile App Banner (3:1 Aspect Ratio)</option>
-                <option value="DESKTOP">Web Portal Banner (5:1 Aspect Ratio)</option>
+                <option value="MOBILE">{t("Mobile App Banner (3:1 Aspect Ratio)")}</option>
+                <option value="DESKTOP">{t("Web Portal Banner (5:1 Aspect Ratio)")}</option>
               </select>
             </div>
             <div className="p-3 bg-amber-50 rounded-lg border border-amber-100 space-y-1">
-              <span className="text-xs font-bold text-amber-800 block">📐 Banner Sizing Instructions</span>
+              <span className="text-xs font-bold text-amber-800 block">{t("📐 Banner Sizing Instructions")}</span>
               <p className="text-[11px] text-amber-700 leading-relaxed">
                 {form.deviceType === "DESKTOP" 
-                  ? "Desktop banners require a strict 5:1 aspect ratio constraint (e.g. 1500 x 300 px recommended). Standard limits will enforce ratio validation." 
-                  : "Mobile banners require a strict 3:1 aspect ratio constraint (e.g. 1200 x 400 px recommended). Standard limits will enforce ratio validation."}
+                  ? t("Desktop banners require a strict 5:1 aspect ratio constraint (e.g. 1500 x 300 px recommended). Standard limits will enforce ratio validation.") 
+                  : t("Mobile banners require a strict 3:1 aspect ratio constraint (e.g. 1200 x 400 px recommended). Standard limits will enforce ratio validation.")}
               </p>
             </div>
             <div>
-              <Label className="text-xs">Redirect Link / Route</Label>
+              <Label className="text-xs">{t("Redirect Link / Route")}</Label>
               <Input
                 value={form.redirectUrl}
                 onChange={(e) => setForm({ ...form, redirectUrl: e.target.value })}
-                placeholder="/events or website URL"
+                placeholder={t("/events or website URL")}
                 data-testid="banner-redirect-input"
               />
             </div>
             <div>
-              <Label className="text-xs">Display Order / Position</Label>
+              <Label className="text-xs">{t("Display Order / Position")}</Label>
               <Input
                 type="number"
                 value={form.displayOrder}
@@ -284,9 +286,9 @@ export default function BannersPage() {
             </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>{t("Cancel")}</Button>
             <Button onClick={handleSave} disabled={saving} data-testid="banner-save-btn">
-              {saving ? "Saving…" : editing ? "Update Banner" : "Save Banner"}
+              {saving ? t("Saving…") : editing ? t("Update Banner") : t("Save Banner")}
             </Button>
           </DialogFooter>
         </DialogContent>

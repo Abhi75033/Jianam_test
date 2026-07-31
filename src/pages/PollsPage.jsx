@@ -12,8 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, X, Loader2, Vote } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function PollsPage() {
+  const { t } = useLanguage();
   const [polls, setPolls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -61,7 +63,7 @@ export default function PollsPage() {
         options: form.options.filter(Boolean),
         endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : undefined,
       });
-      toast.success("Poll created.");
+      toast.success(t("Poll created."));
       setOpen(false);
       setForm({ question: "", options: ["", ""], endsAt: "" });
       setReloadKey((k) => k + 1);
@@ -76,7 +78,7 @@ export default function PollsPage() {
     setVoting(`${pollId}-${optionIndex}`);
     try {
       await api.post(`/polls/${pollId}/vote`, { optionIndex });
-      toast.success("Vote recorded.");
+      toast.success(t("Vote recorded."));
       setReloadKey((k) => k + 1);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -88,7 +90,7 @@ export default function PollsPage() {
   const closePoll = async (pollId) => {
     try {
       await api.post(`/polls/${pollId}/close`);
-      toast.success("Poll closed successfully.");
+      toast.success(t("Poll closed successfully."));
       setReloadKey((k) => k + 1);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -98,7 +100,7 @@ export default function PollsPage() {
   const deletePoll = async (pollId) => {
     try {
       await api.delete(`/polls/${pollId}`);
-      toast.success("Poll deleted.");
+      toast.success(t("Poll deleted."));
       setReloadKey((k) => k + 1);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -108,11 +110,11 @@ export default function PollsPage() {
   return (
     <div data-testid="polls-page">
       <PageHeader
-        title="Polls"
-        subtitle="Community polls attached to feed posts."
+        title={t("polls.title", "Polls")}
+        subtitle={t("Community polls attached to feed posts.")}
         actions={
           <Button onClick={() => setOpen(true)} data-testid="polls-create-btn">
-            <Plus className="h-4 w-4 mr-2" /> Create Poll
+            <Plus className="h-4 w-4 mr-2" /> {t("Create Poll")}
           </Button>
         }
       />
@@ -120,7 +122,7 @@ export default function PollsPage() {
       {loading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}</div>
       ) : polls.length === 0 ? (
-        <EmptyState title="No polls yet" description="Create a poll to gather community opinions." />
+        <EmptyState title={t("No polls yet")} description={t("Create a poll to gather community opinions.")} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {polls.map((p) => (
@@ -136,7 +138,7 @@ export default function PollsPage() {
                     data-testid={`poll-vote-${p.id}-${o.index}`}
                   >
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="group-hover:text-primary transition-colors">{o.label}</span>
+                      <span className="group-hover:text-primary transition-colors">{t(o.label)}</span>
                       <span className="font-mono-num text-xs text-muted-foreground">{o.votes || 0}</span>
                     </div>
                     <Progress value={p.totalVotes > 0 ? (o.votes / p.totalVotes) * 100 : 0} className="h-1.5" />
@@ -145,14 +147,14 @@ export default function PollsPage() {
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t mt-3">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline">{p.totalVotes || 0} votes</Badge>
+                  <Badge variant="outline">{p.totalVotes || 0} {t("votes")}</Badge>
                   {p.endsAt && new Date(p.endsAt) < new Date() && (
-                    <Badge variant="secondary" className="bg-red-50 text-red-700 font-bold border-red-200">Closed</Badge>
+                    <Badge variant="secondary" className="bg-red-50 text-red-700 font-bold border-red-200">{t("Closed")}</Badge>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => closePoll(p.id)}>Close</Button>
-                  <Button size="sm" variant="ghost" className="h-7 text-[11px] text-red-600 hover:text-red-700" onClick={() => deletePoll(p.id)}>Delete</Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => closePoll(p.id)}>{t("Close")}</Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-[11px] text-red-600 hover:text-red-700" onClick={() => deletePoll(p.id)}>{t("Delete")}</Button>
                 </div>
               </div>
             </Card>
@@ -162,20 +164,20 @@ export default function PollsPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md" data-testid="poll-form-dialog">
-          <DialogHeader><DialogTitle>Create poll</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("Create poll")}</DialogTitle></DialogHeader>
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <Label className="text-xs">Question *</Label>
+              <Label className="text-xs">{t("Question *")}</Label>
               <Input
                 value={form.question}
                 onChange={(e) => setForm({ ...form, question: e.target.value })}
                 required
-                placeholder="e.g. What time works best for evening pravachan?"
+                placeholder={t("e.g. What time works best for evening pravachan?")}
                 data-testid="poll-question"
               />
             </div>
             <div>
-              <Label className="text-xs">Expiry Date (Optional)</Label>
+              <Label className="text-xs">{t("Expiry Date (Optional)")}</Label>
               <Input
                 type="date"
                 value={form.endsAt}
@@ -184,7 +186,7 @@ export default function PollsPage() {
               />
             </div>
             <div>
-              <Label className="text-xs">Options</Label>
+              <Label className="text-xs">{t("Options")}</Label>
               <div className="space-y-2 mt-1">
                 {form.options.map((o, i) => (
                   <div key={i} className="flex items-center gap-2">
@@ -204,13 +206,13 @@ export default function PollsPage() {
                 ))}
               </div>
               <Button type="button" variant="ghost" size="sm" onClick={addOption} className="mt-2" data-testid="poll-add-option">
-                <Plus className="h-3 w-3 mr-1" /> Add option
+                <Plus className="h-3 w-3 mr-1" /> {t("Add option")}
               </Button>
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t("Cancel")}</Button>
               <Button type="submit" disabled={saving} data-testid="poll-submit">
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Create
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {t("Create")}
               </Button>
             </DialogFooter>
           </form>

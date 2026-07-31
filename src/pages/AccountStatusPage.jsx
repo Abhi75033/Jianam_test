@@ -8,8 +8,10 @@ import { ShieldAlert, UserX, UserCheck, Lock, Unlock, AlertTriangle } from "luci
 import { StatCard } from "@/components/common/StatCard";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function AccountStatusPage() {
+  const { t } = useLanguage();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, active: 0, locked: 0, suspended: 0 });
@@ -52,7 +54,7 @@ export default function AccountStatusPage() {
   const columns = [
     {
       key: "name",
-      header: "Account Name",
+      header: t("Account Name"),
       render: (r) => (
         <div>
           <div className="font-semibold text-slate-800">{r.fullName || r.name || "Admin Account"}</div>
@@ -62,12 +64,12 @@ export default function AccountStatusPage() {
     },
     {
       key: "role",
-      header: "Role",
+      header: t("Role"),
       render: (r) => <Badge variant="outline">{r.role || "ADMIN"}</Badge>,
     },
     {
       key: "status",
-      header: "Account Status",
+      header: t("Account Status"),
       render: (r) => (
         <Badge className={r.isLocked ? "bg-amber-100 text-amber-800" : r.status === "INACTIVE" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"}>
           {r.isLocked ? "LOCKED" : r.status || "ACTIVE"}
@@ -76,7 +78,7 @@ export default function AccountStatusPage() {
     },
     {
       key: "actions",
-      header: "Actions",
+      header: t("Actions"),
       render: (r) => (
         <Button
           size="sm"
@@ -85,7 +87,7 @@ export default function AccountStatusPage() {
           className={r.isLocked ? "text-emerald-700 hover:bg-emerald-50" : "text-amber-700 hover:bg-amber-50"}
         >
           {r.isLocked ? <Unlock className="h-3.5 w-3.5 mr-1" /> : <Lock className="h-3.5 w-3.5 mr-1" />}
-          {r.isLocked ? "Unlock Account" : "Lock Account"}
+          {r.isLocked ? t("Unlock Account") : t("Lock Account")}
         </Button>
       ),
     },
@@ -94,15 +96,15 @@ export default function AccountStatusPage() {
   return (
     <div className="space-y-4" data-testid="account-status-page">
       <PageHeader
-        title="Account Status & Security Control"
-        subtitle="Manage account states, unlock accounts locked by failed login thresholds, and control active/inactive administrative permissions."
+        title={t("Account Status & Security Control")}
+        subtitle={t("Manage account states, unlock accounts locked by failed login thresholds, and control active/inactive administrative permissions.")}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <StatCard label="Total Accounts" value={loading ? "..." : stats.total} icon={UserCheck} tone="blue" />
-        <StatCard label="Active Accounts" value={loading ? "..." : stats.active} icon={UserCheck} tone="green" />
-        <StatCard label="Locked Accounts" value={loading ? "..." : stats.locked} icon={Lock} tone="warning" />
-        <StatCard label="Suspended" value={loading ? "..." : stats.suspended} icon={AlertTriangle} tone="red" />
+        <StatCard label={t("Total Accounts")} value={loading ? "..." : stats.total} icon={UserCheck} tone="blue" />
+        <StatCard label={t("Active Accounts")} value={loading ? "..." : stats.active} icon={UserCheck} tone="green" />
+        <StatCard label={t("Locked Accounts")} value={loading ? "..." : stats.locked} icon={Lock} tone="warning" />
+        <StatCard label={t("Suspended")} value={loading ? "..." : stats.suspended} icon={AlertTriangle} tone="red" />
       </div>
 
       <Card className="p-4 border border-slate-200 bg-white">
@@ -110,8 +112,8 @@ export default function AccountStatusPage() {
           columns={columns}
           rows={accounts}
           loading={loading}
-          emptyTitle="No Accounts Found"
-          emptyDescription="Administrative accounts will appear here."
+          emptyTitle={t("No Accounts Found")}
+          emptyDescription={t("Administrative accounts will appear here.")}
         />
       </Card>
     </div>

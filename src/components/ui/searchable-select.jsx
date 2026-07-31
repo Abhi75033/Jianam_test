@@ -35,6 +35,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * SearchableSelect
@@ -55,13 +56,14 @@ const SearchableSelect = React.forwardRef(function SearchableSelect(
   ref
 ) {
   const [open, setOpen] = React.useState(false);
+  const { t } = useLanguage();
 
   // Find the label for the current value
   const selectedLabel = React.useMemo(() => {
     if (!value) return null;
     const found = options.find((o) => String(o.value) === String(value));
-    return found ? found.label : value;
-  }, [value, options]);
+    return found ? t(found.label) : value;
+  }, [value, options, t]);
 
   function handleSelect(optValue) {
     // Toggle off if same value selected again (optional: remove this for strict mode)
@@ -87,7 +89,7 @@ const SearchableSelect = React.forwardRef(function SearchableSelect(
           )}
           {...props}
         >
-          <span className="truncate">{selectedLabel || placeholder}</span>
+          <span className="truncate">{selectedLabel || t(placeholder)}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
         </Button>
       </PopoverTrigger>
@@ -98,14 +100,14 @@ const SearchableSelect = React.forwardRef(function SearchableSelect(
         sideOffset={4}
       >
         <Command>
-          <CommandInput placeholder={searchPlaceholder} className="h-9" />
+          <CommandInput placeholder={t(searchPlaceholder)} className="h-9" />
           <CommandList>
-            <CommandEmpty>{emptyText}</CommandEmpty>
+            <CommandEmpty>{t(emptyText)}</CommandEmpty>
             <CommandGroup>
               {options.map((opt) => (
                 <CommandItem
                   key={opt.value}
-                  value={opt.label} /* cmdk matches on this string */
+                  value={t(opt.label)} /* cmdk matches on this string */
                   onSelect={() => handleSelect(opt.value)}
                   className="cursor-pointer"
                 >
@@ -117,7 +119,7 @@ const SearchableSelect = React.forwardRef(function SearchableSelect(
                         : "opacity-0"
                     )}
                   />
-                  {opt.label}
+                  {t(opt.label)}
                 </CommandItem>
               ))}
             </CommandGroup>

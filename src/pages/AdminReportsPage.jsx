@@ -9,8 +9,10 @@ import { UsersRound, ShieldCheck, Landmark, Hotel, Download, FileSpreadsheet, Fi
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from "recharts";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function AdminReportsPage() {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [admins, setAdmins] = useState([]);
   const [stats, setStats] = useState({
@@ -65,7 +67,7 @@ export default function AdminReportsPage() {
   const columns = [
     {
       key: "fullName",
-      header: "Admin Name",
+      header: t("Admin Name"),
       render: (r) => (
         <div>
           <div className="font-semibold text-slate-800">{r.fullName || r.name || "Admin User"}</div>
@@ -75,7 +77,7 @@ export default function AdminReportsPage() {
     },
     {
       key: "role",
-      header: "Role",
+      header: t("Role"),
       render: (r) => (
         <Badge
           className={
@@ -92,12 +94,12 @@ export default function AdminReportsPage() {
     },
     {
       key: "organization",
-      header: "Assigned Organization",
+      header: t("Assigned Organization"),
       render: (r) => r.organization?.name || r.orgName || "Platform Wide",
     },
     {
       key: "status",
-      header: "Status",
+      header: t("Status"),
       render: (r) => (
         <Badge className={r.status === "INACTIVE" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"}>
           {r.status || "ACTIVE"}
@@ -109,15 +111,15 @@ export default function AdminReportsPage() {
   return (
     <div className="space-y-4" data-testid="admin-reports-page">
       <PageHeader
-        title="Admin Enrollment & Distribution Report"
-        subtitle="Role segmentation, geographic organization assignment, and active status for all system administrators."
+        title={t("Admin Enrollment & Distribution Report")}
+        subtitle={t("Role segmentation, geographic organization assignment, and active status for all system administrators.")}
         actions={
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={() => handleExport("csv")}>
-              <FileText className="h-4 w-4 mr-1 text-slate-600" /> Export CSV
+              <FileText className="h-4 w-4 mr-1 text-slate-600" /> {t("Export CSV")}
             </Button>
             <Button size="sm" className="bg-purple-700 hover:bg-purple-800 text-white font-bold" onClick={() => handleExport("excel")}>
-              <FileSpreadsheet className="h-4 w-4 mr-1" /> Export Excel
+              <FileSpreadsheet className="h-4 w-4 mr-1" /> {t("Export Excel")}
             </Button>
           </div>
         }
@@ -125,15 +127,15 @@ export default function AdminReportsPage() {
 
       {/* Metric Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <StatCard label="Total Admin Accounts" value={loading ? "..." : stats.total} icon={UsersRound} tone="purple" />
-        <StatCard label="Super Admins" value={loading ? "..." : stats.superAdmins} icon={ShieldCheck} tone="info" />
-        <StatCard label="Temple & JC Admins" value={loading ? "..." : stats.templeAdmins} icon={Landmark} tone="warning" />
-        <StatCard label="Dharamshala Admins" value={loading ? "..." : stats.dharamshalaAdmins} icon={Hotel} tone="green" />
+        <StatCard label={t("Total Admin Accounts")} value={loading ? "..." : stats.total} icon={UsersRound} tone="purple" />
+        <StatCard label={t("Super Admins")} value={loading ? "..." : stats.superAdmins} icon={ShieldCheck} tone="info" />
+        <StatCard label={t("Temple & JC Admins")} value={loading ? "..." : stats.templeAdmins} icon={Landmark} tone="warning" />
+        <StatCard label={t("Dharamshala Admins")} value={loading ? "..." : stats.dharamshalaAdmins} icon={Hotel} tone="green" />
       </div>
 
       {/* Chart Section */}
       <Card className="p-4 border border-slate-200 bg-white">
-        <div className="text-sm font-semibold text-slate-800 mb-4">Admin Account Distribution by Role & Privilege</div>
+        <div className="text-sm font-semibold text-slate-800 mb-4">{t("Admin Account Distribution by Role & Privilege")}</div>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={stats.chartData}>
@@ -149,13 +151,13 @@ export default function AdminReportsPage() {
 
       {/* Admin Users Table */}
       <Card className="p-4 border border-slate-200 bg-white">
-        <div className="text-sm font-semibold text-slate-800 mb-3">Admin Account Register</div>
+        <div className="text-sm font-semibold text-slate-800 mb-3">{t("Admin Account Register")}</div>
         <DataTable
           columns={columns}
           rows={admins}
           loading={loading}
-          emptyTitle="No Admin Accounts Found"
-          emptyDescription="Administrator accounts will appear here."
+          emptyTitle={t("No Admin Accounts Found")}
+          emptyDescription={t("Administrator accounts will appear here.")}
         />
       </Card>
     </div>

@@ -22,6 +22,7 @@ import { formatCurrency, formatDateTime, initials } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Label } from "@/components/ui/label";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const STATUS_TONE = {
   PENDING: "bg-amber-100 text-amber-700",
@@ -30,6 +31,7 @@ const STATUS_TONE = {
 };
 
 export default function DonationsPage() {
+  const { t } = useLanguage();
   const { canDo, user, isSuperAdmin } = useAuth();
   const orgId = user?.organizationIds?.[0];
   const [rows, setRows] = useState([]);
@@ -135,8 +137,8 @@ export default function DonationsPage() {
       finalOrgId = orgsList[0].id;
       setTargetOrgId(orgsList[0].id);
     }
-    if (!finalOrgId) { toast.error("Please select a temple/organization."); return; }
-    if (!amount || Number(amount) <= 0) { toast.error("Please enter a valid amount."); return; }
+    if (!finalOrgId) { toast.error(t("Please select a temple/organization.")); return; }
+    if (!amount || Number(amount) <= 0) { toast.error(t("Please enter a valid amount.")); return; }
 
     // Validate category splits sum
     const totalAmountNum = Number(amount);
@@ -198,7 +200,7 @@ export default function DonationsPage() {
 
       await api.post(`/donations/manual`, payload);
 
-      toast.success("Donation recorded successfully.");
+      toast.success(t("Donation recorded successfully."));
       setRecordOpen(false);
       setReload((k) => k + 1);
       // reset form
@@ -231,28 +233,28 @@ export default function DonationsPage() {
   return (
     <div data-testid="donations-page">
       <PageHeader
-        title="Donations Management"
-        subtitle="Verify offline donations, manage campaigns and issue 80G receipts to donors."
+        title={t("Donations Management")}
+        subtitle={t("Verify offline donations, manage campaigns and issue 80G receipts to donors.")}
         actions={
           canDo("DONATIONS", "CREATE") && (
             <Button onClick={() => setRecordOpen(true)} data-testid="donations-new-btn" className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Plus className="h-4 w-4 mr-2" /> Record Donation
+              <Plus className="h-4 w-4 mr-2" /> {t("Record Donation")}
             </Button>
           )
         }
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-        <StatCard label="Total Donations" value={formatCurrency(totals.total)} delta={`${totals.count} donations`} icon={HeartHandshake} tone="green" />
-        <StatCard label="Verified" value={formatCurrency(totals.verified)} delta="Receipt issued" icon={ShieldCheck} tone="green" />
-        <StatCard label="Pending" value={formatCurrency(totals.pending)} delta="Needs verification" icon={Clock} tone="orange" />
-        <StatCard label="Total Donors" value={totals.count} delta="This period" icon={TrendingUp} tone="purple" />
+        <StatCard label={t("Total Donations")} value={formatCurrency(totals.total)} delta={`${totals.count} donations`} icon={HeartHandshake} tone="green" />
+        <StatCard label={t("Verified")} value={formatCurrency(totals.verified)} delta={t("Receipt issued")} icon={ShieldCheck} tone="green" />
+        <StatCard label={t("Pending")} value={formatCurrency(totals.pending)} delta={t("Needs verification")} icon={Clock} tone="orange" />
+        <StatCard label={t("Total Donors")} value={totals.count} delta={t("This period")} icon={TrendingUp} tone="purple" />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
         <Card className="xl:col-span-2 p-5 rounded-xl border-border bg-white shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading text-base font-semibold">Recent Donations</h2>
+            <h2 className="font-heading text-base font-semibold">{t("Recent Donations")}</h2>
             <div className="flex gap-2 items-center flex-wrap">
               <Tabs value={status} onValueChange={setStatus}>
                 <TabsList>
@@ -263,24 +265,24 @@ export default function DonationsPage() {
               </Tabs>
               <div className="relative w-40">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Search…" className="pl-8 h-8 text-xs" />
+                <Input value={q} onChange={(e)=>setQ(e.target.value)} placeholder={t("Search…")} className="pl-8 h-8 text-xs" />
               </div>
             </div>
           </div>
           {loading ? (
             <div className="space-y-2">{[1,2,3,4,5].map(i=><Skeleton key={i} className="h-14" />)}</div>
           ) : filtered.length === 0 ? (
-            <EmptyState title="No donations yet" description="Recorded donations will appear here for verification." icon={HeartHandshake} className="border-0" />
+            <EmptyState title={t("No donations yet")} description={t("Recorded donations will appear here for verification.")} icon={HeartHandshake} className="border-0" />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[560px]">
                 <thead>
                   <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="text-left font-semibold py-2">Donor</th>
-                    <th className="text-left font-semibold">Flow</th>
-                    <th className="text-right font-semibold">Amount</th>
-                    <th className="text-center font-semibold">Status</th>
-                    <th className="text-right font-semibold">Actions</th>
+                    <th className="text-left font-semibold py-2">{t("Donor")}</th>
+                    <th className="text-left font-semibold">{t("Flow")}</th>
+                    <th className="text-right font-semibold">{t("Amount")}</th>
+                    <th className="text-center font-semibold">{t("Status")}</th>
+                    <th className="text-right font-semibold">{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -325,7 +327,7 @@ export default function DonationsPage() {
 
         <Card className="p-5 rounded-xl border-border bg-white shadow-sm">
           <div className="mb-2">
-            <div className="text-xs text-muted-foreground">Total Collection</div>
+            <div className="text-xs text-muted-foreground">{t("Total Collection")}</div>
             <div className="flex items-baseline gap-3 mt-1">
               <div className="font-heading font-bold text-2xl text-foreground font-mono-num">{formatCurrency(totals.total)}</div>
             </div>
@@ -348,15 +350,15 @@ export default function DonationsPage() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-muted-foreground">No trend data yet</div>
+              <div className="h-full flex items-center justify-center text-xs text-muted-foreground">{t("No trend data yet")}</div>
             )}
           </div>
           <div className="mt-4 pt-4 border-t border-border">
-            <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">Quick Split</div>
+            <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">{t("Quick Split")}</div>
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between"><span>Verified</span><span className="font-mono-num font-semibold text-emerald-700">{formatCurrency(totals.verified)}</span></div>
-              <div className="flex justify-between"><span>Pending</span><span className="font-mono-num font-semibold text-amber-700">{formatCurrency(totals.pending)}</span></div>
-              <div className="flex justify-between border-t border-border pt-2"><span className="font-semibold">Total</span><span className="font-mono-num font-bold">{formatCurrency(totals.total)}</span></div>
+              <div className="flex justify-between"><span>{t("Verified")}</span><span className="font-mono-num font-semibold text-emerald-700">{formatCurrency(totals.verified)}</span></div>
+              <div className="flex justify-between"><span>{t("Pending")}</span><span className="font-mono-num font-semibold text-amber-700">{formatCurrency(totals.pending)}</span></div>
+              <div className="flex justify-between border-t border-border pt-2"><span className="font-semibold">{t("Total")}</span><span className="font-mono-num font-bold">{formatCurrency(totals.total)}</span></div>
             </div>
           </div>
         </Card>
@@ -367,19 +369,19 @@ export default function DonationsPage() {
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <HeartHandshake className="h-5 w-5 text-orange-600" /> Record Manual Donation
+              <HeartHandshake className="h-5 w-5 text-orange-600" /> {t("Record Manual Donation")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleRecordSubmit} className="space-y-4 pt-2">
             {isSuperAdmin && (
               <div>
-                <Label className="text-xs">Select Temple / Organization *</Label>
+                <Label className="text-xs">{t("Select Temple / Organization *")}</Label>
                 <SearchableSelect
                   value={targetOrgId}
                   onValueChange={setTargetOrgId}
                   options={orgsList.map((o) => ({ value: o.id, label: `${o.name} (${o.city})` }))}
-                  placeholder="Choose temple…"
-                  searchPlaceholder="Search temple…"
+                  placeholder={t("Choose temple…")}
+                  searchPlaceholder={t("Search temple…")}
                   className="mt-1"
                 />
               </div>
@@ -387,16 +389,16 @@ export default function DonationsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Amount (INR) *</Label>
-                <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 5000" min={1} required />
+                <Label className="text-xs">{t("Amount (INR) *")}</Label>
+                <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("e.g. 5000")} min={1} required />
               </div>
               <div>
-                <Label className="text-xs">Tx Ref / Receipt Number (Optional)</Label>
-                <Input value={txRef} onChange={(e) => setTxRef(e.target.value)} placeholder="e.g. UPI txn ref or cash no." />
+                <Label className="text-xs">{t("Tx Ref / Receipt Number (Optional)")}</Label>
+                <Input value={txRef} onChange={(e) => setTxRef(e.target.value)} placeholder={t("e.g. UPI txn ref or cash no.")} />
               </div>
               <div className="col-span-2">
-                <Label className="text-xs">Donor Member ID (Optional)</Label>
-                <Input value={donorId} onChange={(e) => setDonorId(e.target.value)} placeholder="e.g. JFJM101 (leave blank for guest/anon)" />
+                <Label className="text-xs">{t("Donor Member ID (Optional)")}</Label>
+                <Input value={donorId} onChange={(e) => setDonorId(e.target.value)} placeholder={t("e.g. JFJM101 (leave blank for guest/anon)")} />
               </div>
             </div>
 
@@ -404,9 +406,9 @@ export default function DonationsPage() {
             {categories.length > 0 && (
               <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-3.5 space-y-3">
                 <div className="flex justify-between items-center">
-                  <div className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Category Allocation</div>
+                  <div className="text-xs font-semibold text-orange-700 uppercase tracking-wide">{t("Category Allocation")}</div>
                   <Button type="button" variant="link" size="sm" onClick={autoSplitEvenly} className="text-xs h-auto p-0 text-orange-600 font-semibold">
-                    Split Evenly
+                    {t("Split Evenly")}
                   </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5 max-h-48 overflow-y-auto pr-1">
@@ -423,18 +425,18 @@ export default function DonationsPage() {
 
             {/* Payment Proof File */}
             <div>
-              <Label className="text-xs">Payment Proof Receipt (Optional)</Label>
+              <Label className="text-xs">{t("Payment Proof Receipt (Optional)")}</Label>
               <div className="flex items-center gap-3 mt-1.5">
                 <div className="h-16 w-16 rounded-lg bg-slate-100 border flex items-center justify-center overflow-hidden">
                   {proofPreview ? (
-                    <img src={proofPreview} alt="preview" className="h-full w-full object-cover" />
+                    <img src={proofPreview} alt={t("preview")} className="h-full w-full object-cover" />
                   ) : (
                     <Camera className="h-6 w-6 text-slate-400" />
                   )}
                 </div>
                 <div>
                   <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="h-8">
-                    Select Image/Receipt
+                    {t("Select Image/Receipt")}
                   </Button>
                   <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden"
                     onChange={(e) => {
@@ -444,15 +446,15 @@ export default function DonationsPage() {
                         setProofPreview(URL.createObjectURL(f));
                       }
                     }} />
-                  <div className="text-[10px] text-slate-400 mt-1">Image or PDF. Max 10 MB</div>
+                  <div className="text-[10px] text-slate-400 mt-1">{t("Image or PDF. Max 10 MB")}</div>
                 </div>
               </div>
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setRecordOpen(false)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => setRecordOpen(false)}>{t("Cancel")}</Button>
               <Button type="submit" disabled={submitting} className="bg-orange-600 hover:bg-orange-700 text-white">
-                {submitting ? "Submitting…" : "Record Donation"}
+                {submitting ? t("Submitting…") : t("Record Donation")}
               </Button>
             </DialogFooter>
           </form>
@@ -464,38 +466,38 @@ export default function DonationsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-orange-600" /> Donation Details
+              <Info className="h-5 w-5 text-orange-600" /> {t("Donation Details")}
             </DialogTitle>
           </DialogHeader>
           {selectedDonation && (
             <div className="space-y-4 pt-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">ID</div>
+                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">{t("ID")}</div>
                   <div className="font-mono mt-0.5">{selectedDonation.publicId || "—"}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">Status</div>
+                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">{t("Status")}</div>
                   <Badge className={`text-xs mt-0.5 ${STATUS_TONE[selectedDonation.status] || "bg-amber-100"}`}>
                     {selectedDonation.status || "PENDING"}
                   </Badge>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">Amount</div>
+                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">{t("Amount")}</div>
                   <div className="font-bold text-emerald-700 mt-0.5">
                     {formatCurrency(selectedDonation.totalAmount || selectedDonation.amount || 0, selectedDonation.currency)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">Flow Type</div>
+                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">{t("Flow Type")}</div>
                   <div className="mt-0.5">{selectedDonation.flowType || "ORG_MANUAL"}</div>
                 </div>
                 <div className="col-span-2">
-                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">Donor</div>
+                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">{t("Donor")}</div>
                   <div className="mt-0.5 font-medium">{selectedDonation.donor?.fullName || selectedDonation.donorName || "Anonymous"}</div>
                 </div>
                 <div className="col-span-2">
-                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">Tx Reference</div>
+                  <div className="text-[10px] uppercase font-semibold text-muted-foreground">{t("Tx Reference")}</div>
                   <div className="mt-0.5 font-mono">{selectedDonation.transactionReference || "—"}</div>
                 </div>
               </div>
@@ -503,7 +505,7 @@ export default function DonationsPage() {
               {/* Splits */}
               {selectedDonation.categorySplits?.length > 0 && (
                 <div className="border-t border-slate-100 pt-3">
-                  <div className="text-[11px] uppercase font-bold text-slate-500 mb-2">Category Splits</div>
+                  <div className="text-[11px] uppercase font-bold text-slate-500 mb-2">{t("Category Splits")}</div>
                   <div className="space-y-1 bg-slate-50 p-3 rounded-lg text-xs">
                     {selectedDonation.categorySplits.map((s, idx) => (
                       <div key={idx} className="flex justify-between">
@@ -521,7 +523,7 @@ export default function DonationsPage() {
                   <a href={selectedDonation.proofUrl.startsWith("http") ? selectedDonation.proofUrl : `${STATIC_URL}${selectedDonation.proofUrl}`}
                     target="_blank" rel="noreferrer" className="flex-1">
                     <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
-                      View Proof <ExternalLink className="h-3 w-3" />
+                      {t("View Proof")} <ExternalLink className="h-3 w-3" />
                     </Button>
                   </a>
                 )}
@@ -529,7 +531,7 @@ export default function DonationsPage() {
                   <a href={selectedDonation.receipt.pdfUrl.startsWith("http") ? selectedDonation.receipt.pdfUrl : `${STATIC_URL}${selectedDonation.receipt.pdfUrl}`}
                     target="_blank" rel="noreferrer" className="flex-1">
                     <Button variant="outline" size="sm" className="w-full gap-1 text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
-                      Download Receipt <ExternalLink className="h-3 w-3" />
+                      {t("Download Receipt")} <ExternalLink className="h-3 w-3" />
                     </Button>
                   </a>
                 )}
