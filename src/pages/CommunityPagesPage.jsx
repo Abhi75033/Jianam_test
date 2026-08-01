@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const GEO_VISIBILITY_OPTIONS = ["Global", "Country", "State", "District", "City", "Area"];
@@ -1385,10 +1386,12 @@ export default function CommunityPagesPage() {
                     {/* Save, Suspend/Reactivate & Delete */}
                     <div className="flex flex-wrap justify-between items-center gap-2 pt-3 border-t">
                       <div className="flex flex-wrap gap-2">
-                        <Button onClick={deletePage} variant="outline"
-                          className="border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs">
-                          <Trash2 className="h-4 w-4 mr-1.5" /> {t("Delete Page (Permanently)")}
-                        </Button>
+                        <PermissionGate action="DELETE">
+                          <Button onClick={deletePage} variant="outline"
+                            className="border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs">
+                            <Trash2 className="h-4 w-4 mr-1.5" /> {t("Delete Page (Permanently)")}
+                          </Button>
+                        </PermissionGate>
                         {detailPage?.subscriptionStatus === "SUSPENDED" || detailPage?.subscriptionStatus === "EXPIRED" ? (
                           <Button onClick={() => toggleSuspendStatus("ACTIVE")}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">
@@ -1604,7 +1607,8 @@ export default function CommunityPagesPage() {
             <Button variant="outline" onClick={() => setShowPaidEventWarn(false)}>{t("Close")}</Button>
             <Button onClick={async () => {
               try {
-                await api.post("/tickets-support", {
+                await api.post("/support-tickets/", {
+                  title: `Paid Event Request - ${detailPage?.name}`,
                   subject: `Paid Event Request - ${detailPage?.name}`,
                   category: "COMMUNITY_PAGE_PAID_EVENT",
                   description: `Page ${detailPage?.name} (${detailPage?.publicId}) requests a Paid Event setup.`,

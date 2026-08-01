@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 export default function ChaturmasPage() {
   const { t } = useLanguage();
@@ -142,7 +143,9 @@ export default function ChaturmasPage() {
       key: "actions", header: "", render: (r) => (
         <div className="flex gap-2">
           <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
-          <Button size="icon" variant="ghost" className="text-red-500" onClick={() => handleDelete(r)}><Trash2 className="h-4 w-4" /></Button>
+          <PermissionGate action="DELETE">
+            <Button size="icon" variant="ghost" className="text-red-500" onClick={() => handleDelete(r)}><Trash2 className="h-4 w-4" /></Button>
+          </PermissionGate>
         </div>
       )
     }

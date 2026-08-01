@@ -22,6 +22,7 @@ import {
 import TimePicker, { TimeRangePicker } from "@/components/common/TimePicker";
 import MemberLinkSelect from "@/components/common/MemberLinkSelect";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 const FACILITY_OPTIONS = [
   "Parking", "CCTV", "Lift", "AC", "Cafeteria", "Medical", "Library", "Ramp", "Wheelchair Access",
@@ -106,14 +107,45 @@ const MemberSelect = ({ label, value, onChange, placeholder = "Select Member..."
   );
 };
 
-export default function OrgListPage({
-  endpoint,
-  entity,
-  label,
-  pluralLabel,
-  moduleKey,
-  testId,
-}) {
+export default function OrgListPage(props) {
+  const typeKey = (props.defaultType || props.entity || "TEMPLE").toUpperCase();
+  let endpoint = props.endpoint;
+  let entity = props.entity;
+  let label = props.label;
+  let pluralLabel = props.pluralLabel;
+  let moduleKey = props.moduleKey;
+  let testId = props.testId;
+
+  if (typeKey === "JAIN_CENTER" || typeKey === "JAIN-CENTER" || typeKey === "JAIN_CENTRE") {
+    endpoint = endpoint || "/jain-centers";
+    entity = entity || "jain-center";
+    label = label || "Jain Centre";
+    pluralLabel = pluralLabel || "Jain Centres";
+    moduleKey = moduleKey || "JAIN_CENTERS";
+    testId = testId || "jain-center-list-page";
+  } else if (typeKey === "DHARAMSHALA") {
+    endpoint = endpoint || "/dharamshalas";
+    entity = entity || "dharamshala";
+    label = label || "Dharamshala";
+    pluralLabel = pluralLabel || "Dharamshalas";
+    moduleKey = moduleKey || "DHARAMSHALAS";
+    testId = testId || "dharamshala-list-page";
+  } else if (typeKey === "STHANAK" || typeKey === "STANAK") {
+    endpoint = endpoint || "/stanaks";
+    entity = entity || "sthanak";
+    label = label || "Sthanak";
+    pluralLabel = pluralLabel || "Sthanaks";
+    moduleKey = moduleKey || "STHANAKS";
+    testId = testId || "sthanak-list-page";
+  } else {
+    endpoint = endpoint || "/temples";
+    entity = entity || "temple";
+    label = label || "Temple";
+    pluralLabel = pluralLabel || "Temples";
+    moduleKey = moduleKey || "TEMPLES";
+    testId = testId || "temple-list-page";
+  }
+
   const { canDo, isSuperAdmin } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -500,7 +532,7 @@ export default function OrgListPage({
     <div data-testid={testId} className="space-y-4">
       <PageHeader
         title={pluralLabel}
-        subtitle={`Centralized directory of all ${pluralLabel.toLowerCase()} managed across the network platform.`}
+        subtitle={`Centralized directory of all ${(pluralLabel || "organizations").toLowerCase()} managed across the network platform.`}
         actions={
           isSuperAdmin && (
             <Dialog open={open} onOpenChange={setOpen}>
@@ -815,9 +847,11 @@ export default function OrgListPage({
 
                             {(form.buildings || []).map((b, bIdx) => (
                               <div key={b.id || bIdx} className="border p-4 rounded-xl bg-white space-y-3 relative shadow-sm">
-                                <button type="button" onClick={() => removeBuilding(b.id)} className="absolute top-3 right-3 text-red-500 hover:text-red-700">
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
+                                <PermissionGate action="DELETE">
+                                  <button type="button" onClick={() => removeBuilding(b.id)} className="absolute top-3 right-3 text-red-500 hover:text-red-700">
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </PermissionGate>
                                 
                                 <div className="grid grid-cols-2 gap-3 pr-8">
                                   <div>
@@ -1770,7 +1804,7 @@ export default function OrgListPage({
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder={t("action.search", `Search ${pluralLabel.toLowerCase()}…`)}
+            placeholder={t("action.search", `Search ${(pluralLabel || "organizations").toLowerCase()}…`)}
             className="pl-9 bg-white"
             data-testid={`${testId}-search`}
           />
@@ -1782,11 +1816,15 @@ export default function OrgListPage({
         rows={filtered}
         loading={loading}
         testId={`${testId}-table`}
-        onRowClick={(r) => navigate(`/${entity}s/${r.id || r.publicId}`)}
-        emptyTitle={`No ${pluralLabel.toLowerCase()} yet`}
+        onRowClick={(r) => {
+          const folder = entity === "jain-center" ? "jain-centers" : entity === "sthanak" ? "stanaks" : `${entity}s`;
+          const targetId = r.id || r.publicId;
+          navigate(`/admin/${folder}/${targetId}`);
+        }}
+        emptyTitle={`No ${(pluralLabel || "organizations").toLowerCase()} yet`}
         emptyDescription={
           canDo(moduleKey, "CREATE") || isSuperAdmin
-            ? `Add your first ${label.toLowerCase()} to begin managing it.`
+            ? `Add your first ${(label || "organization").toLowerCase()} to begin managing it.`
             : t("No records available.")
         }
       />

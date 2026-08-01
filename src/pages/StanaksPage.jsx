@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 // Community options — FIXED per Stanak document spec
 const COMMUNITY_OPTIONS = [
@@ -254,9 +255,11 @@ export default function StanaksPage() {
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(item)}>
                         <Edit2 className="w-3.5 h-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50" onClick={() => setDeleteTarget(item)}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      <PermissionGate action="DELETE">
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50" onClick={() => setDeleteTarget(item)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </PermissionGate>
                     </>
                   )}
                 </div>

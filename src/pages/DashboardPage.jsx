@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, extractErrorMessage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import PersonalizedDashboard from "@/components/dashboard/PersonalizedDashboard";
 
 // Rich mock data used to demonstrate the design at full fidelity.
 // Real data will drop-in from the backend calls below.
@@ -152,11 +153,16 @@ function SendReminderDialog({ open, onClose }) {
 function SectionCard({ number, title, viewAll, viewAllTo, children, testId, className = "" }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { isSuperAdmin } = useAuth();
+  // Section numbers only make sense when the full set renders. Once panels are
+  // gated by tab access a delegated admin would see e.g. a lone "9.", so the
+  // numbering is dropped for them.
+  const showNumber = isSuperAdmin && number;
   return (
     <Card className={`p-5 rounded-xl border-border bg-white ${className}`} data-testid={testId}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-heading text-base md:text-lg font-semibold text-foreground">
-          <span className="text-primary">{number}.</span> {title}
+          {showNumber && <span className="text-primary">{number}.</span>} {title}
         </h2>
         {viewAll && (
           <button
@@ -197,9 +203,36 @@ const ORG_TYPES = [
 ];
 
 export default function DashboardPage() {
-  const { user, isSuperAdmin } = useAuth();
+  const {
+    user, isSuperAdmin, canDo, allowedModules,
+    organizationIds, hasNoOrgScope, isGlobalScope,
+  } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+
+  /**
+   * Personalised dashboard: a panel renders only when the account holds the tab
+   * behind it. An admin granted Temple only sees temple-related panels — no
+   * donations ledger, no yatra groups, no volunteer roster.
+   */
+  const shows = useCallback(
+    (moduleKey) => canDo(moduleKey, "VIEW"),
+    [canDo]
+  );
+
+  /** The organisations this account is actually assigned to manage. */
+  const [myOrgs, setMyOrgs] = useState([]);
+  const [loadingMyOrgs, setLoadingMyOrgs] = useState(false);
+
+  /** Shortcuts, narrowed to the tabs this account holds. Hidden when empty. */
+  const quickActions = [
+    { icon: CalendarPlus,   labelKey: "dashboard.addNewBooking",    label: "Add New Booking",  tone: "green",  to: "/bookings",      module: "BOOKINGS" },
+    { icon: HeartHandshake, labelKey: "dashboard.addDonation",      label: "Add Donation",     tone: "orange", to: "/donations",     module: "DONATIONS" },
+    { icon: Megaphone,      labelKey: "dashboard.sendAnnouncement", label: "Send Announcement",tone: "purple", to: "/announcements", module: "ANNOUNCEMENTS" },
+    { icon: Sun,            labelKey: "dashboard.addEvent",         label: "Add Event",        tone: "blue",   to: "/events",        module: "EVENTS" },
+    { icon: Landmark,       labelKey: "dashboard.bookDoliService",  label: "Book Doli Service",tone: "orange", to: "/bookings",      module: "BOOKINGS" },
+    { icon: BarChart3,      labelKey: "dashboard.viewReports",      label: "View Reports",     tone: "purple", to: "/reports",       module: "REPORTS" },
+  ].filter((q) => shows(q.module));
   const [orgs, setOrgs] = useState([]);
   const [orgId, setOrgId] = useState(user?.organizationIds?.[0] || "");
   const [selectedType, setSelectedType] = useState("TEMPLE");
@@ -319,37 +352,85 @@ export default function DashboardPage() {
       .then((res) => setData(res.data?.data || null))
       .catch(() => { });
 
-    // Fetch dynamic monks
-    api.get("/monks").then((res) => {
-      setMonksList(res.data?.data || []);
-    }).catch(() => { });
+    // Only fetch what this account's tabs actually cover. A temple-only admin
+    // shouldn't be issuing donation or tour requests it has no right to read.
+    if (shows("TRACKING") || shows("MONKS")) {
+      api.get("/monks").then((res) => {
+        setMonksList(res.data?.data || []);
+      }).catch(() => { });
+    }
 
-    // Fetch dynamic tours
-    api.get("/tours").then((res) => {
-      setToursList(res.data?.data || []);
-    }).catch(() => { });
+    if (shows("TOURS")) {
+      api.get("/tours").then((res) => {
+        setToursList(res.data?.data || []);
+      }).catch(() => { });
+    }
 
-    // Fetch dynamic events
-    api.get("/events").then((res) => {
-      setEventsList(res.data?.data || []);
-    }).catch(() => { });
+    if (shows("EVENTS")) {
+      api.get("/events").then((res) => {
+        setEventsList(res.data?.data || []);
+      }).catch(() => { });
+    }
 
-    // Fetch dynamic volunteers
-    api.get("/volunteers").then((res) => {
-      setVolunteersList(res.data?.data || []);
-    }).catch(() => { });
+    if (shows("VOLUNTEERS")) {
+      api.get("/volunteers").then((res) => {
+        setVolunteersList(res.data?.data || []);
+      }).catch(() => { });
+    }
 
-    // Fetch dynamic announcements
-    api.get("/announcements").then((res) => {
-      setAnnouncementsList(res.data?.data || []);
-    }).catch(() => { });
+    if (shows("ANNOUNCEMENTS") || shows("NEWS")) {
+      api.get("/announcements").then((res) => {
+        setAnnouncementsList(res.data?.data || []);
+      }).catch(() => { });
+    }
 
-    // Fetch dynamic donations
-    api.get("/donations").then((res) => {
-      setDonationsList(res.data?.data || []);
-    }).catch(() => { });
+    if (shows("DONATIONS")) {
+      api.get("/donations").then((res) => {
+        setDonationsList(res.data?.data || []);
+      }).catch(() => { });
+    }
 
-  }, [orgId, reloadKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId, reloadKey, allowedModules]);
+
+  /**
+   * Load the organisations assigned to this admin, limited to the org types
+   * their tabs cover. A temple-only admin resolves temples and nothing else.
+   */
+  useEffect(() => {
+    if (isSuperAdmin || organizationIds.length === 0) { setMyOrgs([]); return; }
+
+    const sources = [
+      { module: "TEMPLES", prefix: "/temples", label: "Temple", route: "/admin/temples" },
+      { module: "JAIN_CENTERS", prefix: "/jain-centers", label: "Jain Centre", route: "/admin/jain-centers" },
+      { module: "DHARAMSHALAS", prefix: "/dharamshalas", label: "Dharamshala", route: "/admin/dharamshalas" },
+    ].filter((s) => canDo(s.module, "VIEW"));
+
+    if (sources.length === 0) { setMyOrgs([]); return; }
+
+    let cancelled = false;
+    setLoadingMyOrgs(true);
+    Promise.all(
+      sources.flatMap((s) =>
+        organizationIds.map((oid) =>
+          api.get(`${s.prefix}/${oid}`)
+            .then((r) => {
+              const o = r.data?.data;
+              return o ? { ...o, _label: s.label, _route: `${s.route}/${o.id || oid}`, _module: s.module } : null;
+            })
+            .catch(() => null)
+        )
+      )
+    )
+      .then((rows) => {
+        if (cancelled) return;
+        setMyOrgs(rows.filter(Boolean));
+      })
+      .finally(() => { if (!cancelled) setLoadingMyOrgs(false); });
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuperAdmin, organizationIds, allowedModules, reloadKey]);
 
   // Real-time dashboard stat updates
   const { connected: liveConnected, socket } = useSocket("/dashboards", {
@@ -562,8 +643,12 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
+          {/* Delegated admins get a workspace built from their own tabs and
+              assigned organisations, instead of the platform-wide panel set. */}
+          {!isSuperAdmin && <PersonalizedDashboard orgs={myOrgs} loading={loadingMyOrgs} />}
+
           {/* Temple header banner */}
-          <div className="mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className={`mb-4 md:mb-6 flex-col md:flex-row md:items-center md:justify-between gap-3 ${isSuperAdmin ? "flex" : "hidden"}`}>
             <div className="flex items-center gap-3 md:gap-4 min-w-0">
               <div className="h-12 w-12 md:h-14 md:w-14 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md shrink-0">
                 <Landmark className="h-6 w-6 md:h-7 md:w-7 text-white" strokeWidth={2.2} />
@@ -637,17 +722,69 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Metric stats row */}
+          {/* A scoped admin with no organisation mapped can't manage anything —
+              say so instead of rendering an empty dashboard. */}
+          {hasNoOrgScope && (
+            <Card className="p-4 mb-4 md:mb-6 rounded-xl border border-amber-200 bg-amber-50 flex items-start gap-3">
+              <Landmark className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-amber-900">
+                <div className="font-bold">{t("No organisation assigned to your account")}</div>
+                <div className="mt-0.5">
+                  {t("Ask your Super Admin to map you to a temple, Jain centre or dharamshala. Until then you can view your tabs but not manage any records.")}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Assigned organisations — the records this admin may actually edit */}
+          {!isSuperAdmin && myOrgs.length > 0 && (
+            <SectionCard number="•" title={t("My Assigned Organisations")} testId="section-my-orgs" className="mb-4 md:mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {myOrgs.map((o) => (
+                  <div key={`${o._module}-${o.id}`} className="p-3 rounded-xl border border-border bg-white flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-[10px] uppercase tracking-wider font-bold text-slate-400">{o._label}</div>
+                      <div className="text-sm font-bold text-slate-800 truncate">{o.name}</div>
+                      <div className="text-[11px] text-slate-500 truncate">
+                        {[o.city, o.state].filter(Boolean).join(", ") || o.publicId}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-[11px] font-bold shrink-0"
+                      onClick={() => navigate(o._route)}
+                    >
+                      {canDo(o._module, "EDIT") ? t("Manage") : t("View")}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+
+          {/* Metric stats row — each tile follows its module */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 md:mb-6">
-            <StatCard label={t("dashboard.todaysVisitors", "Today's Visitors")} value={(stats.todaysVisitors ?? 0).toLocaleString()} delta={t("Devotees checked-in")} icon={Users} tone="green" testId="stat-visitors" />
-            <StatCard label={t("dashboard.bhojanshalaMeals", "Bhojanshala Meals")} value={(stats.bhojanshalaMeals ?? 0).toLocaleString()} delta={t("Meals served today")} icon={UtensilsCrossed} tone="orange" testId="stat-meals" />
-            <StatCard label={t("dashboard.activeVolunteers", "Active Volunteers")} value={(stats.activeVolunteers ?? 0).toLocaleString()} delta={t("On-duty volunteers")} icon={HandHeart} tone="blue" testId="stat-volunteers" />
-            <StatCard label={t("dashboard.roomOccupancy", "Room Occupancy")} value={`${stats.occupiedRooms ?? 0}`} delta={t("Occupied / 200 Rooms")} icon={BedDouble} tone="purple" testId="stat-rooms" />
-            <StatCard label={t("dashboard.donationsToday", "Donations Today")} value={formatCurrency(stats.totalDonations ?? 0)} delta={t("{0} transaction logs", [stats.donationCount ?? 0])} icon={HeartHandshake} tone="green" testId="stat-donations" />
+            {shows("VISITORS") && (
+              <StatCard label={t("dashboard.todaysVisitors", "Today's Visitors")} value={(stats.todaysVisitors ?? 0).toLocaleString()} delta={t("Devotees checked-in")} icon={Users} tone="green" testId="stat-visitors" />
+            )}
+            {shows("DHARAMSHALAS") && (
+              <StatCard label={t("dashboard.bhojanshalaMeals", "Bhojanshala Meals")} value={(stats.bhojanshalaMeals ?? 0).toLocaleString()} delta={t("Meals served today")} icon={UtensilsCrossed} tone="orange" testId="stat-meals" />
+            )}
+            {shows("VOLUNTEERS") && (
+              <StatCard label={t("dashboard.activeVolunteers", "Active Volunteers")} value={(stats.activeVolunteers ?? 0).toLocaleString()} delta={t("On-duty volunteers")} icon={HandHeart} tone="blue" testId="stat-volunteers" />
+            )}
+            {shows("BOOKINGS") && (
+              <StatCard label={t("dashboard.roomOccupancy", "Room Occupancy")} value={`${stats.occupiedRooms ?? 0}`} delta={t("Occupied / 200 Rooms")} icon={BedDouble} tone="purple" testId="stat-rooms" />
+            )}
+            {shows("DONATIONS") && (
+              <StatCard label={t("dashboard.donationsToday", "Donations Today")} value={formatCurrency(stats.totalDonations ?? 0)} delta={t("{0} transaction logs", [stats.donationCount ?? 0])} icon={HeartHandshake} tone="green" testId="stat-donations" />
+            )}
           </div>
 
           {/* Row 1: Monk arrivals · Room status · 99 Yatra */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            {(shows("TRACKING") || shows("MONKS")) && (
             <SectionCard number="1" title={t("dashboard.monkArrivalTracking", "Monk Arrival & Tracking")} viewAll viewAllTo="/tracking" testId="section-monks">
               <div className="space-y-3">
                 {activeMonks.length === 0 ? (
@@ -680,7 +817,9 @@ export default function DashboardPage() {
                 )}
               </div>
             </SectionCard>
+            )}
 
+            {(shows("BOOKINGS")) && (
             <SectionCard number="2" title={t("dashboard.roomStatusInventory", "Room Status & Inventory")} viewAll viewAllTo="/bookings" testId="section-rooms">
               {(() => {
                 const roomStats = stats.roomStats || { available: 0, occupied: 0, cleaning: 0, total: 0, floors: [] };
@@ -728,7 +867,9 @@ export default function DashboardPage() {
                 );
               })()}
             </SectionCard>
+            )}
 
+            {(shows("TOURS")) && (
             <SectionCard number="3" title={t("dashboard.yatraGroupManagement", "99 Yatra Group Management")} viewAll viewAllTo="/tours" testId="section-yatra">
               {activeYatras.length === 0 ? (
                 <div className="text-center py-12 text-xs text-muted-foreground font-medium">
@@ -766,10 +907,12 @@ export default function DashboardPage() {
                 </div>
               )}
             </SectionCard>
+            )}
           </div>
 
           {/* Row 2: Bhojanshala · Events · Volunteers */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            {(shows("DHARAMSHALAS")) && (
             <SectionCard number="4" title={t("dashboard.bhojanshalaManagement", "Bhojanshala Management")} testId="section-bhojanshala">
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -789,7 +932,9 @@ export default function DashboardPage() {
                 ))}
               </div>
             </SectionCard>
+            )}
 
+            {(shows("EVENTS")) && (
             <SectionCard number="5" title={t("dashboard.eventManagement", "Event Management")} viewAll viewAllTo="/events" testId="section-events">
               <div className="space-y-3">
                 {activeEvents.length === 0 ? (
@@ -823,7 +968,9 @@ export default function DashboardPage() {
                 </Button>
               </div>
             </SectionCard>
+            )}
 
+            {(shows("VOLUNTEERS")) && (
             <SectionCard number="6" title={t("dashboard.volunteerAssignment", "Volunteer Assignment")} viewAll viewAllTo="/volunteers" testId="section-volunteers">
               {activeVolunteers.length === 0 ? (
                 <div className="text-center py-12 text-xs text-muted-foreground font-sans">
@@ -861,10 +1008,12 @@ export default function DashboardPage() {
                 </div>
               )}
             </SectionCard>
+            )}
           </div>
 
           {/* Row 3: Live Donations · Announcements · Quick Actions */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {(shows("DONATIONS")) && (
             <SectionCard number="7" title={t("dashboard.liveDonationsLedger", "Live Donations Ledger")} viewAll viewAllTo="/donations" testId="section-donations">
               <div className="flex justify-between items-center mb-3">
                 <div>
@@ -917,7 +1066,9 @@ export default function DashboardPage() {
                 )}
               </div>
             </SectionCard>
+            )}
 
+            {(shows("ANNOUNCEMENTS") || shows("NEWS")) && (
             <SectionCard number="8" title={t("dashboard.announcements", "Announcements")} viewAll viewAllTo="/announcements" testId="section-announcements">
               <div className="space-y-3">
                 {activeAnnouncements.length === 0 ? (
@@ -940,17 +1091,12 @@ export default function DashboardPage() {
                 )}
               </div>
             </SectionCard>
+            )}
 
+            {quickActions.length > 0 && (
             <SectionCard number="9" title={t("dashboard.quickActions", "Quick Actions")} testId="section-quick-actions">
               <div className="grid grid-cols-3 gap-3">
-                {[
-                  { icon: CalendarPlus, labelKey: "dashboard.addNewBooking", label: t("Add New Booking"), tone: "green", to: "/bookings" },
-                  { icon: HeartHandshake, labelKey: "dashboard.addDonation", label: t("Add Donation"), tone: "orange", to: "/donations" },
-                  { icon: Megaphone, labelKey: "dashboard.sendAnnouncement", label: t("Send Announcement"), tone: "purple", to: "/announcements" },
-                  { icon: Sun, labelKey: "dashboard.addEvent", label: t("Add Event"), tone: "blue", to: "/events" },
-                  { icon: Landmark, labelKey: "dashboard.bookDoliService", label: t("Book Doli Service"), tone: "orange", to: "/bookings" },
-                  { icon: BarChart3, labelKey: "dashboard.viewReports", label: t("View Reports"), tone: "purple", to: "/reports" },
-                ].map((q) => (
+                {quickActions.map((q) => (
                   <button
                     key={q.label}
                     onClick={() => navigate(q.to)}
@@ -965,6 +1111,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             </SectionCard>
+            )}
           </div>
         </>
       )}

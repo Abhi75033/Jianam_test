@@ -14,6 +14,7 @@ import { Users, TrendingUp, Trophy, LayoutGrid, Plus, RotateCcw, Sigma, Trash2 }
 import { toast } from "sonner";
 import { initials } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 const TILE_TONES = ["green", "orange", "purple", "red", "blue", "green", "orange", "purple"];
 
@@ -156,7 +157,9 @@ export default function CountersPage() {
                         <div className={`p-2.5 rounded-lg bg-orange-50 text-orange-600 h-10 w-10 flex items-center justify-center`}><Sigma className="h-5 w-5" /></div>
                         <div className="flex gap-1.5">
                           <button onClick={() => handleReset(c.id, c.name)} title={t("Reset counts")} className="text-slate-400 hover:text-orange-500 transition-colors p-1"><RotateCcw className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => handleDelete(c.id, c.name)} title={t("Delete counter type")} className="text-slate-400 hover:text-red-500 transition-colors p-1"><Trash2 className="h-3.5 w-3.5" /></button>
+                          <PermissionGate action="DELETE">
+                            <button onClick={() => handleDelete(c.id, c.name)} title={t("Delete counter type")} className="text-slate-400 hover:text-red-500 transition-colors p-1"><Trash2 className="h-3.5 w-3.5" /></button>
+                          </PermissionGate>
                         </div>
                       </div>
                       <div className="text-sm font-semibold text-slate-800">{c.name || "Counter"}</div>

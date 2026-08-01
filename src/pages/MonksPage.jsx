@@ -1211,9 +1211,11 @@ function RegisterMonkDialog({ onCreated }) {
                       <div className="space-y-3">
                         {(form.tapasya || []).map((tItem, idx) => (
                           <div key={idx} className="border p-4 rounded-xl bg-white space-y-3 relative shadow-sm">
-                            <button type="button" onClick={() => removeTapasya(idx)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            <PermissionGate action="DELETE">
+                              <button type="button" onClick={() => removeTapasya(idx)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </PermissionGate>
                             <div className="grid grid-cols-3 gap-3">
                               <div>
                                 <Label className="text-xs font-semibold">{t("Tapasya Name")}</Label>
@@ -1812,6 +1814,7 @@ function ExportButton() {
 }
 
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 /* ─── Main Page ────────────────────────────────────────────────── */
 export default function MonksPage() {

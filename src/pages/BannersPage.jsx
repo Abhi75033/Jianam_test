@@ -15,6 +15,7 @@ import {
 import { Image as BannerIcon, Plus, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 const EMPTY_FORM = { title: "", imageUrl: "", deviceType: "MOBILE", redirectUrl: "", displayOrder: "0" };
 
@@ -184,13 +185,15 @@ export default function BannersPage() {
           <Button size="sm" variant="ghost" onClick={() => openEdit(r)}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>
-          <Button
-            size="sm" variant="ghost"
-            disabled={deletingId === r.id}
-            onClick={() => handleDelete(r.id)}
-          >
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-          </Button>
+          <PermissionGate action="DELETE">
+            <Button
+              size="sm" variant="ghost"
+              disabled={deletingId === r.id}
+              onClick={() => handleDelete(r.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          </PermissionGate>
         </div>
       ),
     },

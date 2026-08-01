@@ -67,7 +67,7 @@ export const TONE_HEX = {
 export const FLAT_NAV = [
   { id: "sep-overview", isSeparator: true, label: "Overview" },
   { id: "sa-dashboard", label: "SA Dashboard", icon: LayoutDashboard, route: "/sa-dashboard", roles: ["SUPER_ADMIN"] },
-  { id: "a-dashboard", label: "A Dashboard", icon: LayoutDashboard, route: "/", roles: ["TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JAIN_CENTER_ADMIN", "MONK_ADMIN"] },
+  { id: "a-dashboard", label: "A Dashboard", icon: LayoutDashboard, route: "/a-dashboard", roles: ["TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JAIN_CENTER_ADMIN", "MONK_ADMIN"] },
 
   { id: "sep-orgs", isSeparator: true, label: "Organizations" },
   { id: "flat-temples", label: "Temple", icon: Landmark, route: "/temples" },
@@ -134,7 +134,7 @@ export const FLAT_NAV = [
 // --- NESTED STRUCTURE (Option 2) ---
 export const NESTED_NAV = [
   { id: "sa-dashboard", label: "SA Dashboard", icon: LayoutDashboard, route: "/sa-dashboard", roles: ["SUPER_ADMIN"] },
-  { id: "a-dashboard", label: "A Dashboard", icon: LayoutDashboard, route: "/", roles: ["TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JAIN_CENTER_ADMIN", "MONK_ADMIN"] },
+  { id: "a-dashboard", label: "A Dashboard", icon: LayoutDashboard, route: "/a-dashboard", roles: ["TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JAIN_CENTER_ADMIN", "MONK_ADMIN"] },
 
   {
     id: "group-people",
@@ -143,6 +143,7 @@ export const NESTED_NAV = [
     children: [
       {
         id: "folder-members",
+    module: "MEMBERS",
         label: "Members",
         icon: Users,
         children: [
@@ -158,6 +159,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-volunteers",
+    module: "VOLUNTEERS",
         label: "Volunteers",
         icon: HandshakeIcon,
         children: [
@@ -170,6 +172,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-ms",
+    module: "MONKS",
         label: "MS Management",
         icon: HandHeart,
         children: [
@@ -188,6 +191,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-staff",
+    module: "STAFF",
         label: "Staff",
         icon: Briefcase,
         children: [
@@ -202,6 +206,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-committee",
+    module: "STAFF",
         label: "Committee",
         icon: UsersRound,
         featureFlag: true,
@@ -221,33 +226,35 @@ export const NESTED_NAV = [
     children: [
       {
         id: "folder-temple",
+    module: "TEMPLES",
         label: "Temple",
         icon: Landmark,
         children: [
-          { id: "t-mgt", label: "Temple Management", route: "/temples" },
+          { id: "t-mgt", label: "Temple Management", route: "/admin/temples" },
           { id: "t-info", label: "Temple Information", route: "/coming-soon?module=Temple Information", featureFlag: true },
           { id: "t-fac", label: "Facilities", route: "/coming-soon?module=Temple Facilities", featureFlag: true },
-          { id: "t-gal", label: "Gallery", route: "/gallery" },
+          { id: "t-gal", label: "Gallery", route: "/admin/gallery" },
           { id: "t-com", label: "Committee", route: "/coming-soon?module=Temple Committee", featureFlag: true },
-          { id: "t-vol", label: "Volunteers", route: "/volunteers" },
+          { id: "t-vol", label: "Volunteers", route: "/admin/volunteers" },
           { id: "t-not", label: "Notices", route: "/coming-soon?module=Temple Notices", featureFlag: true },
           { id: "t-rev", label: "Reviews", route: "/coming-soon?module=Temple Reviews", featureFlag: true },
           { id: "t-dhaja", label: "Dhaja", route: "/coming-soon?module=Temple Dhaja", featureFlag: true },
-          { id: "t-chat", label: "Chaturmas", route: "/chaturmas" },
+          { id: "t-chat", label: "Chaturmas", route: "/admin/chaturmas" },
           { id: "t-social", label: "Social Links", route: "/coming-soon?module=Temple Social Links", featureFlag: true }
         ]
       },
       {
         id: "folder-jc",
+    module: "JAIN_CENTERS",
         label: "Jain Centre",
         icon: Building2,
         children: [
-          { id: "jc-mgt", label: "Jain Centre Management", route: "/jain-centers" },
+          { id: "jc-mgt", label: "Jain Centre Management", route: "/admin/jain-centers" },
           { id: "jc-info", label: "Centre Information", route: "/coming-soon?module=Centre Information", featureFlag: true },
           { id: "jc-fac", label: "Facilities", route: "/coming-soon?module=Jain Centre Facilities", featureFlag: true },
-          { id: "jc-gal", label: "Gallery", route: "/gallery" },
+          { id: "jc-gal", label: "Gallery", route: "/admin/gallery" },
           { id: "jc-com", label: "Committee", route: "/coming-soon?module=Jain Centre Committee", featureFlag: true },
-          { id: "jc-vol", label: "Volunteers", route: "/volunteers" },
+          { id: "jc-vol", label: "Volunteers", route: "/admin/volunteers" },
           { id: "jc-not", label: "Notices", route: "/coming-soon?module=Jain Centre Notices", featureFlag: true },
           { id: "jc-rev", label: "Reviews", route: "/coming-soon?module=Jain Centre Reviews", featureFlag: true },
           { id: "jc-social", label: "Social Links", route: "/coming-soon?module=Jain Centre Social Links", featureFlag: true }
@@ -255,10 +262,11 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-dharamshala",
+    module: "DHARAMSHALAS",
         label: "Dharamshala",
         icon: Hotel,
         children: [
-          { id: "d-mgt", label: "Dharamshala Management", route: "/dharamshalas" },
+          { id: "d-mgt", label: "Dharamshala Management", route: "/admin/dharamshalas" },
           { id: "d-build", label: "Buildings", route: "/coming-soon?module=Buildings", featureFlag: true },
           { id: "d-floor", label: "Floors", route: "/coming-soon?module=Floors", featureFlag: true },
           { id: "d-room", label: "Rooms", route: "/coming-soon?module=Dharamshala Rooms", featureFlag: true },
@@ -266,12 +274,13 @@ export const NESTED_NAV = [
           { id: "d-am", label: "Amenities", route: "/coming-soon?module=Amenities", featureFlag: true },
           { id: "d-pr", label: "Pricing", route: "/coming-soon?module=Room Pricing", featureFlag: true },
           { id: "d-fac", label: "Facilities", route: "/coming-soon?module=Dharamshala Facilities", featureFlag: true },
-          { id: "d-gal", label: "Gallery", route: "/gallery" },
+          { id: "d-gal", label: "Gallery", route: "/admin/gallery" },
           { id: "d-rule", label: "Rules", route: "/coming-soon?module=Dharamshala Rules", featureFlag: true }
         ]
       },
       {
         id: "folder-bhojanshala",
+    module: "DHARAMSHALAS",
         label: "Bhojanshala",
         icon: Sigma,
         children: [
@@ -283,6 +292,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-st",
+    module: "STHANAKS",
         label: "Sthanaks",
         icon: HomeIcon,
         children: [
@@ -291,6 +301,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-pages",
+    module: "COMMUNITY_PAGES",
         label: "Community Pages",
         icon: Globe,
         children: [
@@ -313,6 +324,7 @@ export const NESTED_NAV = [
     children: [
       {
         id: "folder-feed",
+    module: "FEED",
         label: "Feed",
         icon: Newspaper,
         children: [
@@ -326,6 +338,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-events",
+    module: "EVENTS",
         label: "Events",
         icon: PartyPopper,
         children: [
@@ -346,6 +359,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-news",
+    module: "NEWS",
         label: "News",
         icon: ScrollText,
         children: [
@@ -358,6 +372,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-ann",
+    module: "ANNOUNCEMENTS",
         label: "Announcements",
         icon: Megaphone,
         children: [
@@ -368,6 +383,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-polls",
+    module: "POLLS",
         label: "Polls",
         icon: BarChart3,
         children: [
@@ -378,6 +394,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-tours",
+    module: "TOURS",
         label: "Tours",
         icon: Route,
         children: [
@@ -389,6 +406,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-99",
+    module: "TOURS",
         label: "99 Management",
         icon: GitBranch,
         featureFlag: true,
@@ -401,6 +419,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-counter",
+    module: "COUNTERS",
         label: "Spiritual Counter",
         icon: Sigma,
         children: [
@@ -411,6 +430,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-tcalendar",
+    module: "CALENDAR",
         label: "Tithi Calendar",
         icon: Calendar,
         children: [
@@ -421,6 +441,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-notif",
+    module: "NOTIFICATIONS",
         label: "Notifications",
         icon: Bell,
         children: [
@@ -431,7 +452,8 @@ export const NESTED_NAV = [
           { id: "nt-hist", label: "Notification History", route: "/notifications" }
         ]
       },
-      { id: "folder-varshitap", label: "Varshitap Management", icon: Flame, route: "/coming-soon?module=Varshitap Management", featureFlag: true }
+      { id: "folder-varshitap",
+    module: "TOURS", label: "Varshitap Management", icon: Flame, route: "/coming-soon?module=Varshitap Management", featureFlag: true }
     ]
   },
 
@@ -442,6 +464,7 @@ export const NESTED_NAV = [
     children: [
       {
         id: "folder-bcat",
+    module: "BOOKINGS",
         label: "Booking Categories",
         icon: ClipboardList,
         children: [
@@ -452,6 +475,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-bres",
+    module: "BOOKINGS",
         label: "Booking Resources",
         icon: Landmark,
         children: [
@@ -465,6 +489,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-bmgt",
+    module: "BOOKINGS",
         label: "Booking Management",
         icon: CalendarCheck,
         children: [
@@ -479,6 +504,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-bprice",
+    module: "BOOKINGS",
         label: "Pricing & Availability",
         icon: Wallet,
         children: [
@@ -491,6 +517,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-bcal",
+    module: "BOOKINGS",
         label: "Calendar",
         icon: Calendar,
         children: [
@@ -500,6 +527,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-bcheck",
+    module: "BOOKINGS",
         label: "Check-In / Check-Out",
         icon: ScanLine,
         children: [
@@ -511,6 +539,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-brep",
+    module: "BOOKINGS",
         label: "Reports",
         icon: TrendingUp,
         children: [
@@ -530,6 +559,7 @@ export const NESTED_NAV = [
     children: [
       {
         id: "folder-fnd",
+    module: "DONATIONS",
         label: "Donations",
         icon: HeartHandshake,
         children: [
@@ -546,6 +576,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-fbank",
+    module: "DONATIONS",
         label: "Bank & Payment",
         icon: Wallet,
         children: [
@@ -558,6 +589,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-fsponsor",
+    module: "SPONSORS",
         label: "Sponsors",
         icon: Wallet,
         featureFlag: true,
@@ -571,6 +603,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-fads",
+    module: "SPONSORS",
         label: "Advertisements",
         icon: Megaphone,
         children: [
@@ -583,6 +616,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-foffers",
+    module: "OFFERS",
         label: "Offers & Benefits",
         icon: Tag,
         children: [
@@ -596,6 +630,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-freports",
+    module: "REPORTS",
         label: "Reports",
         icon: TrendingUp,
         children: [
@@ -616,6 +651,7 @@ export const NESTED_NAV = [
     children: [
       {
         id: "folder-opvis",
+    module: "VISITORS",
         label: "Visitor Management",
         icon: ScanLine,
         children: [
@@ -632,6 +668,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-optracking",
+    module: "TRACKING",
         label: "MS Tracking",
         icon: MapPin,
         children: [
@@ -646,6 +683,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-opstaff",
+    module: "STAFF",
         label: "Staff Operations",
         icon: Briefcase,
         children: [
@@ -659,6 +697,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-opdocs",
+    module: "STAFF",
         label: "Document Management",
         icon: BookOpen,
         children: [
@@ -671,6 +710,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-optasks",
+    module: "STAFF",
         label: "Task Management",
         icon: CheckSquare,
         featureFlag: true,
@@ -684,6 +724,7 @@ export const NESTED_NAV = [
       },
       {
         id: "folder-oprep",
+    module: "REPORTS",
         label: "Reports",
         icon: TrendingUp,
         children: [
@@ -698,6 +739,7 @@ export const NESTED_NAV = [
 
   {
     id: "group-reports",
+    module: "REPORTS",
     label: "Reports & Analytics",
     icon: TrendingUp,
     children: [
@@ -714,6 +756,7 @@ export const NESTED_NAV = [
 
   {
     id: "group-support",
+    module: "SUPPORT",
     label: "Support",
     icon: LifeBuoy,
     children: [
@@ -727,6 +770,7 @@ export const NESTED_NAV = [
 
   {
     id: "group-settings",
+    module: "SETTINGS",
     label: "Settings",
     icon: Settings,
     children: [

@@ -17,6 +17,7 @@ import { useOrgs } from "@/hooks/useOrgs";
 import { OrgSelect } from "@/components/common/OrgSelect";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 export default function GalleryPage() {
   const { t } = useLanguage();
@@ -117,9 +118,11 @@ export default function GalleryPage() {
                     <Upload className="h-3 w-3 mr-1" /> {t("Upload")}
                   </Button>
                   {isSuperAdmin && a.images?.[0] && (
-                    <Button size="sm" variant="outline" onClick={() => removeImage(a.images[0].id)} data-testid={`album-del-first-${a.id}`}>
-                      <Trash2 className="h-3 w-3 mr-1 text-destructive" /> {t("Delete first")}
-                    </Button>
+                    <PermissionGate action="DELETE">
+                      <Button size="sm" variant="outline" onClick={() => removeImage(a.images[0].id)} data-testid={`album-del-first-${a.id}`}>
+                        <Trash2 className="h-3 w-3 mr-1 text-destructive" /> {t("Delete first")}
+                      </Button>
+                    </PermissionGate>
                   )}
                 </div>
               </div>

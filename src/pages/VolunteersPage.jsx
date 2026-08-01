@@ -35,6 +35,7 @@ import MemberLinkSelect from "@/components/common/MemberLinkSelect";
 import TimePicker from "@/components/common/TimePicker";
 import { initials } from "@/lib/utils";
 import { toast } from "sonner";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 const STATUS_TONE = {
   ACTIVE: "bg-emerald-100 text-emerald-700",
@@ -108,13 +109,15 @@ function RoleRow({ role, idx, onChange, onRemove, canRemove }) {
         />
       </div>
       {canRemove && (
-        <button
-          type="button"
-          onClick={() => onRemove(idx)}
-          className="text-slate-400 hover:text-red-500 p-1"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <PermissionGate action="DELETE">
+          <button
+            type="button"
+            onClick={() => onRemove(idx)}
+            className="text-slate-400 hover:text-red-500 p-1"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </PermissionGate>
       )}
     </div>
   );

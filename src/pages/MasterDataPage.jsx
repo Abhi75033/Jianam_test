@@ -15,6 +15,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 const LISTS = [
   { key: "communities", label: "Communities" },
@@ -144,9 +145,11 @@ function ListEditor({ listKey }) {
                 <Button size="sm" variant="ghost" onClick={() => startEdit(it)} title={t("Edit Item Post Submission")} data-testid={`master-data-edit-${it.id}`}>
                   <span className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">{t("Edit")}</span>
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => remove(it.id)} data-testid={`master-data-delete-${it.id}`}>
-                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-rose-600" />
-                </Button>
+                <PermissionGate action="DELETE">
+                  <Button size="sm" variant="ghost" onClick={() => remove(it.id)} data-testid={`master-data-delete-${it.id}`}>
+                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-rose-600" />
+                  </Button>
+                </PermissionGate>
               </div>
             </div>
           ))}

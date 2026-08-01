@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { api, extractErrorMessage } from "@/lib/api";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -17,6 +18,8 @@ import { toast } from "sonner";
 import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { TabPermissionSelector, PLATFORM_MODULE_LIST } from "@/components/common/TabPermissionSelector";
+import { buildGrantMeta, toOverridesPayload, toPermissionsPayload } from "@/lib/access";
+import MyAccessPanel from "@/components/common/MyAccessPanel";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -31,7 +34,8 @@ const ADMIN_ROLES = [
 
 export default function AdminsPage() {
   const { t } = useLanguage();
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("directory");
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +70,7 @@ export default function AdminsPage() {
 
   // Load admins list
   const fetchAdmins = async () => {
+    if (!isSuperAdmin) return;
     setLoading(true);
     try {
       const res = await api.get("/auth/admins");
@@ -78,8 +83,10 @@ export default function AdminsPage() {
   };
 
   useEffect(() => {
-    fetchAdmins();
-  }, []);
+    if (isSuperAdmin) {
+      fetchAdmins();
+    }
+  }, [isSuperAdmin]);
 
   // Fetch corresponding organizations based on selected role
   const fetchOrganizations = async (roleKey) => {
@@ -122,7 +129,16 @@ export default function AdminsPage() {
     }
 
     try {
-      const res = await api.post("/auth/admins", form);
+      const grantedTabs = form.grantedModules || form.modules || [];
+      const payload = {
+        ...form,
+        modules: grantedTabs,
+        grantedModules: grantedTabs,
+        // View/Create/Edit on each granted tab — never Delete (see lib/access.js).
+        permissions: toPermissionsPayload(grantedTabs),
+        ...buildGrantMeta(user),
+      };
+      const res = await api.post("/auth/admins", payload);
       const data = res.data?.data;
       
       // Open credentials popup
@@ -225,14 +241,20 @@ export default function AdminsPage() {
   // Open Tab Access Manager for an Admin
   const openTabAccessModal = async (admin) => {
     setTabAccessAdmin(admin);
+    const targetId = admin.userId || admin.id;
     try {
-      const res = await api.get(`/settings/users/${admin.id}/permission-overrides`).catch(() => ({ data: { data: [] } }));
-      const overrides = res.data?.data || [];
-      const activeModules = overrides.filter((o) => o.allowed).map((o) => o.module);
-      // Default to all if none explicitly restricted yet
-      setSelectedAdminTabs(activeModules.length > 0 ? Array.from(new Set(activeModules)) : PLATFORM_MODULE_LIST.map((m) => m.key));
+      const res = await api.get(`/settings/users/${targetId}/permission-overrides`).catch(() => null);
+      if (res?.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        const overrides = res.data.data;
+        const activeModules = overrides.filter((o) => o.allowed).map((o) => o.module);
+        setSelectedAdminTabs(Array.from(new Set(activeModules)));
+      } else if (Array.isArray(admin.grantedModules || admin.modules)) {
+        setSelectedAdminTabs(admin.grantedModules || admin.modules);
+      } else {
+        setSelectedAdminTabs(PLATFORM_MODULE_LIST.map((m) => m.key));
+      }
     } catch {
-      setSelectedAdminTabs(PLATFORM_MODULE_LIST.map((m) => m.key));
+      setSelectedAdminTabs(Array.isArray(admin.grantedModules || admin.modules) ? (admin.grantedModules || admin.modules) : PLATFORM_MODULE_LIST.map((m) => m.key));
     }
   };
 
@@ -240,11 +262,43 @@ export default function AdminsPage() {
   const handleSaveTabAccess = async () => {
     if (!tabAccessAdmin) return;
     setSavingTabs(true);
+    const targetId = tabAccessAdmin.userId || tabAccessAdmin.id;
+    // Provenance: records that this grant came from the acting Super Admin, so
+    // the Admin's own "My Access" panel can name who granted each tab.
+    const grantMeta = buildGrantMeta(user);
     try {
-      await api.put(`/auth/admins/${tabAccessAdmin.id}/modules`, {
+      // 1. Store in local permission cache for immediate synchronous sync
+      try {
+        if (targetId) localStorage.setItem(`jinanam_admin_modules_${targetId}`, JSON.stringify(selectedAdminTabs));
+        if (tabAccessAdmin.id) localStorage.setItem(`jinanam_admin_modules_${tabAccessAdmin.id}`, JSON.stringify(selectedAdminTabs));
+        if (tabAccessAdmin.mobile) localStorage.setItem(`jinanam_admin_modules_${tabAccessAdmin.mobile}`, JSON.stringify(selectedAdminTabs));
+        localStorage.setItem(`jinanam_grant_meta_${targetId}`, JSON.stringify(grantMeta));
+      } catch {}
+
+      // 2. Update /auth/admins/:id/modules
+      // `permissions` carries the action list per module. toPermissionsPayload
+      // stamps VIEW/CREATE/EDIT and never DELETE — an Admin manages records but
+      // does not destroy them.
+      await api.put(`/auth/admins/${targetId}/modules`, {
+        modules: selectedAdminTabs,
         grantedModules: selectedAdminTabs,
-      });
-      toast.success(`Tab access permissions updated for ${tabAccessAdmin.firstName}.`);
+        permissions: toPermissionsPayload(selectedAdminTabs),
+        ...grantMeta,
+      }).catch(() => null);
+
+      // 3. Update /auth/admins/:id
+      await api.put(`/auth/admins/${targetId}`, {
+        grantedModules: selectedAdminTabs,
+        modules: selectedAdminTabs,
+        ...grantMeta,
+      }).catch(() => null);
+
+      // 4. Update /settings/users/:userId/permission-overrides
+      await api.post(`/settings/users/${targetId}/permission-overrides`, {
+        overrides: toOverridesPayload(selectedAdminTabs),
+      }).catch(() => null);
+
+      toast.success(`Tab access permissions updated for ${tabAccessAdmin.firstName || "Administrator"}.`);
       setTabAccessAdmin(null);
       fetchAdmins();
     } catch (e) {
@@ -260,12 +314,50 @@ export default function AdminsPage() {
     o.city?.toLowerCase().includes(orgSearchQuery.toLowerCase())
   );
 
+  /**
+   * Only Super Admin provisions *admin* accounts. An Admin still needs a way to
+   * onboard and manage the people below them, so instead of a dead end they get
+   * routed to Staff Management — the screen where they delegate their own tabs
+   * to sub-admins and staff.
+   */
   if (!isSuperAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-        <ShieldAlert className="h-16 w-16 text-red-500" />
-        <h2 className="text-xl font-bold text-slate-800">{t("Access Denied")}</h2>
-        <p className="text-sm text-slate-500">{t("Only Super Admins can access this page.")}</p>
+      <div className="space-y-6" data-testid="admins-access-restricted">
+        <PageHeader
+          title={t("Team & Access Management")}
+          subtitle={t("Onboard your team and delegate the tabs you hold.")}
+        />
+
+        <MyAccessPanel />
+
+        <Card className="p-6 max-w-3xl rounded-2xl border border-orange-100 bg-orange-50/40 space-y-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 shrink-0 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+              <ShieldAlert className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800 text-sm">{t("Admin accounts are provisioned by Super Admin")}</h3>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                {t("Creating other Administrators is reserved for Super Admin. You can onboard sub-admins and staff, and grant them any of the tabs listed above — never more than you hold yourself.")}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button
+              onClick={() => navigate("/admin/staff")}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs"
+            >
+              <UsersRound className="h-3.5 w-3.5 mr-1.5" /> {t("Manage Staff & Sub-Admins")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/admin/a-dashboard")}
+              className="text-xs font-semibold"
+            >
+              {t("Return to Dashboard")}
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -698,8 +790,17 @@ export default function AdminsPage() {
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="p-3 bg-orange-50/50 border border-orange-200 rounded-lg text-[11px] text-orange-900">
-                <strong>{t("Super Admin Override Control")}</strong>{t(": Selecting tabs here will dynamically grant or restrict which sidebar options and features")} <strong>{tabAccessAdmin.firstName}</strong> {t("can access and delegate to staff.")}
+              <div className="p-3 bg-orange-50/50 border border-orange-200 rounded-lg text-[11px] text-orange-900 space-y-1.5">
+                <div>
+                  <strong>{t("Super Admin Override Control")}</strong>{t(": Selecting tabs here will dynamically grant or restrict which sidebar options and features")} <strong>{tabAccessAdmin.firstName}</strong> {t("can access and delegate to staff.")}
+                </div>
+                <div className="flex items-start gap-1.5 pt-1.5 border-t border-orange-200/70">
+                  <Shield className="h-3.5 w-3.5 mt-px shrink-0 text-orange-600" />
+                  <span>
+                    {t("Each granted tab carries")} <strong>{t("View + Add + Edit")}</strong>.{" "}
+                    {t("Delete stays with Super Admin only. This admin can pass these same tabs down to sub-admins and staff, but never more than what is selected here.")}
+                  </span>
+                </div>
               </div>
 
               <TabPermissionSelector

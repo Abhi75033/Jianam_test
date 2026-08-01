@@ -40,6 +40,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { OFFER_CATEGORIES, OFFER_CATEGORY_OPTIONS } from "@/constants/dropdownOptions";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 // OFFER_CATEGORIES imported from @/constants/dropdownOptions
 
@@ -340,9 +341,11 @@ export default function OffersPage() {
           <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => openEditModal(r)}>
             <Edit className="h-3 w-3 mr-1" /> {t("Edit")}
           </Button>
-          <Button size="sm" variant="outline" className="h-7 text-[10px] text-red-650 hover:bg-red-50" onClick={() => handleDeleteOffer(r.id)}>
-            <Trash2 className="h-3 w-3 mr-1" /> {t("Delete")}
-          </Button>
+          <PermissionGate action="DELETE">
+            <Button size="sm" variant="outline" className="h-7 text-[10px] text-red-650 hover:bg-red-50" onClick={() => handleDeleteOffer(r.id)}>
+              <Trash2 className="h-3 w-3 mr-1" /> {t("Delete")}
+            </Button>
+          </PermissionGate>
         </div>
       )
     }

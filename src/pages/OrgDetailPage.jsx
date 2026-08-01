@@ -4,7 +4,7 @@
  * Every tab has Add + Edit + Delete with confirmation.
  */
 import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { api, extractErrorMessage, STATIC_URL, API_BASE } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { toOptions, ALL_COUNTRIES, COUNTRY_OPTIONS } from "@/constants/dropdownOptions";
 import TimePicker, { TimeRangePicker } from "@/components/common/TimePicker";
 import MemberLinkSelect from "@/components/common/MemberLinkSelect";
+import { PermissionGate, ReadEditOnlyNotice } from "@/components/common/PermissionGate";
 
 const STATUSES = ["AVAILABLE", "BOOKED", "PENDING"];
 const ROOM_AMENITIES_LIST = [
@@ -173,12 +174,14 @@ function GalleryTab({ images, apiPrefix, orgId, onRefresh, canEdit }) {
                 </div>
               )}
               {canEdit && (
-                <button
-                  onClick={() => setDeleteTarget(g)}
-                  className="absolute top-1.5 right-1.5 bg-red-600 text-white rounded-full h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
+                <PermissionGate action="DELETE">
+                  <button
+                    onClick={() => setDeleteTarget(g)}
+                    className="absolute top-1.5 right-1.5 bg-red-600 text-white rounded-full h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </PermissionGate>
               )}
             </div>
           ))}
@@ -312,9 +315,11 @@ function TrusteesTab({ trustees, apiPrefix, orgId, onRefresh, canEdit }) {
                   <div className="text-xs text-orange-650 font-bold mt-1.5 uppercase tracking-wide bg-orange-50 px-2 py-0.5 rounded w-max">{tItem.designation}</div>
                 </div>
                 {canEdit && (
-                  <button onClick={() => setDeleteTarget(tItem)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-650 transition-opacity">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <PermissionGate action="DELETE">
+                    <button onClick={() => setDeleteTarget(tItem)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-650 transition-opacity">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </PermissionGate>
                 )}
               </div>
             </Card>
@@ -420,9 +425,11 @@ function ContactsTab({ contacts, apiPrefix, orgId, onRefresh, canEdit }) {
                   </div>
                 </div>
                 {canEdit && (
-                  <button onClick={() => setDeleteTarget(c)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-650 transition-opacity">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <PermissionGate action="DELETE">
+                    <button onClick={() => setDeleteTarget(c)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-650 transition-opacity">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </PermissionGate>
                 )}
               </div>
             </Card>
@@ -556,9 +563,11 @@ function NoticesTab({ notices, apiPrefix, orgId, onRefresh, canEdit }) {
                     </div>
                   </div>
                   {canEdit && (
-                    <button onClick={() => setDeleteTarget(n)} className="opacity-0 group-hover:opacity-100 text-red-455 hover:text-red-650 shrink-0 ml-2">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <PermissionGate action="DELETE">
+                      <button onClick={() => setDeleteTarget(n)} className="opacity-0 group-hover:opacity-100 text-red-455 hover:text-red-650 shrink-0 ml-2">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </PermissionGate>
                   )}
                 </div>
               </Card>
@@ -727,9 +736,11 @@ function ReviewsTab({ reviews, apiPrefix, orgId, onRefresh, isSuperAdmin, canEdi
                 )}
               </div>
               {isSuperAdmin && (
-                <button onClick={() => setDeleteTarget(r)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 shrink-0 p-1">
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <PermissionGate action="DELETE">
+                  <button onClick={() => setDeleteTarget(r)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 shrink-0 p-1">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </PermissionGate>
               )}
             </div>
           ))}
@@ -876,9 +887,11 @@ function DhajaTab({ dhajaRecords, apiPrefix, orgId, onRefresh, canEdit }) {
                     <button onClick={() => handleOpenEdit(d)} className="text-slate-400 hover:text-orange-600 p-1" title={t("Edit Record")}>
                       <Pencil className="h-4 w-4" />
                     </button>
-                    <button onClick={() => setDeleteTarget(d)} className="text-slate-400 hover:text-red-600 p-1" title={t("Delete Record")}>
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <PermissionGate action="DELETE">
+                      <button onClick={() => setDeleteTarget(d)} className="text-slate-400 hover:text-red-600 p-1" title={t("Delete Record")}>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </PermissionGate>
                   </div>
                 )}
               </div>
@@ -1411,9 +1424,11 @@ function ChaturmasTab({ chaturmasStays = [], apiPrefix, orgId, org, onRefresh, c
                         <button onClick={() => handleOpenEdit(c)} className="text-slate-400 hover:text-orange-600 p-1" title={t("Edit Entry")}>
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <button onClick={() => setDeleteTarget(c)} className="text-slate-400 hover:text-red-600 p-1" title={t("Delete Entry")}>
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <PermissionGate action="DELETE">
+                          <button onClick={() => setDeleteTarget(c)} className="text-slate-400 hover:text-red-600 p-1" title={t("Delete Entry")}>
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </PermissionGate>
                       </div>
                     )}
                   </div>
@@ -3509,10 +3524,51 @@ function EditOrgDialog({ open, onClose, org, apiPrefix, onSaved, entityLabel }) 
 }
 
 /* ─── Main OrgDetailPage ────────────────────────────────────────────────────── */
-export default function OrgDetailPage({ basePath, entityLabel, apiPrefix }) {
+/**
+ * Every OrgDetailPage route in App.js is mounted without props, which left
+ * apiPrefix undefined and sent every request to `/api/v1/undefined/:id`. Rather
+ * than annotate a dozen routes, the page resolves its own entity from the URL
+ * and only falls back to props when they are supplied.
+ */
+const ORG_ROUTE_CONFIG = [
+  { match: /(^|\/)(temples?|temple-management)(\/|$)/, entityLabel: "Temple", apiPrefix: "/temples", basePath: "/admin/temples" },
+  { match: /(^|\/)(dharamshalas?|dharamshala-management)(\/|$)/, entityLabel: "Dharamshala", apiPrefix: "/dharamshalas", basePath: "/admin/dharamshalas" },
+  { match: /(^|\/)(jain-cent(er|re)s?|jain-center-management)(\/|$)/, entityLabel: "Jain Center", apiPrefix: "/jain-centers", basePath: "/admin/jain-centers" },
+  { match: /(^|\/)(sthanaks?|stanaks?|sthanak-management)(\/|$)/, entityLabel: "Sthanak", apiPrefix: "/jain-centers", basePath: "/admin/stanaks" },
+];
+
+/**
+ * Member-only engagement actions (follow, review) resolve the caller to a member
+ * profile server-side. Admin and staff accounts are provisioned without one, so
+ * these controls must not be offered to them.
+ */
+function hasMemberProfile(user) {
+  if (!user) return false;
+  if (user.memberId || user.member?.id) return true;
+  // Member IDs are JFJM… (Jain) and JFNJM… (Non-Jain). Org and monk IDs
+  // (JFJT/JFD/JFJC/JFMS) belong to entities, not people, and must not match.
+  return /^JF(J|NJ)M/i.test(user.publicId || "");
+}
+
+function resolveOrgConfig(pathname) {
+  const hit = ORG_ROUTE_CONFIG.find((c) => c.match.test(pathname));
+  // /orgs/:id and /org/:id carry no type — default to temples.
+  return hit || { entityLabel: "Temple", apiPrefix: "/temples", basePath: "/admin/temples" };
+}
+
+export default function OrgDetailPage(props) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isSuperAdmin } = useAuth();
+  const { pathname } = useLocation();
+  const resolved = resolveOrgConfig(pathname);
+  const basePath = props.basePath || resolved.basePath;
+  const entityLabel = props.entityLabel || resolved.entityLabel;
+  const apiPrefix = props.apiPrefix || resolved.apiPrefix;
+  // `user` and `canDo` drive canEdit below. `user` was previously referenced
+  // here without being destructured, which threw a ReferenceError for every
+  // non-Super-Admin (the || chain short-circuited only for SA) and blanked the
+  // whole management page.
+  const { isSuperAdmin, user, canDo, canManageOrg } = useAuth();
   const { t } = useLanguage();
   const [org, setOrg]       = useState(null);
   const [loading, setLoading] = useState(true);
@@ -3526,6 +3582,23 @@ export default function OrgDetailPage({ basePath, entityLabel, apiPrefix }) {
   const [ticketField, setTicketField] = useState("");
   const [ticketDesc, setTicketDesc] = useState("");
   const [ticketSaving, setTicketSaving] = useState(false);
+
+  /**
+   * The org payload stores the deity as `mulNayakBhagwanId` and does not always
+   * expand the relation, which left "Mul Nayak" reading "—" even when one was
+   * set. Loading the master list lets the view resolve the id to a name.
+   */
+  const [bhagwanNameById, setBhagwanNameById] = useState({});
+  useEffect(() => {
+    api.get("/master-data/bhagwans")
+      .then((r) => {
+        const list = r.data?.data?.items || r.data?.data || [];
+        setBhagwanNameById(
+          Object.fromEntries((Array.isArray(list) ? list : []).map((b) => [b.id, b.name]))
+        );
+      })
+      .catch(() => {});
+  }, []);
 
   const loadOrg = () => {
     setLoading(true);
@@ -3542,7 +3615,15 @@ export default function OrgDetailPage({ basePath, entityLabel, apiPrefix }) {
 
   const follow = async () => {
     try { await api.post(`${apiPrefix}/${id}/follow`); toast.success(`Following this ${entityLabel.toLowerCase()}.`); }
-    catch (e) { toast.error(extractErrorMessage(e)); }
+    catch (e) {
+      const msg = extractErrorMessage(e);
+      // Explain the cause instead of echoing the raw backend string.
+      toast.error(
+        /member profile not found/i.test(msg)
+          ? t("Following is a member feature. Your admin account is not linked to a member profile.")
+          : msg
+      );
+    }
   };
 
   const uploadLogo = async (file) => {
@@ -3567,13 +3648,22 @@ export default function OrgDetailPage({ basePath, entityLabel, apiPrefix }) {
     }
     setTicketSaving(true);
     try {
-      const payload = {
-        title: `Incorrect Info: ${entityLabel} (${org?.publicId})`,
-        category: "INCORRECT_INFO_REPORT",
-        description: `Field: ${ticketField}\nDetails: ${ticketDesc}`,
-        priority: "MEDIUM"
-      };
-      await api.post("/tickets", payload);
+      // `POST /tickets` does not exist on the API (that namespace is event
+      // ticketing). Report against the organisation's own endpoint, falling
+      // back to the general support queue.
+      try {
+        await api.post(`${apiPrefix}/${id}/report-incorrect-info`, {
+          field: ticketField,
+          description: ticketDesc,
+        });
+      } catch {
+        await api.post("/support-tickets/", {
+          title: `Incorrect Info: ${entityLabel} (${org?.publicId})`,
+          category: "INCORRECT_INFO_REPORT",
+          description: `Field: ${ticketField}\nDetails: ${ticketDesc}`,
+          priority: "MEDIUM",
+        });
+      }
       toast.success(t("Support ticket registered successfully. You can track status in the app."));
       setTicketOpen(false);
       setTicketField("");
@@ -3600,7 +3690,21 @@ export default function OrgDetailPage({ basePath, entityLabel, apiPrefix }) {
   const isDharamshala = entityLabel === "Dharamshala";
   const accentClass = isTemple ? "from-orange-500 to-amber-400" : isDharamshala ? "from-teal-600 to-emerald-500" : "from-blue-600 to-indigo-500";
   const accentColor = isTemple ? "#E64E0A" : isDharamshala ? "#0D9488" : "#2563EB";
-  const canEdit = isSuperAdmin;
+
+  /**
+   * Editing needs BOTH halves of the permission model:
+   *   1. the module — was this account granted the Temple / Dharamshala /
+   *      Jain Centre tab at all?
+   *   2. the record — is *this* organisation one they were assigned?
+   *
+   * An admin holding the Temple tab can manage the temples mapped to them and
+   * only those; every other temple stays read-only. Delete remains gated
+   * separately via <PermissionGate>, so assigned records are add/edit, never
+   * destroy.
+   */
+  const orgModuleKey = isTemple ? "TEMPLES" : isDharamshala ? "DHARAMSHALAS" : "JAIN_CENTERS";
+  const inScope = canManageOrg(org?.id || id, org?.publicId);
+  const canEdit = canDo(orgModuleKey, "EDIT") && inScope;
 
   return (
     <div data-testid="org-detail-page">
@@ -3621,7 +3725,10 @@ export default function OrgDetailPage({ basePath, entityLabel, apiPrefix }) {
             <Button variant="outline" onClick={() => setTicketOpen(true)} className="bg-white/20 border-white/30 text-white hover:bg-white/30">
               <Flag className="h-4 w-4 mr-2" /> {t("Report Error")}
             </Button>
-            {!isSuperAdmin && (
+            {/* Following is a member-panel action: the backend ties a follow to a
+                member profile, which staff/admin accounts don't have. Showing it
+                to them only produced "Member profile not found". */}
+            {!isSuperAdmin && hasMemberProfile(user) && (
               <Button variant="outline" onClick={follow} className="bg-white/20 border-white/30 text-white hover:bg-white/30">
                 <Heart className="h-4 w-4 mr-2" /> {t("Follow")}
               </Button>
@@ -3695,6 +3802,19 @@ export default function OrgDetailPage({ basePath, entityLabel, apiPrefix }) {
       </div>
 
       {/* Tabs */}
+      {/* Explains the missing delete controls for delegated accounts. */}
+      {canEdit && <ReadEditOnlyNotice className="mb-4" />}
+
+      {/* Holds the tab but not this record — say why it's read-only. */}
+      {!canEdit && !isSuperAdmin && canDo(orgModuleKey, "EDIT") && !inScope && (
+        <div className="mb-4 flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+          <Shield className="h-3.5 w-3.5 mt-px shrink-0 text-amber-600" />
+          <span>
+            {t("This")} {entityLabel.toLowerCase()} {t("is not assigned to your account, so it is read-only. You can manage only the organisations mapped to you.")}
+          </span>
+        </div>
+      )}
+
       <Tabs defaultValue="info">
         <TabsList className="mb-5 flex-wrap h-auto gap-1 bg-slate-100/80 p-1 rounded-xl">
           {(isDharamshala
@@ -3733,7 +3853,7 @@ export default function OrgDetailPage({ basePath, entityLabel, apiPrefix }) {
                     ["Gaccha Name",     org.gacchaName || "—"],
                     ["Trust Name",      org.trustName],
                     ["Trust Reg. No.",  org.trustRegistrationNumber],
-                    ["Established",     formatDate(org.establishedDate)],
+                    ["Established",     (org.establishedDate || org.establishmentDate || org.establishedYear || org.establishmentYear || org.foundedYear || org.foundedDate) ? (typeof (org.establishedDate || org.establishmentDate || org.establishedYear || org.establishmentYear || org.foundedYear || org.foundedDate) === "number" || /^\d{4}$/.test(String(org.establishedDate || org.establishmentDate || org.establishedYear || org.establishmentYear || org.foundedYear || org.foundedDate).trim()) ? String(org.establishedDate || org.establishmentDate || org.establishedYear || org.establishmentYear || org.foundedYear || org.foundedDate).trim() : formatDate(org.establishedDate || org.establishmentDate)) : "—"],
                     ["City",            org.city],
                     ["State",           org.state],
                     ["Country",         org.country],
@@ -3755,8 +3875,8 @@ export default function OrgDetailPage({ basePath, entityLabel, apiPrefix }) {
                     ["Sect",            org.sect || "Shwetambar"],
                     ["Sub-Sect",        org.subSect || "Murtipujak"],
                     ["Gaccha Name",     org.gacchaName || "—"],
-                    ["Mul Nayak",       org.mulNayakBhagwan?.name || "—"],
-                    ["Established",     formatDate(org.establishedDate)],
+                    ["Mul Nayak",       org.mulNayakBhagwan?.name || bhagwanNameById[org.mulNayakBhagwanId] || org.mulNayakName || org.mulNayakBhagwanName || org.deity || org.mulNayak || "—"],
+                    ["Established",     (org.establishedDate || org.establishmentDate || org.establishedYear || org.establishmentYear || org.foundedYear || org.foundedDate) ? (typeof (org.establishedDate || org.establishmentDate || org.establishedYear || org.establishmentYear || org.foundedYear || org.foundedDate) === "number" || /^\d{4}$/.test(String(org.establishedDate || org.establishmentDate || org.establishedYear || org.establishmentYear || org.foundedYear || org.foundedDate).trim()) ? String(org.establishedDate || org.establishmentDate || org.establishedYear || org.establishmentYear || org.foundedYear || org.foundedDate).trim() : formatDate(org.establishedDate || org.establishmentDate)) : "—"],
                     ["City",            org.city],
                     ["State",           org.state],
                     ["Country",         org.country],

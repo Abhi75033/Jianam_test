@@ -16,6 +16,7 @@ import { CreditCard, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 const DURATIONS = ["Monthly", "Annual", "Lifetime"];
 const EMPTY_FORM = { name: "", price: "", currency: "INR", duration: "Monthly", features: "" };
@@ -158,13 +159,15 @@ export default function SubscriptionPlansPage() {
           <Button size="sm" variant="ghost" onClick={() => openEdit(r)}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>
-          <Button
-            size="sm" variant="ghost"
-            disabled={deletingId === r.id}
-            onClick={() => handleDelete(r.id)}
-          >
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-          </Button>
+          <PermissionGate action="DELETE">
+            <Button
+              size="sm" variant="ghost"
+              disabled={deletingId === r.id}
+              onClick={() => handleDelete(r.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          </PermissionGate>
         </div>
       ),
     },

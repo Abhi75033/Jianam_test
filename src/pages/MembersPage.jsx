@@ -759,7 +759,7 @@ function RegisterMemberDialog({ onCreated }) {
                     <div>
                       <Label className="text-xs">{t("Mobile Number *")}</Label>
                       <div className="flex gap-2 mt-1">
-                        <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white flex-1" />
+                        <PhoneField value={form.mobile} onChange={(v) => setForm({ ...form, mobile: v })} placeholder={t("Mobile Number")} className="flex-1" />
                         <Button size="sm" variant={mobileVerified ? "outline" : "default"} type="button" onClick={() => verifyField("mobile")}>
                           {mobileVerified ? t("✓ Verified") : t("Verify Mobile")}
                         </Button>
@@ -822,7 +822,7 @@ function RegisterMemberDialog({ onCreated }) {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <Label className="text-xs">{t("Country (default India) *")}</Label>
-                          <Input value={form.currentAddress.country || "India"} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: e.target.value } })} placeholder={t("India")} className="bg-white mt-1" />
+                          <CountryDropdown value={form.currentAddress.country || "India"} onValueChange={(v) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: v } })} className="mt-1" />
                         </div>
                         <div>
                           <Label className="text-xs">{t("Pincode *")}</Label>
@@ -918,7 +918,7 @@ function RegisterMemberDialog({ onCreated }) {
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <Label className="text-xs">{t("Country (default India)")}</Label>
-                              <Input value={form.permanentAddress.country || "India"} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, country: e.target.value } })} placeholder={t("India")} className="bg-white mt-1" />
+                              <CountryDropdown value={form.permanentAddress.country || "India"} onValueChange={(v) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, country: v } })} className="mt-1" />
                             </div>
                             <div>
                               <Label className="text-xs">{t("Pincode")}</Label>
@@ -1021,12 +1021,14 @@ function RegisterMemberDialog({ onCreated }) {
                               }} placeholder={t("Mobile")} className="h-8 text-xs font-mono" />
                             </div>
                             <div className="col-span-1 text-right">
-                              <button type="button" onClick={() => {
-                                const list = form.familyMembers.filter((_, i) => i !== idx);
-                                setForm({ ...form, familyMembers: list });
-                              }} className="text-slate-400 hover:text-red-500 transition-colors">
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              <PermissionGate action="DELETE">
+                                <button type="button" onClick={() => {
+                                  const list = form.familyMembers.filter((_, i) => i !== idx);
+                                  setForm({ ...form, familyMembers: list });
+                                }} className="text-slate-400 hover:text-red-500 transition-colors">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </PermissionGate>
                             </div>
                           </div>
                         ))}
@@ -1188,12 +1190,14 @@ function RegisterMemberDialog({ onCreated }) {
                               }} placeholder={t("Mobile Number")} className="h-8 text-xs font-mono" />
                             </div>
                             <div className="col-span-1 text-right">
-                              <button type="button" onClick={() => {
-                                const list = form.familyMembers.filter((_, i) => i !== idx);
-                                setForm({ ...form, familyMembers: list });
-                              }} className="text-slate-400 hover:text-red-500 transition-colors">
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              <PermissionGate action="DELETE">
+                                <button type="button" onClick={() => {
+                                  const list = form.familyMembers.filter((_, i) => i !== idx);
+                                  setForm({ ...form, familyMembers: list });
+                                }} className="text-slate-400 hover:text-red-500 transition-colors">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </PermissionGate>
                             </div>
                           </div>
                         ))}
@@ -1272,12 +1276,14 @@ function RegisterMemberDialog({ onCreated }) {
                                 </div>
                               </div>
                               <div className="col-span-3 text-right pt-4">
-                                <button type="button" onClick={() => {
-                                  const list = form.siblings.filter((_, i) => i !== idx);
-                                  setForm({ ...form, siblings: list });
-                                }} className="text-slate-400 hover:text-red-500 transition-colors text-xs font-semibold">
-                                  <Trash2 className="h-4 w-4 inline mr-1" /> {t("Remove")}
-                                </button>
+                                <PermissionGate action="DELETE">
+                                  <button type="button" onClick={() => {
+                                    const list = form.siblings.filter((_, i) => i !== idx);
+                                    setForm({ ...form, siblings: list });
+                                  }} className="text-slate-400 hover:text-red-500 transition-colors text-xs font-semibold">
+                                    <Trash2 className="h-4 w-4 inline mr-1" /> {t("Remove")}
+                                  </button>
+                                </PermissionGate>
                               </div>
                             </div>
                           </div>
@@ -1511,6 +1517,9 @@ function ExportDialog({ autoOpen = false }) {
  * Main Members Page
  * ───────────────────────────────────────────────────────────────────────── */
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
+import { PhoneField } from "@/components/common/PhoneInput";
+import CountryDropdown from "@/components/common/CountryDropdown";
 
 export default function MembersPage() {
   const location = useLocation();

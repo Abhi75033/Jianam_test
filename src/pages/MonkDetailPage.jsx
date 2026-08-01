@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import TimePicker, { TimeRangePicker } from "@/components/common/TimePicker";
 import MemberLinkSelect from "@/components/common/MemberLinkSelect";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 // Constant arrays for community subsects and gacchas
 const DIGAMBAR_SUB = [
@@ -1305,9 +1306,11 @@ export default function MonkDetailPage() {
                       <div className="space-y-3">
                         {(editForm.tapasya || []).map((tItem, idx) => (
                           <div key={idx} className="border p-4 rounded-xl bg-white space-y-3 relative shadow-sm">
-                            <button type="button" onClick={() => eRemoveTapasya(idx)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            <PermissionGate action="DELETE">
+                              <button type="button" onClick={() => eRemoveTapasya(idx)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </PermissionGate>
                             <div className="grid grid-cols-3 gap-3">
                               <div>
                                 <Label className="text-xs font-semibold">{t("Tapasya Name")}</Label>

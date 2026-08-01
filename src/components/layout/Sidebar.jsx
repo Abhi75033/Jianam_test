@@ -24,6 +24,7 @@ import {
   ROUTE_TONES,
   TONE_HEX,
 } from "@/constants/nav.config";
+import { moduleForRoute, ROUTE_TO_MODULE } from "@/lib/access";
 
 function getNavLabel(label, t) {
   if (!label) return "";
@@ -306,11 +307,75 @@ function saveExpanded(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+// ─── Route to Module Mapping for Tab Access Permissions ─────────────────────
+// The map now lives in src/lib/access.js so the sidebar, page guards and the
+// permission selector all resolve routes the same way. Aliased for readability.
+const ROUTE_TO_MODULE_MAP = ROUTE_TO_MODULE;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function isRoleAllowed(nodeRoles, isSuperAdmin) {
-  if (!nodeRoles || nodeRoles.length === 0) return true;
+function isNodeAllowed(node, isSuperAdmin, user, authModules, parentModule = null) {
+  if (!node) return false;
+
+  // 1. Role-based check
+  if (node.roles && node.roles.length > 0) {
+    if (!isSuperAdmin) {
+      const userRole = user?.primaryRoleKey || user?.role;
+      if (!userRole || !node.roles.includes(userRole)) {
+        return false;
+      }
+    }
+  }
+
+  // Super Admin sees all tabs
   if (isSuperAdmin) return true;
-  return false;
+
+  // 2. Tab Access Permissions check
+  const granted = (authModules && Array.isArray(authModules))
+    ? authModules
+    : (user?.grantedModules || user?.modules || user?.permissionOverrides);
+
+  const route = node.route ? node.route.split("?")[0] : "";
+  const isDashboard = node.id === "a-dashboard" || node.id === "sa-dashboard" || route === "/" || route === "/a-dashboard" || route === "/sa-dashboard";
+
+  // Dashboard is ALWAYS visible for personalized Org Admin Dashboard
+  if (isDashboard) return true;
+
+  // A folder's own module (if it has one) becomes the fallback for its children,
+  // so a leaf whose route we can't map — "Temple Information", "Facilities",
+  // and the other coming-soon entries under Temple — is governed by the tab it
+  // sits under instead of being hidden. Granting TEMPLES therefore reveals the
+  // whole Temple folder, not just "Temple Management".
+  const ownModule = node.module || moduleForRoute(route);
+  const effectiveParentModule = ownModule || parentModule;
+
+  // For parent containers (sections or folders with children), allow if ANY child is allowed
+  if (node.children && Array.isArray(node.children) && node.children.length > 0) {
+    return node.children.some((child) =>
+      isNodeAllowed(child, isSuperAdmin, user, granted, effectiveParentModule)
+    );
+  }
+
+  if (Array.isArray(granted)) {
+    // If 0 tabs granted by Super Admin, block ALL non-dashboard tabs!
+    if (granted.length === 0) return false;
+
+    // Resolve the gating module: the node's own, else the folder it lives in.
+    // An unmappable leaf with no parent module stays hidden.
+    const moduleKey = ownModule || parentModule;
+    if (!moduleKey) return false;
+    if (moduleKey && moduleKey !== "DASHBOARD") {
+      const isAllowed = granted.some((m) => {
+        const key = typeof m === "string" ? m : m.module;
+        return key === moduleKey || key?.toUpperCase() === moduleKey.toUpperCase();
+      });
+      if (!isAllowed) return false;
+    }
+  } else if (!isSuperAdmin) {
+    // Fallback for non-super admins: block non-dashboard tabs
+    return false;
+  }
+
+  return true;
 }
 
 function getTone(route) {
@@ -543,13 +608,13 @@ function SectionHeader({ node, expanded, onToggle, collapsed }) {
 }
 
 // ─── FLAT MODE renderer ────────────────────────────────────────────────────────
-function FlatNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggle }) {
+function FlatNav({ collapsed, onNavigate, isSuperAdmin, user, authModules, expandedState, onToggle }) {
   const { t } = useLanguage();
   const sections = [];
   let current = null;
 
   for (const item of FLAT_NAV) {
-    if (!isRoleAllowed(item.roles, isSuperAdmin)) continue;
+    if (!isNodeAllowed(item, isSuperAdmin, user, authModules)) continue;
 
     if (item.isSeparator) {
       if (current) sections.push(current);
@@ -598,9 +663,9 @@ function FlatNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggle 
 }
 
 // ─── NESTED MODE renderer (2 explicit levels, no recursion) ───────────────────
-function NestedNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggle }) {
+function NestedNav({ collapsed, onNavigate, isSuperAdmin, user, authModules, expandedState, onToggle }) {
   return NESTED_NAV.map((topNode) => {
-    if (!isRoleAllowed(topNode.roles, isSuperAdmin)) return null;
+    if (!isNodeAllowed(topNode, isSuperAdmin, user, authModules)) return null;
 
     const hasChildren = topNode.children && topNode.children.length > 0;
     const topExpanded = expandedState[topNode.id] !== false;
@@ -616,7 +681,7 @@ function NestedNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggl
       );
     }
 
-    const visibleTopChildren = topNode.children.filter((c) => isRoleAllowed(c.roles, isSuperAdmin));
+    const visibleTopChildren = topNode.children.filter((c) => isNodeAllowed(c, isSuperAdmin, user, authModules));
     if (visibleTopChildren.length === 0) return null;
 
     return (
@@ -631,7 +696,7 @@ function NestedNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggl
         {!collapsed && topExpanded && (
           <ul className="mt-1 space-y-0.5">
             {visibleTopChildren.map((child) => {
-              if (!isRoleAllowed(child.roles, isSuperAdmin)) return null;
+              if (!isNodeAllowed(child, isSuperAdmin, user, authModules)) return null;
 
               const hasGrandchildren = child.children && child.children.length > 0;
               const childExpanded = expandedState[child.id] !== false;
@@ -641,7 +706,7 @@ function NestedNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggl
                 return <NavLeaf key={child.id} item={child} collapsed={collapsed} onNavigate={onNavigate} />;
               }
 
-              const visibleGrand = child.children.filter((g) => isRoleAllowed(g.roles, isSuperAdmin));
+              const visibleGrand = child.children.filter((g) => isNodeAllowed(g, isSuperAdmin, user, authModules));
               if (visibleGrand.length === 0) return null;
 
               // Level-2 group with level-3 leaves
@@ -657,7 +722,7 @@ function NestedNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggl
                   {!collapsed && childExpanded && (
                     <ul className="ml-3 pl-3 border-l border-white/10 space-y-0.5 mt-0.5">
                       {visibleGrand.map((grand) => {
-                        if (!isRoleAllowed(grand.roles, isSuperAdmin)) return null;
+                        if (!isNodeAllowed(grand, isSuperAdmin, user, authModules)) return null;
 
                         const hasGreat = grand.children && grand.children.length > 0;
                         const grandExpanded = expandedState[grand.id] !== false;
@@ -670,7 +735,7 @@ function NestedNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggl
                         }
 
                         // Level-3 group (render its children flat — max depth 4)
-                        const visibleGreat = grand.children.filter((g) => isRoleAllowed(g.roles, isSuperAdmin));
+                        const visibleGreat = grand.children.filter((g) => isNodeAllowed(g, isSuperAdmin, user, authModules));
                         return (
                           <li key={grand.id} className="list-none">
                             <SubGroupToggle
@@ -705,7 +770,7 @@ function NestedNav({ collapsed, onNavigate, isSuperAdmin, expandedState, onToggl
 // ─── Main Sidebar ─────────────────────────────────────────────────────────────
 export default function Sidebar({ onNavigate, collapsed = false }) {
   const { t } = useLanguage();
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, user, modules: authModules } = useAuth();
 
   const [expandedState, setExpandedState] = useState(() => loadExpanded());
 
@@ -763,6 +828,8 @@ export default function Sidebar({ onNavigate, collapsed = false }) {
               collapsed={collapsed}
               onNavigate={onNavigate}
               isSuperAdmin={isSuperAdmin}
+              user={user}
+              authModules={authModules}
               expandedState={expandedState}
               onToggle={handleToggle}
             />
@@ -771,6 +838,8 @@ export default function Sidebar({ onNavigate, collapsed = false }) {
               collapsed={collapsed}
               onNavigate={onNavigate}
               isSuperAdmin={isSuperAdmin}
+              user={user}
+              authModules={authModules}
               expandedState={expandedState}
               onToggle={handleToggle}
             />

@@ -1,340 +1,415 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { VisibilityEngineProvider } from "@/contexts/VisibilityEngineContext";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import AdminLayout from "@/components/layout/AdminLayout";
 import LoginPage from "@/pages/LoginPage";
 import LandingPage from "@/pages/LandingPage";
-import DashboardPage from "@/pages/DashboardPage";
-import MembersPage from "@/pages/MembersPage";
-import FamilyPage from "@/pages/FamilyPage";
-import MonksPage from "@/pages/MonksPage";
-import MonkDetailPage from "@/pages/MonkDetailPage";
-import OrgListPage from "@/pages/OrgListPage";
-import OrgDetailPage from "@/pages/OrgDetailPage";
-import StaffPage from "@/pages/StaffPage";
-import VisitorsPage from "@/pages/VisitorsPage";
-import BookingsPage from "@/pages/BookingsPage";
-import DonationsPage from "@/pages/DonationsPage";
-import EventsPage from "@/pages/EventsPage";
-import ToursPage from "@/pages/ToursPage";
-import FeedPage from "@/pages/FeedPage";
-import OffersPage from "@/pages/OffersPage";
-import AdsPage from "@/pages/AdsPage";
-import NewsPage from "@/pages/NewsPage";
-import CommunityPagesPage from "@/pages/CommunityPagesPage";
-import PollsPage from "@/pages/PollsPage";
-import CalendarPage from "@/pages/CalendarPage";
-import CountersPage from "@/pages/CountersPage";
-import TrackingPage from "@/pages/TrackingPage";
-import DevicesPage from "@/pages/DevicesPage";
-import AlertsPage from "@/pages/AlertsPage";
-import AnnouncementsPage from "@/pages/AnnouncementsPage";
-import GalleryPage from "@/pages/GalleryPage";
-import VolunteersPage from "@/pages/VolunteersPage";
-import SupportTicketsPage from "@/pages/SupportTicketsPage";
-import NotificationsPage from "@/pages/NotificationsPage";
-import NotificationPreferencesPage from "@/pages/NotificationPreferencesPage";
-import ReportsPage from "@/pages/ReportsPage";
-import SettingsPage from "@/pages/SettingsPage";
-import AuditLogsPage from "@/pages/AuditLogsPage";
-import MasterDataPage from "@/pages/MasterDataPage";
-import BulkImportPage from "@/pages/BulkImportPage";
-import TourJatraPage from "@/pages/TourJatraPage";
-import NonJainMembersPage from "@/pages/NonJainMembersPage";
-import StanaksPage from "@/pages/StanaksPage";
-import ChaturmasPage from "@/pages/ChaturmasPage";
-import ReceiptsPage from "@/pages/ReceiptsPage";
-import MSTrackingPage from "@/pages/MSTrackingPage";
-import ManualTrackingPage from "@/pages/ManualTrackingPage";
-import JourneyLogsPage from "@/pages/JourneyLogsPage";
-import RoutesPage from "@/pages/RoutesPage";
-import LiveMapPage from "@/pages/LiveMapPage";
-import FaqPage from "@/pages/FaqPage";
-import BannersPage from "@/pages/BannersPage";
-import HomeSectionsPage from "@/pages/HomeSectionsPage";
-import FeedbackPage from "@/pages/FeedbackPage";
-import IncorrectReportsPage from "@/pages/IncorrectReportsPage";
-import SubscriptionPlansPage from "@/pages/SubscriptionPlansPage";
-import AdminsPage from "@/pages/AdminsPage";
-import MemberReportsPage from "@/pages/MemberReportsPage";
-import AdminReportsPage from "@/pages/AdminReportsPage";
-import RolesPermissionsPage from "@/pages/RolesPermissionsPage";
-import LoginHistoryPage from "@/pages/LoginHistoryPage";
-import AccountStatusPage from "@/pages/AccountStatusPage";
-import LiveReportPage from "@/pages/LiveReportPage";
-import DonationReportsPage from "@/pages/DonationReportsPage";
-import EventsReportsPage from "@/pages/EventsReportsPage";
-import FeedAnalyticsPage from "@/pages/FeedAnalyticsPage";
-import AppUsagePage from "@/pages/AppUsagePage";
-import BookingCalendarPage from "@/pages/BookingCalendarPage";
-import SADashboardPage from "@/pages/SADashboardPage";
+const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
+const MembersPage = lazy(() => import("@/pages/MembersPage"));
+const FamilyPage = lazy(() => import("@/pages/FamilyPage"));
+const MonksPage = lazy(() => import("@/pages/MonksPage"));
+const MonkDetailPage = lazy(() => import("@/pages/MonkDetailPage"));
+const OrgListPage = lazy(() => import("@/pages/OrgListPage"));
+const OrgDetailPage = lazy(() => import("@/pages/OrgDetailPage"));
+const StaffPage = lazy(() => import("@/pages/StaffPage"));
+const VisitorsPage = lazy(() => import("@/pages/VisitorsPage"));
+const BookingsPage = lazy(() => import("@/pages/BookingsPage"));
+const DonationsPage = lazy(() => import("@/pages/DonationsPage"));
+const EventsPage = lazy(() => import("@/pages/EventsPage"));
+const ToursPage = lazy(() => import("@/pages/ToursPage"));
+const FeedPage = lazy(() => import("@/pages/FeedPage"));
+const OffersPage = lazy(() => import("@/pages/OffersPage"));
+const AdsPage = lazy(() => import("@/pages/AdsPage"));
+const NewsPage = lazy(() => import("@/pages/NewsPage"));
+const CommunityPagesPage = lazy(() => import("@/pages/CommunityPagesPage"));
+const PollsPage = lazy(() => import("@/pages/PollsPage"));
+const CalendarPage = lazy(() => import("@/pages/CalendarPage"));
+const CountersPage = lazy(() => import("@/pages/CountersPage"));
+const TrackingPage = lazy(() => import("@/pages/TrackingPage"));
+const DevicesPage = lazy(() => import("@/pages/DevicesPage"));
+const AlertsPage = lazy(() => import("@/pages/AlertsPage"));
+const AnnouncementsPage = lazy(() => import("@/pages/AnnouncementsPage"));
+const GalleryPage = lazy(() => import("@/pages/GalleryPage"));
+const VolunteersPage = lazy(() => import("@/pages/VolunteersPage"));
+const SupportTicketsPage = lazy(() => import("@/pages/SupportTicketsPage"));
+const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
+const NotificationPreferencesPage = lazy(() => import("@/pages/NotificationPreferencesPage"));
+const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const AuditLogsPage = lazy(() => import("@/pages/AuditLogsPage"));
+const ReceiptsPage = lazy(() => import("@/pages/ReceiptsPage"));
+const MasterDataPage = lazy(() => import("@/pages/MasterDataPage"));
+const SubscriptionPlansPage = lazy(() => import("@/pages/SubscriptionPlansPage"));
+const AccountStatusPage = lazy(() => import("@/pages/AccountStatusPage"));
+const RolesPermissionsPage = lazy(() => import("@/pages/RolesPermissionsPage"));
+const AdminsPage = lazy(() => import("@/pages/AdminsPage"));
 import ComingSoonPage from "@/pages/ComingSoonPage";
-import SiteComingSoonPage from "@/pages/SiteComingSoonPage";
-import SeatingPage from "@/pages/SeatingPage";
-import TicketsPage from "@/pages/TicketsPage";
+const CommitteePage = StaffPage;
+const PassManagementPage = OrgListPage;
+const SthanaksPage = OrgListPage;
 
-/* The public site and the admin panel are two separate router trees.
-   The admin tree is mounted with basename="/admin", so every absolute
-   path inside it — nav.config.js, navigate("/members"), ROUTE_TONES
-   keyed on location.pathname — keeps working unchanged while the
-   browser URL carries the /admin prefix. Moving between the two trees
-   is a full page load (<a href>), not a client-side <Link>. */
-const isAdminPath =
-  typeof window !== "undefined" &&
-  (window.location.pathname === "/admin" ||
-    window.location.pathname.startsWith("/admin/"));
+/* ─── Member Panel Page Imports ───────────────────────────────────────────── */
+import MemberLayout from "@/components/member/MemberLayout";
+const MemberLoginPage = lazy(() => import("@/pages/member/MemberLoginPage"));
+const MemberRegisterPage = lazy(() => import("@/pages/member/MemberRegisterPage"));
+const MemberHomePage = lazy(() => import("@/pages/member/MemberHomePage"));
+const MemberFeedPage = lazy(() => import("@/pages/member/MemberFeedPage"));
+const MemberOffersPage = lazy(() => import("@/pages/member/MemberOffersPage"));
+const MemberExplorePage = lazy(() => import("@/pages/member/MemberExplorePage"));
+const MemberSpiritualPage = lazy(() => import("@/pages/member/MemberSpiritualPage"));
+const MemberProfilePage = lazy(() => import("@/pages/member/MemberProfilePage"));
+const MemberNewsPage = lazy(() => import("@/pages/member/MemberNewsPage"));
+const MemberMSListPage = lazy(() => import("@/pages/member/MemberMSListPage"));
+const MemberMSDetailPage = lazy(() => import("@/pages/member/MemberMSDetailPage"));
+const MemberTempleListPage = lazy(() => import("@/pages/member/MemberTempleListPage"));
+const MemberSupportPage = lazy(() => import("@/pages/member/MemberSupportPage"));
+const MemberToursPage = lazy(() => import("@/pages/member/MemberToursPage"));
+const MemberDigitalIdPage = lazy(() => import("@/pages/member/MemberDigitalIdPage"));
+const MemberWalletPage = lazy(() => import("@/pages/member/MemberWalletPage"));
+const MemberNotificationsPage = lazy(() => import("@/pages/member/MemberNotificationsPage"));
+const MyBookingsPage = lazy(() => import("@/pages/member/MyBookingsPage"));
+const BookingDetailPage = lazy(() => import("@/pages/member/BookingDetailPage"));
+const MemberDonationsPage = lazy(() => import("@/pages/member/MemberDonationsPage"));
+const MemberEventsPage = lazy(() => import("@/pages/member/MemberEventsPage"));
+const MyTicketsPage = lazy(() => import("@/pages/member/MyTicketsPage"));
 
-function PublicApp() {
+/**
+ * SmartRouteResolver — Handles un-prefixed URLs dynamically for logged-in user.
+ * Preserves query strings (e.g. ?module=Organization%20Documents or ?tab=documents).
+ */
+function SmartRouteResolver() {
+  const location = useLocation();
+  const path = location.pathname;
+  const search = location.search;
+  const { isAuthenticated, user, isSuperAdmin } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Inspect user object AND localStorage fallback to prevent transient role loss during route transitions
+  let role = String(user?.primaryRoleKey || user?.role || user?.userRole || "").toUpperCase();
+  if (!role || role === "UNDEFINED" || role === "NULL") {
+    try {
+      const stored = JSON.parse(localStorage.getItem("jinanam_user") || "{}");
+      role = String(stored.primaryRoleKey || stored.role || "").toUpperCase();
+    } catch {}
+  }
+
+  const isOrgAdmin =
+    isSuperAdmin ||
+    role.includes("ADMIN") ||
+    role.includes("SUPER") ||
+    role.includes("TEMPLE") ||
+    role.includes("DHARAMSHALA") ||
+    role.includes("MONK") ||
+    role.includes("CENTER") ||
+    role === "TEMPLE_ADMIN" ||
+    role === "DHARAMSHALA_ADMIN" ||
+    role === "JC_ADMIN" ||
+    role === "MONK_ADMIN";
+
+  if (isOrgAdmin) {
+    if (path === "/" || path === "" || path === "/a-dashboard" || path === "/sa-dashboard") {
+      return <Navigate to="/admin/a-dashboard" replace />;
+    }
+    const cleanPath = path.startsWith("/admin") ? path : `/admin${path.startsWith("/") ? path : `/${path}`}`;
+    return <Navigate to={`${cleanPath}${search}`} replace />;
+  }
+
+  // Member user
+  if (path === "/" || path === "") {
+    return <Navigate to="/member/home" replace />;
+  }
+  const cleanMemberPath = path.startsWith("/member") ? path : `/member${path.startsWith("/") ? path : `/${path}`}`;
+  return <Navigate to={`${cleanMemberPath}${search}`} replace />;
+}
+
+/** Shown for the moment a route's chunk is in flight. */
+function RouteFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+        <span className="text-xs font-semibold text-slate-400">Loading…</span>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
   return (
     <BrowserRouter>
-      {/* Public pages need the same language context as the admin tree so the
-          en/hi/gu switch applies here too. */}
       <LanguageProvider>
-        <Routes>
-          <Route path="/" element={<SiteComingSoonPage />} />
-          <Route path="/welcome" element={<LandingPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AuthProvider>
+          <VisibilityEngineProvider>
+            {/* Pages are code-split (see the lazy() imports above), so each
+                route downloads only its own chunk instead of shipping all 60+
+                screens in the first bundle. */}
+            <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              {/* Public Auth Routes */}
+              <Route path="/login/admin" element={<LoginPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<MemberRegisterPage />} />
+
+              {/* Admin Panel Root (/admin/*) */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={["SUPER_ADMIN", "TEMPLE_ADMIN", "DHARAMSHALA_ADMIN", "JC_ADMIN", "MONK_ADMIN"]}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/admin/a-dashboard" replace />} />
+                <Route path="sa-dashboard" element={<DashboardPage />} />
+                <Route path="a-dashboard" element={<DashboardPage />} />
+                <Route path="members" element={<MembersPage />} />
+                <Route path="jain-members" element={<MembersPage />} />
+                <Route path="non-jain-members" element={<MembersPage />} />
+                <Route path="family" element={<FamilyPage />} />
+                <Route path="family-management" element={<FamilyPage />} />
+                <Route path="member-requests" element={<MembersPage />} />
+                <Route path="member-verification" element={<MembersPage />} />
+                <Route path="family-groups" element={<FamilyPage />} />
+                <Route path="import-members" element={<MembersPage />} />
+                <Route path="export-members" element={<MembersPage />} />
+                <Route path="volunteers" element={<VolunteersPage />} />
+                <Route path="volunteer-management" element={<VolunteersPage />} />
+                <Route path="volunteer-registration" element={<VolunteersPage />} />
+                <Route path="volunteer-assignment" element={<VolunteersPage />} />
+                <Route path="volunteer-attendance" element={<VolunteersPage />} />
+                <Route path="volunteer-reports" element={<VolunteersPage />} />
+                <Route path="ms-profiles" element={<MonksPage />} />
+                <Route path="ms/:id" element={<MonkDetailPage />} />
+                <Route path="guru-hierarchy" element={<MonksPage />} />
+                <Route path="ms-groups" element={<MonksPage />} />
+                <Route path="ms-associations" element={<MonksPage />} />
+                <Route path="current-route" element={<TrackingPage />} />
+                <Route path="route-planning" element={<TrackingPage />} />
+                <Route path="journey-history" element={<TrackingPage />} />
+                <Route path="chaturmas" element={<MonksPage />} />
+                <Route path="tapasya" element={<MonksPage />} />
+                <Route path="timeline" element={<MonksPage />} />
+                <Route path="followers" element={<MonksPage />} />
+                <Route path="staff-management" element={<StaffPage />} />
+                <Route path="staff" element={<StaffPage />} />
+                <Route path="staff-registration" element={<StaffPage />} />
+                <Route path="staff-qr-cards" element={<StaffPage />} />
+                <Route path="attendance" element={<StaffPage />} />
+                <Route path="leave-management" element={<StaffPage />} />
+                <Route path="documents" element={<StaffPage />} />
+                <Route path="working-hours" element={<StaffPage />} />
+                <Route path="committee-members" element={<CommitteePage />} />
+                <Route path="designations" element={<CommitteePage />} />
+                <Route path="contact-directory" element={<CommitteePage />} />
+                <Route path="temple-management" element={<OrgListPage defaultType="TEMPLE" />} />
+                <Route path="temple-management/:id" element={<OrgDetailPage />} />
+                <Route path="temples" element={<OrgListPage defaultType="TEMPLE" />} />
+                <Route path="temples/:id" element={<OrgDetailPage />} />
+                <Route path="temple-information" element={<OrgListPage defaultType="TEMPLE" />} />
+                <Route path="facilities" element={<OrgListPage defaultType="TEMPLE" />} />
+                <Route path="gallery" element={<GalleryPage />} />
+                <Route path="temple-committee" element={<OrgListPage defaultType="TEMPLE" />} />
+                <Route path="notices" element={<AnnouncementsPage />} />
+                <Route path="reviews" element={<OrgListPage defaultType="TEMPLE" />} />
+                <Route path="dhaja" element={<OrgListPage defaultType="TEMPLE" />} />
+                <Route path="social-links" element={<OrgListPage defaultType="TEMPLE" />} />
+                <Route path="jain-center-management" element={<OrgListPage defaultType="JAIN_CENTER" />} />
+                <Route path="jain-center-management/:id" element={<OrgDetailPage />} />
+                <Route path="jain-centers" element={<OrgListPage defaultType="JAIN_CENTER" />} />
+                <Route path="jain-centers/:id" element={<OrgDetailPage />} />
+                <Route path="jain-centres/:id" element={<OrgDetailPage />} />
+                <Route path="centre-information" element={<OrgListPage defaultType="JAIN_CENTER" />} />
+                <Route path="dharamshala-management" element={<OrgListPage defaultType="DHARAMSHALA" />} />
+                <Route path="dharamshala-management/:id" element={<OrgDetailPage />} />
+                <Route path="dharamshalas" element={<OrgListPage defaultType="DHARAMSHALA" />} />
+                <Route path="dharamshalas/:id" element={<OrgDetailPage />} />
+                <Route path="sthanak-management" element={<SthanaksPage />} />
+                <Route path="sthanak-management/:id" element={<OrgDetailPage />} />
+                <Route path="stanaks" element={<SthanaksPage />} />
+                <Route path="stanaks/:id" element={<OrgDetailPage />} />
+                <Route path="sthanaks/:id" element={<OrgDetailPage />} />
+                <Route path="orgs/:id" element={<OrgDetailPage />} />
+                <Route path="org/:id" element={<OrgDetailPage />} />
+                <Route path="buildings" element={<OrgListPage defaultType="DHARAMSHALA" />} />
+                <Route path="floors" element={<OrgListPage defaultType="DHARAMSHALA" />} />
+                <Route path="rooms" element={<OrgListPage defaultType="DHARAMSHALA" />} />
+                <Route path="room-categories" element={<OrgListPage defaultType="DHARAMSHALA" />} />
+                <Route path="amenities" element={<OrgListPage defaultType="DHARAMSHALA" />} />
+                <Route path="pricing" element={<OrgListPage defaultType="DHARAMSHALA" />} />
+                <Route path="rules" element={<OrgListPage defaultType="DHARAMSHALA" />} />
+                <Route path="bhojanshala-management" element={<OrgListPage defaultType="BHOJANSHALA" />} />
+                <Route path="timings" element={<OrgListPage defaultType="BHOJANSHALA" />} />
+                <Route path="menu" element={<OrgListPage defaultType="BHOJANSHALA" />} />
+                <Route path="pass-management" element={<PassManagementPage />} />
+                <Route path="sthanak-management" element={<SthanaksPage />} />
+                <Route path="stanaks" element={<SthanaksPage />} />
+                <Route path="my-page" element={<CommunityPagesPage />} />
+                <Route path="community-pages" element={<CommunityPagesPage />} />
+                <Route path="page-information" element={<CommunityPagesPage />} />
+                <Route path="seo-sharing" element={<CommunityPagesPage />} />
+                <Route path="feed-management" element={<FeedPage />} />
+                <Route path="feed" element={<FeedPage />} />
+                <Route path="create-post" element={<FeedPage />} />
+                <Route path="scheduled-posts" element={<FeedPage />} />
+                <Route path="featured-posts" element={<FeedPage />} />
+                <Route path="reported-posts" element={<FeedPage />} />
+                <Route path="feed-analytics" element={<FeedPage />} />
+                <Route path="events" element={<EventsPage />} />
+                <Route path="event-categories" element={<EventsPage />} />
+                <Route path="event-management" element={<EventsPage />} />
+                <Route path="event-schedule" element={<EventsPage />} />
+                <Route path="registrations" element={<EventsPage />} />
+                <Route path="attendees" element={<EventsPage />} />
+                <Route path="seating-layout" element={<EventsPage />} />
+                <Route path="ticket-categories" element={<EventsPage />} />
+                <Route path="coupons" element={<EventsPage />} />
+                <Route path="qr-check-in" element={<EventsPage />} />
+                <Route path="check-in-reports" element={<EventsPage />} />
+                <Route path="event-analytics" element={<EventsPage />} />
+                <Route path="news" element={<NewsPage />} />
+                <Route path="news-management" element={<NewsPage />} />
+                <Route path="news-categories" element={<NewsPage />} />
+                <Route path="featured-news" element={<NewsPage />} />
+                <Route path="scheduled-news" element={<NewsPage />} />
+                <Route path="archived-news" element={<NewsPage />} />
+                <Route path="announcements" element={<AnnouncementsPage />} />
+                <Route path="announcement-management" element={<AnnouncementsPage />} />
+                <Route path="priority-announcements" element={<AnnouncementsPage />} />
+                <Route path="scheduled-announcements" element={<AnnouncementsPage />} />
+                <Route path="polls" element={<PollsPage />} />
+                <Route path="poll-management" element={<PollsPage />} />
+                <Route path="responses" element={<PollsPage />} />
+                <Route path="poll-results" element={<PollsPage />} />
+                <Route path="tours" element={<ToursPage />} />
+                <Route path="tour-management" element={<ToursPage />} />
+                <Route path="tour-schedule" element={<ToursPage />} />
+                <Route path="participants" element={<ToursPage />} />
+                <Route path="99-management" element={<ToursPage />} />
+                <Route path="99-categories" element={<ToursPage />} />
+                <Route path="completion-reports" element={<ToursPage />} />
+                <Route path="counters" element={<CountersPage />} />
+                <Route path="spiritual-counter" element={<CountersPage />} />
+                <Route path="counter-categories" element={<CountersPage />} />
+                <Route path="member-statistics" element={<CountersPage />} />
+                <Route path="daily-tithi" element={<CalendarPage />} />
+                <Route path="choghadiya" element={<CalendarPage />} />
+                <Route path="festival-list" element={<CalendarPage />} />
+                <Route path="calendar-types" element={<CalendarPage />} />
+                <Route path="calendar-correction" element={<CalendarPage />} />
+                <Route path="donations" element={<DonationsPage />} />
+                <Route path="donation-transactions" element={<DonationsPage />} />
+                <Route path="counter-donations" element={<DonationsPage />} />
+                <Route path="jinanam-donations" element={<DonationsPage />} />
+                <Route path="donation-categories" element={<DonationsPage />} />
+                <Route path="receipts" element={<ReceiptsPage />} />
+                <Route path="verification-queue" element={<DonationsPage />} />
+                <Route path="bookings" element={<BookingsPage />} />
+                <Route path="dharamshala-bookings" element={<BookingsPage />} />
+                <Route path="hall-bookings" element={<BookingsPage />} />
+                <Route path="bhojanshala-passes" element={<PassManagementPage />} />
+                <Route path="pooja-bookings" element={<BookingsPage />} />
+                <Route path="calendar" element={<BookingsPage />} />
+                <Route path="ads" element={<AdsPage />} />
+                <Route path="ad-banners" element={<AdsPage />} />
+                <Route path="in-feed-ads" element={<AdsPage />} />
+                <Route path="ad-analytics" element={<AdsPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="push-notifications" element={<NotificationsPage />} />
+                <Route path="in-app-notifications" element={<NotificationsPage />} />
+                <Route path="temporary-notifications" element={<NotificationsPage />} />
+                <Route path="whatsapp-alerts" element={<NotificationsPage />} />
+                <Route path="notifications/preferences" element={<NotificationPreferencesPage />} />
+                <Route path="notification-preferences" element={<NotificationPreferencesPage />} />
+                <Route path="tracking" element={<TrackingPage />} />
+                <Route path="live-tracking-map" element={<TrackingPage />} />
+                <Route path="monk-tracking-list" element={<TrackingPage />} />
+                <Route path="manual-route-entry" element={<TrackingPage />} />
+                <Route path="sos-alerts" element={<AlertsPage />} />
+                <Route path="offline-alerts" element={<AlertsPage />} />
+                <Route path="devices" element={<DevicesPage />} />
+                <Route path="system-health" element={<DevicesPage />} />
+                <Route path="support-tickets" element={<SupportTicketsPage />} />
+                <Route path="general-inquiries" element={<SupportTicketsPage />} />
+                <Route path="complaints" element={<SupportTicketsPage />} />
+                <Route path="faqs" element={<SupportTicketsPage />} />
+                <Route path="reports" element={<ReportsPage />} />
+                <Route path="analytics-dashboard" element={<ReportsPage />} />
+                <Route path="tracking-reports" element={<ReportsPage />} />
+                <Route path="financial-reports" element={<ReportsPage />} />
+                <Route path="audit-logs" element={<AuditLogsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="users-roles" element={<SettingsPage />} />
+                <Route path="system-settings" element={<SettingsPage />} />
+                <Route path="feature-flags" element={<SettingsPage />} />
+                <Route path="master-data" element={<MasterDataPage />} />
+                <Route path="subscription-plans" element={<SubscriptionPlansPage />} />
+                <Route path="account-status" element={<AccountStatusPage />} />
+                <Route path="roles-permissions" element={<RolesPermissionsPage />} />
+                <Route path="admins" element={<AdminsPage />} />
+                <Route path="coming-soon" element={<ComingSoonPage />} />
+                <Route path="*" element={<Navigate to="/admin/a-dashboard" replace />} />
+              </Route>
+
+              {/* Direct Un-prefixed Admin Route Forwarders */}
+              <Route path="/admins" element={<Navigate to="/admin/admins" replace />} />
+              <Route path="/temples" element={<Navigate to="/admin/temples" replace />} />
+              <Route path="/jain-centers" element={<Navigate to="/admin/jain-centers" replace />} />
+              <Route path="/dharamshalas" element={<Navigate to="/admin/dharamshalas" replace />} />
+              <Route path="/stanaks" element={<Navigate to="/admin/stanaks" replace />} />
+              <Route path="/sthanaks" element={<Navigate to="/admin/sthanaks" replace />} />
+              <Route path="/volunteers" element={<Navigate to="/admin/volunteers" replace />} />
+              <Route path="/members" element={<Navigate to="/admin/members" replace />} />
+              <Route path="/staff" element={<Navigate to="/admin/staff" replace />} />
+              <Route path="/monks" element={<Navigate to="/admin/ms-profiles" replace />} />
+              <Route path="/donations" element={<Navigate to="/admin/donations" replace />} />
+              <Route path="/events" element={<Navigate to="/admin/events" replace />} />
+
+              {/* Member Panel Root */}
+              <Route
+                path="/member"
+                element={
+                  <ProtectedRoute>
+                    <MemberLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/member/home" replace />} />
+                <Route path="home" element={<MemberHomePage />} />
+                <Route path="feed" element={<MemberFeedPage />} />
+                <Route path="offers" element={<MemberOffersPage />} />
+                <Route path="explore" element={<MemberExplorePage />} />
+                <Route path="spiritual" element={<MemberSpiritualPage />} />
+                <Route path="profile" element={<MemberProfilePage />} />
+                <Route path="news" element={<MemberNewsPage />} />
+                <Route path="ms" element={<MemberMSListPage />} />
+                <Route path="ms/:id" element={<MemberMSDetailPage />} />
+                <Route path="temples" element={<MemberTempleListPage />} />
+                <Route path="support" element={<MemberSupportPage />} />
+                <Route path="tours" element={<MemberToursPage />} />
+                <Route path="digital-id" element={<MemberDigitalIdPage />} />
+                <Route path="wallet" element={<MemberWalletPage />} />
+                <Route path="notifications" element={<MemberNotificationsPage />} />
+                <Route path="bookings" element={<MyBookingsPage />} />
+                <Route path="bookings/:uid" element={<BookingDetailPage />} />
+                <Route path="donations" element={<MemberDonationsPage />} />
+                <Route path="events" element={<MemberEventsPage />} />
+                <Route path="tickets" element={<MyTicketsPage />} />
+              </Route>
+
+              {/* Smart Catch-All Resolver for root "/" or any un-prefixed or mismatched URL */}
+              <Route path="*" element={<SmartRouteResolver />} />
+            </Routes>
+            </Suspense>
+          </VisibilityEngineProvider>
+        </AuthProvider>
       </LanguageProvider>
     </BrowserRouter>
   );
 }
-
-function AdminApp() {
-  return (
-    <BrowserRouter basename="/admin">
-      <LanguageProvider>
-        <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            {/* ─── Dashboards & Shared ──────────────────────────────── */}
-            <Route index element={<DashboardPage />} />
-            <Route path="sa-dashboard" element={<SADashboardPage />} />
-            <Route path="coming-soon" element={<ComingSoonPage />} />
-
-            {/* ─── People: Members ────────────────────────────────── */}
-            <Route path="members" element={<MembersPage />} />
-            <Route path="members/bulk-import" element={<BulkImportPage />} />
-            <Route path="non-jain-members" element={<NonJainMembersPage />} />
-            <Route path="family" element={<FamilyPage />} />
-            <Route path="people/member-requests" element={<ComingSoonPage moduleName="Member Requests" />} />
-            <Route path="people/member-verification" element={<ComingSoonPage moduleName="Member Verification" />} />
-            <Route path="people/family-groups" element={<ComingSoonPage moduleName="Family Groups" />} />
-            <Route path="people/export-members" element={<ComingSoonPage moduleName="Export Members" />} />
-
-            {/* ─── People: Volunteers ─────────────────────────────── */}
-            <Route path="volunteers" element={<VolunteersPage />} />
-            <Route path="people/volunteer-registration" element={<ComingSoonPage moduleName="Volunteer Registration" />} />
-            <Route path="people/volunteer-assignment" element={<ComingSoonPage moduleName="Volunteer Assignment" />} />
-            <Route path="people/volunteer-attendance" element={<ComingSoonPage moduleName="Volunteer Attendance" />} />
-            <Route path="people/volunteer-reports" element={<ComingSoonPage moduleName="Volunteer Reports" />} />
-
-            {/* ─── People: MS Management ──────────────────────────── */}
-            <Route path="monks" element={<MonksPage />} />
-            <Route path="monks/:id" element={<MonkDetailPage />} />
-            <Route path="ms/guru-hierarchy" element={<ComingSoonPage moduleName="Guru Hierarchy" />} />
-            <Route path="ms/groups" element={<ComingSoonPage moduleName="MS Groups" />} />
-            <Route path="ms/ms-associations" element={<ComingSoonPage moduleName="MS Associations" />} />
-            <Route path="ms/route-planning" element={<ComingSoonPage moduleName="Route Planning" />} />
-
-            {/* ─── People: Staff ──────────────────────────────────── */}
-            <Route path="staff" element={<StaffPage />} />
-
-            {/* ─── People: Committee ──────────────────────────────── */}
-            <Route path="people/committee" element={<ComingSoonPage moduleName="Committee" />} />
-            <Route path="people/committee/members" element={<ComingSoonPage moduleName="Committee Members" />} />
-            <Route path="people/committee/designations" element={<ComingSoonPage moduleName="Committee Designations" />} />
-            <Route path="people/committee/directory" element={<ComingSoonPage moduleName="Contact Directory" />} />
-
-            {/* ─── Organizations ──────────────────────────────────── */}
-            <Route
-              path="temples"
-              element={
-                <OrgListPage
-                  endpoint="/temples"
-                  entity="temple"
-                  label="Temple"
-                  pluralLabel="Temples"
-                  moduleKey="TEMPLES"
-                  testId="temples-page"
-                />
-              }
-            />
-            <Route
-              path="temples/:id"
-              element={
-                <OrgDetailPage
-                  basePath="/temples"
-                  entityLabel="Temple"
-                  apiPrefix="/temples"
-                />
-              }
-            />
-            <Route
-              path="dharamshalas"
-              element={
-                <OrgListPage
-                  endpoint="/dharamshalas"
-                  entity="dharamshala"
-                  label="Dharamshala"
-                  pluralLabel="Dharamshalas"
-                  moduleKey="DHARAMSHALAS"
-                  testId="dharamshalas-page"
-                />
-              }
-            />
-            <Route
-              path="dharamshalas/:id"
-              element={
-                <OrgDetailPage
-                  basePath="/dharamshalas"
-                  entityLabel="Dharamshala"
-                  apiPrefix="/dharamshalas"
-                />
-              }
-            />
-            <Route
-              path="jain-centers"
-              element={
-                <OrgListPage
-                  endpoint="/jain-centers"
-                  entity="jain-center"
-                  label="Jain Centre"
-                  pluralLabel="Jain Centres"
-                  moduleKey="JAIN_CENTERS"
-                  testId="jain-centers-page"
-                />
-              }
-            />
-            <Route
-              path="jain-centers/:id"
-              element={
-                <OrgDetailPage
-                  basePath="/jain-centers"
-                  entityLabel="Jain Centre"
-                  apiPrefix="/jain-centers"
-                />
-              }
-            />
-            <Route path="stanaks" element={<StanaksPage />} />
-            <Route
-              path="stanaks/:id"
-              element={
-                <OrgDetailPage
-                  basePath="/stanaks"
-                  entityLabel="Sthanak"
-                  apiPrefix="/temples"
-                />
-              }
-            />
-            <Route path="bhojanshala" element={<ComingSoonPage moduleName="Bhojanshala Management" />} />
-            <Route path="community-pages" element={<CommunityPagesPage />} />
-
-            {/* ─── Community ──────────────────────────────────────── */}
-            <Route path="feed" element={<FeedPage />} />
-            <Route path="feed/create-post" element={<FeedPage defaultCompose={true} />} />
-            <Route path="community/scheduled-posts" element={<FeedPage defaultTab="scheduled" />} />
-            <Route path="community/featured-posts" element={<FeedPage defaultTab="featured" />} />
-            <Route path="community/reported-posts" element={<FeedPage defaultTab="reported" />} />
-            <Route path="events" element={<EventsPage />} />
-            <Route path="news" element={<NewsPage />} />
-            <Route path="announcements" element={<AnnouncementsPage />} />
-            <Route path="polls" element={<PollsPage />} />
-            <Route path="tours" element={<ToursPage />} />
-            <Route path="tour-jatra" element={<TourJatraPage />} />
-            <Route path="tours/:tourId/participants/:participantId" element={<TourJatraPage />} />
-            <Route path="chaturmas" element={<ChaturmasPage />} />
-            <Route path="counters" element={<CountersPage />} />
-            <Route path="calendar" element={<CalendarPage />} />
-            <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="notifications/preferences" element={<NotificationPreferencesPage />} />
-            <Route path="seating" element={<SeatingPage />} />
-            <Route path="tickets" element={<TicketsPage />} />
-            <Route path="pricing" element={<TicketsPage />} />
-            <Route path="varshitap" element={<ComingSoonPage moduleName="Varshitap Management" />} />
-
-            {/* ─── Bookings ───────────────────────────────────────── */}
-            <Route path="bookings" element={<BookingsPage />} />
-            <Route path="booking-calendar" element={<BookingCalendarPage />} />
-
-            {/* ─── Finance ────────────────────────────────────────── */}
-            <Route path="donations" element={<DonationsPage />} />
-            <Route path="receipts" element={<ReceiptsPage />} />
-            <Route path="offers" element={<OffersPage />} />
-            <Route path="ads" element={<AdsPage />} />
-            <Route path="sponsors" element={<ComingSoonPage moduleName="Sponsors" />} />
-            <Route path="finance/partner-businesses" element={<ComingSoonPage moduleName="Partner Businesses" />} />
-
-            {/* ─── Operations ─────────────────────────────────────── */}
-            <Route path="visitors" element={<VisitorsPage />} />
-            <Route path="ms-tracking" element={<MSTrackingPage />} />
-            <Route path="tracking" element={<TrackingPage />} />
-            <Route path="manual-tracking" element={<ManualTrackingPage />} />
-            <Route path="journey-logs" element={<JourneyLogsPage />} />
-            <Route path="routes" element={<RoutesPage />} />
-            <Route path="live-map" element={<LiveMapPage />} />
-            <Route path="devices" element={<DevicesPage />} />
-            <Route path="alerts" element={<AlertsPage />} />
-            <Route path="operations/documents" element={<ComingSoonPage moduleName="Document Management" />} />
-            <Route path="operations/tasks" element={<ComingSoonPage moduleName="Task Management" />} />
-            <Route path="operations/chaturmas-tracking" element={<ComingSoonPage moduleName="Chaturmas Tracking" />} />
-            <Route path="attendance" element={<ComingSoonPage moduleName="Attendance" />} />
-
-            {/* ─── Reports & Analytics ────────────────────────────── */}
-            <Route path="reports" element={<ReportsPage />} />
-            <Route path="live-report" element={<LiveReportPage />} />
-            <Route path="reports/members" element={<MemberReportsPage />} />
-            <Route path="reports/admins" element={<AdminReportsPage />} />
-            <Route path="reports/donations" element={<DonationReportsPage />} />
-            <Route path="reports/events" element={<EventsReportsPage />} />
-            <Route path="reports/feed-analytics" element={<FeedAnalyticsPage />} />
-            <Route path="reports/app-usage" element={<AppUsagePage />} />
-
-            {/* ─── Support ────────────────────────────────────────── */}
-            <Route path="support-tickets" element={<SupportTicketsPage />} />
-            <Route path="feedback" element={<FeedbackPage />} />
-            <Route path="incorrect-reports" element={<IncorrectReportsPage />} />
-            <Route path="support/callback-requests" element={<ComingSoonPage moduleName="Callback Requests" />} />
-            <Route path="faq" element={<FaqPage />} />
-
-            {/* ─── Settings & Admin Management ────────────────────── */}
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="roles-permissions" element={<RolesPermissionsPage />} />
-            <Route path="login-history" element={<LoginHistoryPage />} />
-            <Route path="account-status" element={<AccountStatusPage />} />
-            <Route path="settings/payment-settings" element={<ComingSoonPage moduleName="Payment Settings" />} />
-            <Route path="admins" element={<AdminsPage />} />
-            <Route path="audit-logs" element={<AuditLogsPage />} />
-            <Route path="master-data" element={<MasterDataPage />} />
-            <Route path="subscription-plans" element={<SubscriptionPlansPage />} />
-
-            {/* ─── Content Management (SA) ────────────────────────── */}
-            <Route path="gallery" element={<GalleryPage />} />
-            <Route path="banners" element={<BannersPage />} />
-            <Route path="home-sections" element={<HomeSectionsPage />} />
-          </Route>
-
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AuthProvider>
-    </LanguageProvider>
-  </BrowserRouter>
-  );
-}
-
-function App() {
-  return isAdminPath ? <AdminApp /> : <PublicApp />;
-}
-
-export default App;

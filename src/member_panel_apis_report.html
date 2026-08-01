@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JiNANAM Member Panel — Complete Backend APIs Reference</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 15mm;
+    }
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+    }
+    .header {
+      background: linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #f59e0b 100%);
+      color: #ffffff;
+      padding: 24px 30px;
+      border-radius: 14px;
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      margin: 0 0 6px 0;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+    .header p {
+      margin: 0;
+      font-size: 13px;
+      opacity: 0.95;
+    }
+    .meta-bar {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.25);
+      font-size: 11px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+    }
+    .section {
+      margin-bottom: 22px;
+      page-break-inside: avoid;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ea580c;
+      border-bottom: 2px solid #fed7aa;
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 10.5px;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 7px 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f5f9;
+      font-weight: bold;
+      color: #0f172a;
+    }
+    .method {
+      font-family: monospace;
+      font-weight: 800;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .get { background-color: #e0f2fe; color: #0369a1; }
+    .post { background-color: #dcfce7; color: #15803d; }
+    .put { background-color: #fef3c7; color: #b45309; }
+    .delete { background-color: #ffe4e6; color: #be123c; }
+    .endpoint {
+      font-family: monospace;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 10px;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>JiNANAM — Member Panel Backend APIs Reference</h1>
+    <p>Complete Exhaustive List of Backend API Endpoints (`/api/v1/*`) for the Member App & Web Portal</p>
+    <div class="meta-bar">
+      <span>Generated: July 31, 2026</span>
+      <span>Target Platform: Member App & Web Portal</span>
+      <span>Base Route: `/api/v1`</span>
+    </div>
+  </div>
+
+  <!-- 1. Auth & Identity -->
+  <div class="section">
+    <div class="section-title">1. Authentication & Identity Management</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/auth/check-identity</td>
+          <td>Checks if mobile/email exists & returns permitted auth methods (`mobile_otp`, `email_otp`, `google`).</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/auth/request-otp</td>
+          <td>Triggers MSG91 SMS / WhatsApp 6-digit OTP verification code.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/auth/verify-otp</td>
+          <td>Verifies 6-digit OTP and returns `registrationToken` or JWT auth tokens.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/auth/register</td>
+          <td>Registers Jain (`JFJM108`) or Non-Jain (`JFNJM108`) member profile with 21/22-section specifications.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/auth/login</td>
+          <td>Standard credential/OTP login for members.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/auth/refresh</td>
+          <td>Refreshes expired JWT access tokens.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/auth/logout</td>
+          <td>Revokes current device session and clears local tokens.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/auth/me</td>
+          <td>Fetches active logged-in member session, digital ID, and status.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 2. Dashboard & Search -->
+  <div class="section">
+    <div class="section-title">2. Member Homepage & Universal Search</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/dashboard/member</td>
+          <td>Aggregates 15 dashboard blocks (active bookings, followed entities, upcoming events, monk location).</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/search/universal</td>
+          <td>Universal search across Temples, Dharamshalas, Monks, Events, & Members by Unique ID or keyword.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 3. Profile & Family -->
+  <div class="section">
+    <div class="section-title">3. Member Profile & Family Account Linking</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/member/profile</td>
+          <td>Fetches full member profile, completion %, digital ID, and badges.</td>
+        </tr>
+        <tr>
+          <td><span class="method put">PUT</span></td>
+          <td class="endpoint">/member/profile</td>
+          <td>Updates personal, address, health, professional, or privacy preference fields.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/member/family</td>
+          <td>Adds a family member with duplicate mobile check and automatic account linking.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/member/digital-id</td>
+          <td>Returns signed JWT digital token & printable QR pass data.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 4. Feed & Priority Engine -->
+  <div class="section">
+    <div class="section-title">4. Community Feed & Priority Visibility Engine</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/feed</td>
+          <td>Fetches community feed post list filtered by 6-level visibility engine (Priority 1: Followed Entities).</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/feed</td>
+          <td>Creates a new member post/update (Jain members).</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/feed/:id/like</td>
+          <td>Toggles like/applause on a feed post.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/feed/:id/comment</td>
+          <td>Adds a comment to a feed post.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/feed/follow</td>
+          <td>Toggles follow/unfollow status for Temples, Monks, Dharamshalas, or Community Pages.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/feed/following</td>
+          <td>Returns list of all entities followed by the logged-in member.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 5. Temples & Stanaks -->
+  <div class="section">
+    <div class="section-title">5. Temples, Stanaks & Jain Centres Directory</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/temples</td>
+          <td>Lists Derasars (`JFJT`), Stanaks (`JFSK`), & Jain Centres (`JFJC`) with filters.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/temples/:id</td>
+          <td>Returns detailed temple info, Puja/Pakshal timings, Dhaja history (25 yrs), and Chaturmas history.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/temples/:id/reviews</td>
+          <td>Submits a 1–5 star rating and review.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/temples/:id/reviews</td>
+          <td>Retrieves public reviews and official temple replies.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 6. Dharamshala & Bookings -->
+  <div class="section">
+    <div class="section-title">6. Dharamshala, Accommodation & Room Bookings</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/dharamshalas</td>
+          <td>Lists Dharamshalas (`JFD108`) with live availability status (*High Availability*, *Limited*, *Full*).</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/dharamshalas/:id</td>
+          <td>Fetches room types (AC, Non-AC, Dormitory, Hall), check-in/out times, and Bhojanshala rules.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/bookings</td>
+          <td>Fetches all member bookings (Stays, Halls, Bhojanshala, Events, Tours) grouped as *Upcoming*, *Active*, *Past*.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/bookings/:uid</td>
+          <td>Fetches single booking details, status timeline, and payment countdown timer.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/bookings</td>
+          <td>Submits a new room / hall / stay booking request.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/bookings/:uid/payment-proof</td>
+          <td>Uploads payment screenshot + transaction reference number.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/bookings/:uid/extend</td>
+          <td>Requests stay extension for active accommodation.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/bookings/:uid/cancel</td>
+          <td>Submits a booking cancellation request.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/bookings/:uid/receipt</td>
+          <td>Downloads auto-generated Tax / Booking / Stay Receipt PDF.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 7. Monks / MS -->
+  <div class="section">
+    <div class="section-title">7. Maharaj Saheb & Sadhvi (MS) Tracking</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/monks</td>
+          <td>Lists Monks (`JFMS108`) with live status (*Staying*, *Vihaar*, *Chaturmas*).</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/monks/:id</td>
+          <td>Fetches monk profile, Guru Parampara tree, Vihaar Group (`JFMSV108`), Pravachan timings & Tapasya history.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/monks/:id/chaturmas</td>
+          <td>Returns year-wise Chaturmas history synchronized with hosting Derasars.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 8. Events & Passes -->
+  <div class="section">
+    <div class="section-title">8. Events, Tours & Passes</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/events</td>
+          <td>Lists upcoming, ongoing, and past events/tours.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/events/:id</td>
+          <td>Fetches detailed event schedule, venue, & organizer details.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/events/:id/rsvp</td>
+          <td>Submits RSVP / Ticket booking for an event or tour.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/events/:id/pass</td>
+          <td>Generates downloadable Event Pass / E-Ticket with QR Code.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 9. Donations & Receipts -->
+  <div class="section">
+    <div class="section-title">9. Donations & 80G Tax Receipts</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/donations/targets</td>
+          <td>Fetches bank, UPI ID, donation categories, and 80G/CSR eligibility for a target organization.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/donations/manual</td>
+          <td>Creates manual donation record and returns payment transfer instructions.</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/donations/:uid/proof</td>
+          <td>Uploads donation payment proof screenshot.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/donations</td>
+          <td>Fetches member donation history with financial-year totals.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/donations/:uid/receipt</td>
+          <td>Downloads official 80G tax receipt PDF.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 10. News & Offers -->
+  <div class="section">
+    <div class="section-title">10. News, Announcements & Offers</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/news</td>
+          <td>Fetches verified Jain news articles & announcements.</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/offers</td>
+          <td>Lists active merchant & community member offers/discounts.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 11. Support Tickets -->
+  <div class="section">
+    <div class="section-title">11. Support Tickets & Report Incorrect Information</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Method</th>
+          <th style="width: 32%;">Endpoint</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td class="endpoint">/support/tickets</td>
+          <td>Creates a new Support Ticket (or auto-triggered from *Report Incorrect Info* on any profile page).</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td class="endpoint">/support/tickets</td>
+          <td>Lists all member support tickets and tracking status (*Open*, *In Progress*, *Resolved*).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    📌 JiNANAM Platform Member Panel Backend APIs Specification — Production Verified Document | Antigravity AI
+  </div>
+
+</body>
+</html>

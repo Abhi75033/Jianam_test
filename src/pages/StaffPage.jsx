@@ -56,6 +56,8 @@ import { OrgSelect } from "@/components/common/OrgSelect";
 import { toast } from "sonner";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { TabPermissionSelector, PLATFORM_MODULE_LIST } from "@/components/common/TabPermissionSelector";
+import { sanitizeGrant, toPermissionsPayload, buildGrantMeta, normalizeGrants } from "@/lib/access";
+import { PermissionGate, ReadEditOnlyNotice } from "@/components/common/PermissionGate";
 import {
   GENDER_OPTIONS, BLOOD_GROUP_OPTIONS, WORK_CATEGORY_OPTIONS, LEAVE_TYPE_OPTIONS,
   ATTENDANCE_STATUSES, toOptions,
@@ -75,9 +77,14 @@ const TAB_PARAM_MAP = {
 };
 
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PhoneField } from "@/components/common/PhoneInput";
+import CountryDropdown from "@/components/common/CountryDropdown";
 
 export default function StaffPage() {
-  const { canDo, user, isSuperAdmin, permissions, modules } = useAuth();
+  const {
+    canDo, user, isSuperAdmin, permissions, modules,
+    delegatableModules, capabilities, role: actorRole,
+  } = useAuth();
   const { t } = useLanguage();
   const { orgs } = useOrgs();
   const location = useLocation();
@@ -85,12 +92,13 @@ export default function StaffPage() {
   const [selectedOrg, setSelectedOrg] = useState("");
   const orgId = user?.organizationIds?.[0] || selectedOrg || (isSuperAdmin ? orgs[0]?.id : undefined);
 
-  // Compute delegator's allowed modules (Super Admin gets all, Admin/Staff gets granted subset)
-  const actorAllowedModules = isSuperAdmin
-    ? PLATFORM_MODULE_LIST.map((m) => m.key)
-    : permissions && Object.keys(permissions).length > 0
-    ? Object.keys(permissions)
-    : modules || [];
+  /**
+   * What this account may delegate onward. Super Admin can hand out the full
+   * catalogue; an Admin, sub-admin or staff member who onboards someone can
+   * only pass on tabs they themselves hold — so the grant chain narrows at
+   * every level and never widens.
+   */
+  const actorAllowedModules = delegatableModules;
 
   // Tab permissions editing state for Staff
   const [tabAccessStaff, setTabAccessStaff] = useState(null);
@@ -333,6 +341,21 @@ export default function StaffPage() {
         }
       };
 
+      // Whoever onboards this staff member decides their tabs — clamped to the
+      // onboarder's own access, and carrying View/Add/Edit but never Delete.
+      const requestedTabs = form.modulePermissions || actorAllowedModules;
+      const { granted: grantedTabs, rejected: rejectedTabs } = sanitizeGrant(
+        requestedTabs, capabilities, actorRole
+      );
+      if (rejectedTabs.length > 0) {
+        toast.warning(
+          `${rejectedTabs.length} tab(s) skipped — you can only delegate access you hold yourself.`
+        );
+      }
+      payload.modules = grantedTabs;
+      payload.permissions = toPermissionsPayload(grantedTabs);
+      Object.assign(payload, buildGrantMeta(user));
+
       await api.post("/staff", payload);
       toast.success(t("Staff profile created and unique Staff ID auto-generated!"));
       setAddOpen(false);
@@ -460,28 +483,38 @@ export default function StaffPage() {
     }
   };
 
-  const openStaffTabModal = async (staffRow) => {
+  const openStaffTabModal = (staffRow) => {
     setTabAccessStaff(staffRow);
-    try {
-      const res = await api.get(`/staff/${staffRow.id}/modules`).catch(() => ({ data: { data: { modules: [] } } }));
-      const activeMods = res.data?.data?.modules || [];
-      setSelectedStaffTabs(activeMods.length > 0 ? activeMods : actorAllowedModules);
-    } catch {
-      setSelectedStaffTabs([]);
-    }
+    // `GET /staff/:id/modules` is not a route on the API — the staff record
+    // already carries its grants, so read them off the row instead of firing a
+    // request that always 404s and silently reset the selection.
+    const existing = normalizeGrants(
+      staffRow.permissions || staffRow.modules || staffRow.grantedModules
+    );
+    const activeMods = Object.keys(existing);
+    setSelectedStaffTabs(activeMods.length > 0 ? activeMods : actorAllowedModules);
   };
 
   const handleSaveStaffTabs = async () => {
     if (!tabAccessStaff) return;
     setSavingStaffTabs(true);
     try {
-      const permissionsPayload = selectedStaffTabs.map((modKey) => ({
-        module: modKey,
-        actions: ["VIEW", "CREATE", "EDIT"],
-      }));
+      // Subset rule: clamp the request to what this account actually holds, so
+      // a delegator can never grant a tab it wasn't given itself.
+      const { granted, rejected } = sanitizeGrant(selectedStaffTabs, capabilities, actorRole);
+      if (rejected.length > 0) {
+        toast.warning(
+          `${rejected.length} tab(s) skipped — you can only delegate access you hold yourself.`
+        );
+      }
+
       await api.patch(`/staff/${tabAccessStaff.id}/permissions`, {
-        permissions: permissionsPayload,
+        // Actions are stamped by the engine: View/Add/Edit, never Delete.
+        permissions: toPermissionsPayload(granted),
+        modules: granted,
+        ...buildGrantMeta(user),
       });
+      setSelectedStaffTabs(granted);
       toast.success(`Tab access permissions updated for ${tabAccessStaff.member?.fullName || "Staff"}.`);
       setTabAccessStaff(null);
       setReloadKey((k) => k + 1);
@@ -895,7 +928,7 @@ export default function StaffPage() {
                   </div>
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Mobile Number *")}</Label>
-                    <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder={t("e.g. 9876543210")} required className="h-9" />
+                    <PhoneField value={form.mobile} onChange={(v) => setForm({ ...form, mobile: v })} placeholder={t("Mobile Number")} required />
                   </div>
                 </div>
 
@@ -954,7 +987,7 @@ export default function StaffPage() {
                     </div>
                     <div>
                       <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Country *")}</Label>
-                      <Input value={form.currentAddress.country} onChange={(e) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: e.target.value } })} required className="h-9" />
+                      <CountryDropdown value={form.currentAddress.country || "India"} onValueChange={(v) => setForm({ ...form, currentAddress: { ...form.currentAddress, country: v } })} />
                     </div>
                     <div>
                       <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Pincode *")}</Label>
@@ -994,7 +1027,7 @@ export default function StaffPage() {
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Country *")}</Label>
-                        <Input value={form.permanentAddress.country} onChange={(e) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, country: e.target.value } })} required className="h-9" />
+                        <CountryDropdown value={form.permanentAddress.country || "India"} onValueChange={(v) => setForm({ ...form, permanentAddress: { ...form.permanentAddress, country: v } })} />
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase font-bold text-slate-400">{t("Pincode *")}</Label>

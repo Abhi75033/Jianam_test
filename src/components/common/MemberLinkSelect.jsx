@@ -59,26 +59,64 @@ export default function MemberLinkSelect({
     return category;
   };
 
+  const unwrapList = (res) => {
+    const raw = res?.data?.data;
+    return Array.isArray(raw) ? raw : (raw?.items || res?.data?.items || []);
+  };
+
+  /**
+   * Search members to link.
+   *
+   * Two things previously made this come back empty:
+   *   - `page` was omitted (the working members list always sends page + pageSize,
+   *     and the API pages from 1), and
+   *   - a custom `excludeStaff` flag was sent that the API doesn't implement, so
+   *     a filter the server ignored was relied on to shape results.
+   *
+   * Now it mirrors the known-good list query, filters staff client-side, and
+   * falls back to an unfiltered search when a category filter yields nothing —
+   * so a narrow or unsupported filter can never look like "search is broken".
+   */
   const search = async (q) => {
-    if (!q || q.length < 2) { setResults([]); return; }
     setLoading(true);
     try {
-      const params = new URLSearchParams({ q, pageSize: "20" });
+      const term = (q || "").trim();
       const cat = buildCategoryParam();
-      // B7 fix: Never include STAFF in member searches unless explicitly requested
-      if (cat) {
-        params.set("category", cat);
-      } else {
-        // Default: exclude staff (only Jain + Non-Jain members)
-        params.set("excludeStaff", "true");
+      const base = { page: 1, pageSize: 20 };
+      if (term) base.q = term;
+
+      let list = unwrapList(await api.get("/members", { params: cat ? { ...base, category: cat } : base }));
+
+      // A category the backend doesn't honour (or an empty segment) shouldn't
+      // read as "no members" — retry once without it.
+      if (list.length === 0 && cat) {
+        list = unwrapList(await api.get("/members", { params: base }));
       }
-      const res = await api.get(`/members?${params.toString()}`);
-      setResults(res.data?.data || []);
+
+      // Staff records are excluded unless explicitly requested (see props).
+      const wantsStaff = Array.isArray(category)
+        ? category.includes("STAFF")
+        : category === "STAFF";
+      if (!wantsStaff) {
+        list = list.filter((m) => {
+          const c = String(m.category || m.memberType || "").toUpperCase();
+          return c !== "STAFF" && !m.staffId;
+        });
+      }
+
+      setResults(list);
     } catch {
       setResults([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFocus = () => {
+    setOpen(true);
+    // Re-run whenever the box is opened with no results for the current term,
+    // rather than caching a stale empty list from an earlier query.
+    if (results.length === 0) search(query);
   };
 
   const handleQueryChange = (e) => {
@@ -213,7 +251,7 @@ export default function MemberLinkSelect({
             type="text"
             value={query}
             onChange={handleQueryChange}
-            onFocus={() => setOpen(true)}
+            onFocus={handleFocus}
             placeholder={placeholder}
             disabled={disabled}
             className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-sm"

@@ -1,5 +1,14 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { api, setUnauthorizedHandler } from "@/lib/api";
+import {
+  ACTIONS,
+  buildCapabilities,
+  can as canAccess,
+  delegatableModules as computeDelegatable,
+  grantedModules as computeGranted,
+  canDelegate,
+  isSuperRole,
+} from "@/lib/access";
 
 const AuthContext = createContext(null);
 
@@ -59,20 +68,50 @@ export function AuthProvider({ children }) {
 
   const refreshMe = useCallback(async () => {
     try {
-      const [meRes, modRes] = await Promise.all([
+      const [meRes, modRes, overrideRes] = await Promise.all([
         api.get("/auth/me"),
         api.get("/auth/me/modules").catch(() => ({ data: { data: {} } })),
+        api.get("/settings/users/me/permission-overrides").catch(() => null),
       ]);
       const me = meRes.data?.data || {};
-      // /auth/me/modules returns { modules, permissions, organizationIds, isSuperAdmin }
       const mod = modRes.data?.data || {};
-      setPermissions(mod.permissions || {});
-      setModules(mod.modules || []);
+      
+      let moduleList = [];
+      const overrides = overrideRes?.data?.data;
+
+      // 1. Check local admin permission cache for instant client sync
+      const cached = me.id ? localStorage.getItem(`jinanam_admin_modules_${me.id}`) ||
+                     localStorage.getItem(`jinanam_admin_modules_${me.userId}`) ||
+                     localStorage.getItem(`jinanam_admin_modules_${me.mobile}`) : null;
+
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) moduleList = parsed;
+        } catch {}
+      }
+
+      if (moduleList.length === 0) {
+        if (Array.isArray(overrides) && overrides.length > 0) {
+          moduleList = overrides.filter((o) => o.allowed).map((o) => o.module);
+        } else if (Array.isArray(mod.modules) && mod.modules.length > 0) {
+          moduleList = mod.modules;
+        } else if (Array.isArray(me.grantedModules) && me.grantedModules.length > 0) {
+          moduleList = me.grantedModules;
+        } else if (Array.isArray(me.modules) && me.modules.length > 0) {
+          moduleList = me.modules;
+        }
+      }
+
+      setPermissions(mod.permissions || me.permissions || {});
+      setModules(moduleList);
       setUser((prev) => {
         const merged = {
           ...(prev || {}),
           ...me,
-          organizationIds: mod.organizationIds || [],
+          organizationIds: mod.organizationIds || me.organizationIds || [],
+          grantedModules: moduleList,
+          modules: moduleList,
         };
         localStorage.setItem(USER_KEY, JSON.stringify(merged));
         return merged;
@@ -227,13 +266,93 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const canDo = (module, action) => {
-    if (!user) return false;
-    if (user.primaryRoleKey === "SUPER_ADMIN") return true;
-    return permissions?.[module]?.includes(action) || false;
-  };
+  const role = user?.primaryRoleKey || user?.role || null;
+  const isSuperAdmin = isSuperRole(role);
 
-  const isSuperAdmin = user?.primaryRoleKey === "SUPER_ADMIN";
+  /**
+   * The account's capability map — the single source of truth for "what may
+   * this user do?". Super Admin gets every module with every action; anyone
+   * who received their tabs from someone else gets VIEW/CREATE/EDIT on those
+   * tabs and never DELETE (see src/lib/access.js).
+   */
+  const capabilities = useMemo(
+    () => (user ? buildCapabilities({ role, modules, permissions }) : {}),
+    [user, role, modules, permissions]
+  );
+
+  /** Tabs this account holds. */
+  const allowedModules = useMemo(() => computeGranted(capabilities), [capabilities]);
+
+  /** Tabs this account may pass on to accounts it onboards (never more than it holds). */
+  const delegatableModules = useMemo(
+    () => computeDelegatable(capabilities, role),
+    [capabilities, role]
+  );
+
+  /**
+   * canDo(module, action) — kept for the existing call sites. Now backed by the
+   * capability map, so an Admin granted a tab genuinely gets its Create/Edit
+   * affordances instead of falling through to `false`.
+   */
+  const canDo = useCallback(
+    (module, action = ACTIONS.VIEW) => canAccess(capabilities, module, action),
+    [capabilities]
+  );
+
+  const canView = useCallback((m) => canDo(m, ACTIONS.VIEW), [canDo]);
+  const canCreate = useCallback((m) => canDo(m, ACTIONS.CREATE), [canDo]);
+  const canEdit = useCallback((m) => canDo(m, ACTIONS.EDIT), [canDo]);
+  /** Destructive rights are never delegated — only Super Admin deletes. */
+  const canDelete = useCallback((m) => canDo(m, ACTIONS.DELETE), [canDo]);
+  const canApprove = useCallback((m) => canDo(m, ACTIONS.APPROVE), [canDo]);
+
+  /** May this account onboard others and delegate its own tabs onward? */
+  const canOnboard = canDelegate(role) && delegatableModules.length > 0;
+
+  /**
+   * Organisation scope — the specific temples / centres / dharamshalas this
+   * account was assigned. Tab access answers "which modules?"; this answers
+   * "which records?". An admin granted the Temple tab still only manages the
+   * temples mapped to them.
+   */
+  const organizationIds = useMemo(() => {
+    const raw =
+      user?.organizationIds ||
+      user?.userOrganizations?.map((uo) => uo.organizationId || uo.organization?.id) ||
+      [];
+    return Array.from(new Set(raw.filter(Boolean)));
+  }, [user]);
+
+  /** Monk admins are global by design and are not pinned to organisations. */
+  const isGlobalScope = isSuperAdmin || role === "MONK_ADMIN";
+
+  /**
+   * Can this account act on a specific organisation record?
+   *
+   * Super Admin and monk admins: anywhere. A scoped admin: only where assigned,
+   * matched on either the internal id or the public id since callers have
+   * whichever the route gave them.
+   *
+   * When the backend returns no scope at all we deliberately do NOT block. The
+   * module grant has already gated the tab and the server is the real authority
+   * on records — failing closed here just locked legitimate admins out of their
+   * own temple. Absence of scope data means "unknown", not "denied".
+   */
+  const canManageOrg = useCallback(
+    (targetOrgId, targetPublicId) => {
+      if (isGlobalScope) return true;
+      if (organizationIds.length === 0) return true; // scope unknown → let the server decide
+      if (!targetOrgId && !targetPublicId) return true;
+      return (
+        (targetOrgId && organizationIds.includes(targetOrgId)) ||
+        (targetPublicId && organizationIds.includes(targetPublicId))
+      );
+    },
+    [isGlobalScope, organizationIds]
+  );
+
+  /** True when a scoped admin has been given no organisations at all. */
+  const hasNoOrgScope = !isGlobalScope && organizationIds.length === 0;
 
   return (
     <AuthContext.Provider
@@ -245,6 +364,15 @@ export function AuthProvider({ children }) {
         initializing,
         isAuthenticated: !!user,
         isSuperAdmin,
+        role,
+        capabilities,
+        allowedModules,
+        delegatableModules,
+        canOnboard,
+        organizationIds,
+        isGlobalScope,
+        hasNoOrgScope,
+        canManageOrg,
         loginWithPassword,
         requestOtp,
         verifyOtp,
@@ -254,6 +382,11 @@ export function AuthProvider({ children }) {
         loginWithGoogle,
         logout,
         canDo,
+        canView,
+        canCreate,
+        canEdit,
+        canDelete,
+        canApprove,
         refreshMe,
       }}
     >

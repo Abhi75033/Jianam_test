@@ -15,6 +15,7 @@ import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PhoneField } from "@/components/common/PhoneInput";
 import {
   GENDER_OPTIONS, NATIONALITY_OPTIONS, LANGUAGE_OPTIONS, DOC_TYPE_OPTIONS,
   COMMUNICATION_METHOD_OPTIONS, BLOOD_GROUP_OPTIONS,
@@ -397,7 +398,7 @@ function RegisterNonJainDialog({ onCreated }) {
                     <div>
                       <Label className="text-xs">{t("Mobile Number *")}</Label>
                       <div className="flex gap-2 mt-1">
-                        <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder={t("+91XXXXXXXXXX")} className="bg-white flex-1" />
+                        <PhoneField value={form.mobile} onChange={(v) => setForm({ ...form, mobile: v })} placeholder={t("Mobile Number")} className="flex-1" />
                         <Button size="sm" variant={mobileVerified ? "outline" : "default"} type="button" onClick={() => verifyField("mobile")}>
                           {mobileVerified ? t("✓ Verified") : t("Verify Mobile")}
                         </Button>

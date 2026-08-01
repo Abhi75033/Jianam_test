@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { initials } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PhoneField } from "@/components/common/PhoneInput";
 
 /* ─── Add Family Member Dialog ─────────────────────────────────────────
  *
@@ -153,7 +154,7 @@ function AddFamilyDialog({ open, onClose, onCreated, anchorPublicId, anchorLabel
               </div>
               <div>
                 <Label className="text-xs">{t("Mobile (+91…) *")}</Label>
-                <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder={t("+91XXXXXXXXXX")} required={mode === "invite"} data-testid="family-mobile" />
+                <PhoneField value={form.mobile} onChange={(v) => setForm({ ...form, mobile: v })} placeholder={t("Mobile Number")} required={mode === "invite"} id="family-mobile" />
               </div>
             </>
           )}

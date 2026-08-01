@@ -360,7 +360,7 @@ export default function SiteComingSoonPage() {
           className="jn-rise mt-5 max-w-xl text-base leading-relaxed text-white/65 sm:text-lg"
           style={{ animationDelay: ".15s" }}
         >
-          {t("One platform for every temple, MS & seva — bookings, donations, events and community, beautifully organised.")}sed.
+          {t("One platform for every temple, MS & seva — bookings, donations, events and community, beautifully organised.")}
         </p>
 
         {/* Countdown */}

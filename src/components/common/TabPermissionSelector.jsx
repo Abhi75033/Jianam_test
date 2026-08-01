@@ -4,35 +4,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Lock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PLATFORM_MODULES } from "@/lib/access";
 
-export const PLATFORM_MODULE_LIST = [
-  { key: "MEMBERS", label: "Members & Family Directory", category: "People" },
-  { key: "VOLUNTEERS", label: "Volunteer Management", category: "People" },
-  { key: "MONKS", label: "MS Profiles & Chaturmas", category: "People" },
-  { key: "STAFF", label: "Staff Management & Attendance", category: "People" },
-  { key: "TEMPLES", label: "Temple Management", category: "Organizations" },
-  { key: "DHARAMSHALAS", label: "Dharamshala & Rooms", category: "Organizations" },
-  { key: "JAIN_CENTERS", label: "Jain Centre Management", category: "Organizations" },
-  { key: "STHANAKS", label: "Sthanak Management", category: "Organizations" },
-  { key: "COMMUNITY_PAGES", label: "Community Pages", category: "Organizations" },
-  { key: "FEED", label: "Feed & Posts", category: "Community" },
-  { key: "EVENTS", label: "Events & Registrations", category: "Community" },
-  { key: "NEWS", label: "News & Announcements", category: "Community" },
-  { key: "POLLS", label: "Polls & Voting", category: "Community" },
-  { key: "TOURS", label: "Tours & Yatras", category: "Community" },
-  { key: "COUNTERS", label: "Spiritual Counters", category: "Community" },
-  { key: "CALENDAR", label: "Tithi Calendar", category: "Community" },
-  { key: "NOTIFICATIONS", label: "Notification Center", category: "Community" },
-  { key: "BOOKINGS", label: "Facility & Room Bookings", category: "Bookings" },
-  { key: "DONATIONS", label: "Donations & Receipts", category: "Finance" },
-  { key: "SPONSORS", label: "Sponsors & Ads", category: "Finance" },
-  { key: "OFFERS", label: "Offers & Benefits", category: "Finance" },
-  { key: "VISITORS", label: "Visitor Entry & Exit", category: "Operations" },
-  { key: "TRACKING", label: "MS Live Tracking", category: "Operations" },
-  { key: "REPORTS", label: "Reports & Analytics", category: "Reports" },
-  { key: "SUPPORT", label: "Support & Feedback", category: "Support" },
-  { key: "SETTINGS", label: "Organization Settings", category: "Settings" },
-];
+/**
+ * The grantable tab catalogue now lives in src/lib/access.js so the selector,
+ * the sidebar and every page guard agree on one list. Re-exported here to keep
+ * existing imports working.
+ */
+export const PLATFORM_MODULE_LIST = PLATFORM_MODULES;
 
 /**
  * TabPermissionSelector Component

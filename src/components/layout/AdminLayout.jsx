@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import MobileBottomNav from "./MobileBottomNav";
+import ModuleRouteGuard from "./ModuleRouteGuard";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -39,8 +40,11 @@ export default function AdminLayout() {
           className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-24 md:pb-8 animate-fade-up"
           data-testid="admin-main"
         >
-          <Outlet />
-
+          {/* Tab access is enforced here too, so a typed URL can't reach a
+              module the account was never granted. */}
+          <ModuleRouteGuard>
+            <Outlet />
+          </ModuleRouteGuard>
         </main>
       </div>
 

@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 const EMPTY_FORM = { monkPublicId: "", monkName: "", stationName: "", notes: "" };
 
@@ -133,13 +134,15 @@ export default function ManualTrackingPage() {
     {
       key: "actions", header: "", width: 56,
       render: (r) => (
-        <Button
-          size="sm" variant="ghost"
-          disabled={deletingId === r.id}
-          onClick={() => handleDelete(r.id)}
-        >
-          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-        </Button>
+        <PermissionGate action="DELETE">
+          <Button
+            size="sm" variant="ghost"
+            disabled={deletingId === r.id}
+            onClick={() => handleDelete(r.id)}
+          >
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </Button>
+        </PermissionGate>
       ),
     },
   ];
