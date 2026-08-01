@@ -68,14 +68,24 @@ export function AuthProvider({ children }) {
 
   const refreshMe = useCallback(async () => {
     try {
-      const [meRes, modRes, overrideRes] = await Promise.all([
+      const [meRes, modRes] = await Promise.all([
         api.get("/auth/me"),
         api.get("/auth/me/modules").catch(() => ({ data: { data: {} } })),
-        api.get("/settings/users/me/permission-overrides").catch(() => null),
       ]);
       const me = meRes.data?.data || {};
       const mod = modRes.data?.data || {};
-      
+
+      /*
+       * /settings/* is Super-Admin-only, so asking for permission overrides on
+       * every sign-in put a red 403 in the console for every other account. The
+       * result was already discarded for them (grants come from /auth/me/modules),
+       * so the call is now made only when it can actually succeed.
+       */
+      const overrideRes =
+        me.primaryRoleKey === "SUPER_ADMIN"
+          ? await api.get("/settings/users/me/permission-overrides").catch(() => null)
+          : null;
+
       let moduleList = [];
       const overrides = overrideRes?.data?.data;
 
