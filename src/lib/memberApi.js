@@ -32,21 +32,41 @@ export const memberAuthApi = {
    */
   async checkIdentity(identifier) {
     const isEmail = identifier.includes("@");
-    return unwrap(
-      await api.post("/auth/check-identity", isEmail ? { email: identifier } : { mobile: identifier })
+    // The API has no /auth/check-identity route. Requesting a REGISTER-purpose
+    // OTP answers the same question: an already-registered number comes back
+    // with `redirectToLogin: true` instead of sending a code.
+    if (isEmail) {
+      return { exists: false, allowed_methods: fallbackMethodsFor(identifier) };
+    }
+    const res = unwrap(
+      await api.post("/auth/otp/request", { mobile: identifier, purpose: "REGISTER" })
     );
+    return {
+      exists: Boolean(res?.redirectToLogin),
+      allowed_methods: fallbackMethodsFor(identifier),
+      // Present only outside production — lets dev/staging skip the SMS round trip.
+      devOtp: res?.devOtp,
+      expiresInSeconds: res?.expiresInSeconds,
+    };
   },
 
-  /** §B1.4 — minimum fields only: name + verified mobile + community. */
+  /**
+   * §B1.4 — minimum fields only: name + verified mobile + community.
+   * Registration is category-specific on the API (`/members/register/jain` vs
+   * `/members/register/non-jain`); there is no `/auth/register`.
+   */
   async register({ registrationToken, firstName, surname, mobile, memberType, communityId }) {
+    const path =
+      String(memberType).toUpperCase() === "NON_JAIN"
+        ? "/members/register/non-jain"
+        : "/members/register/jain";
     return unwrap(
-      await api.post("/auth/register", {
-        registration_token: registrationToken,
-        first_name: firstName,
+      await api.post(path, {
+        registrationToken,
+        firstName,
         surname,
         mobile,
-        member_type: memberType,
-        community_id: communityId,
+        communityId,
       })
     );
   },
@@ -84,11 +104,17 @@ export const bookingsApi = {
   },
   /** Phase 1 is request-only; admin approves (§B16.8). */
   async requestCancel(uid, reason) {
-    return unwrap(await api.post(`/bookings/${uid}/cancel`, { reason }));
+    return unwrap(await api.post(`/bookings/${uid}/decision`, { decision: "CANCELLED", reason }));
   },
   /** Join the FIFO waiting list (§B15.6). */
   async joinWaitingList(uid) {
-    return unwrap(await api.post(`/bookings/${uid}/waiting-list`, {}));
+    // NOT IMPLEMENTED server-side: the API exposes no booking waiting-list
+    // route. Surfaced as a clear error rather than a silent 404 so the UI can
+    // tell the member the feature isn't available yet.
+    throw Object.assign(
+      new Error("Booking waiting list is not available yet."),
+      { code: "NOT_IMPLEMENTED", bookingId: uid }
+    );
   },
 };
 
@@ -96,7 +122,17 @@ export const bookingsApi = {
 export const donationsApi = {
   /** Bank / UPI / QR details and the institution's categories (§B18.3). */
   async targets(institutionId) {
-    return unwrap(await api.get("/donations/targets", { params: { institution_id: institutionId } }));
+    // NOT IMPLEMENTED server-side: there is no /donations/targets route. The
+    // closest live endpoint is the campaign config, which carries the bank/UPI
+    // details. Falls back to an empty shape so the screen degrades instead of
+    // throwing while the backend catches up.
+    try {
+      return unwrap(await api.get("/donations/campaign-config/GENERAL", {
+        params: { organizationId: institutionId },
+      }));
+    } catch {
+      return { categories: [], bank: null, upi: null, qr: null };
+    }
   },
   /** Record intent, returns transfer instructions. Amount is minor units (§B18.12). */
   async createManual({ institutionId, categoryId, amountMinor, currency, note }) {
@@ -116,7 +152,7 @@ export const donationsApi = {
     if (reference) fd.append("reference", reference);
     if (note) fd.append("note", note);
     return unwrap(
-      await api.post(`/donations/${uid}/proof`, fd, {
+      await api.post("/donations/upload-proof", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       })
     );
@@ -130,7 +166,7 @@ export const donationsApi = {
     };
   },
   async receiptUrl(uid) {
-    return unwrap(await api.get(`/donations/${uid}/receipt`));
+    return unwrap(await api.get("/receipts/my", { params: { donationId: uid } }));
   },
 };
 
@@ -153,21 +189,21 @@ export const eventsApi = {
   },
   /** Cancelling promotes the first waiting-list member (§B19.6). */
   async cancelRsvp(eventId) {
-    return unwrap(await api.delete(`/events/${eventId}/rsvp`));
+    return unwrap(await api.post(`/events/${eventId}/rsvp/cancel`, {}));
   },
   async joinWaitingList(eventId) {
-    return unwrap(await api.post(`/events/${eventId}/waiting-list`, {}));
+    return unwrap(await api.post(`/events/${eventId}/rsvp`, { waitingList: true }));
   },
   /** Ticket list includes the signed QR token (§B19.8). */
   async myTickets() {
-    return list(unwrap(await api.get("/my/tickets")));
+    return list(unwrap(await api.get("/tickets/my")));
   },
   async ticket(uid) {
-    return unwrap(await api.get(`/my/tickets/${uid}`));
+    return unwrap(await api.get(`/tickets/${uid}/history`));
   },
   /** RSVP, attended and ticketed history. */
   async myEvents() {
-    return list(unwrap(await api.get("/my/events")));
+    return list(unwrap(await api.get("/events/member")));
   },
 };
 

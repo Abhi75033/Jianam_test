@@ -152,9 +152,15 @@ export default function App() {
                 screens in the first bundle. */}
             <Suspense fallback={<RouteFallback />}>
             <Routes>
-              {/* Public Auth Routes */}
+              {/* Public Auth Routes.
+                  MemberLoginPage was imported but never routed, so /member/login
+                  fell through to the protected /member parent and bounced every
+                  signed-out member to the ADMIN login. It needs its own public
+                  route, declared before the /member tree. */}
               <Route path="/login/admin" element={<LoginPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/member/login" element={<MemberLoginPage />} />
+              <Route path="/member/register" element={<MemberRegisterPage />} />
               <Route path="/register" element={<MemberRegisterPage />} />
 
               {/* Admin Panel Root (/admin/*) */}

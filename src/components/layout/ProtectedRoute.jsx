@@ -14,7 +14,11 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Send members back to the member sign-in, not the admin one. Previously
+    // every protected route redirected to /login, so a signed-out member
+    // landed on the admin portal.
+    const loginPath = location.pathname.startsWith("/member") ? "/member/login" : "/login";
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
   return children;
 }
