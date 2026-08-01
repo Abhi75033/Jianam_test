@@ -11,6 +11,22 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 /**
+ * Users are stored against an exact E.164 string, so anything a person types
+ * naturally — "+ 91 90000-00001", "(+91) 9000000001" — has to be collapsed
+ * before it is sent, or the lookup silently misses and the API reports invalid
+ * credentials. A bare 10-digit Indian number is given the +91 prefix.
+ */
+function normalizeMobile(raw) {
+  const s = String(raw || "").replace(/[^\d+]/g, "");
+  if (!s) return "";
+  if (s.startsWith("+")) return `+${s.slice(1).replace(/\+/g, "")}`;
+  if (/^[6-9]\d{9}$/.test(s)) return `+91${s}`;      // bare Indian mobile
+  if (/^91[6-9]\d{9}$/.test(s)) return `+${s}`;      // 91XXXXXXXXXX
+  if (/^0[6-9]\d{9}$/.test(s)) return `+91${s.slice(1)}`; // leading 0
+  return `+${s}`;
+}
+
+/**
  * Exact JiNANAM Member Login Page — matches the official design spec & mockup.
  */
 export default function MemberLoginPage() {
@@ -61,11 +77,15 @@ export default function MemberLoginPage() {
         // Email + Password → /auth/login/email
         await loginWithEmailPassword({ email: identifier.trim(), password });
       } else {
-        // Mobile + Password → /auth/login/password
-        await loginWithPassword({ mobile: identifier.trim(), password });
+        // Mobile + Password → /auth/login/password.
+        // The user record is keyed on the exact E.164 string, so "+ 91 90000-00001"
+        // must be normalised to "+919000000001" or the lookup misses and the API
+        // answers "Invalid mobile number or password". trim() alone left the
+        // space after the "+".
+        await loginWithPassword({ mobile: normalizeMobile(identifier), password });
       }
       toast.success(t("Welcome back! Jai Jinendra 🙏"));
-      navigate("/home", { replace: true });
+      navigate("/member/home", { replace: true });
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
