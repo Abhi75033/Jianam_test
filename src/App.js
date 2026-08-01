@@ -88,7 +88,12 @@ function SmartRouteResolver() {
   const { isAuthenticated, user, isSuperAdmin } = useAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // The member panel is the platform's front door: a signed-out visitor at
+    // "/" (or any un-prefixed path) gets the member sign-in, not the admin
+    // portal. Admins reach theirs explicitly at /login or /login/admin, and an
+    // /admin/* deep link still lands on the admin sign-in.
+    const target = path.startsWith("/admin") ? "/login" : "/member/login";
+    return <Navigate to={target} state={{ from: location }} replace />;
   }
 
   // Inspect user object AND localStorage fallback to prevent transient role loss during route transitions
