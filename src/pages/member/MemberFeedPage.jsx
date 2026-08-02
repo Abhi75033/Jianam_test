@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Search, Bookmark, Share2, Bell, Filter, MapPin, Eye, Flag, Newspaper, TrendingUp, Sparkles, Plus, X, Heart, Star, Building2, Check
 } from "lucide-react";
@@ -14,6 +15,21 @@ const CATEGORIES = [
   "All", "Temple Updates", "MS Updates", "Events", "Tours",
   "Notices", "Offers", "JiNANAM"
 ];
+
+/**
+ * The sidebar links to /member/feed?filter=ms|events|sponsored. Those tabs used
+ * to render an identical unfiltered list because nothing read the param, so
+ * four distinct-looking tabs behaved the same. This maps the URL onto the
+ * category the page already filters by.
+ */
+const FILTER_TO_CATEGORY = {
+  ms: "MS Updates",
+  events: "Events",
+  notices: "Notices",
+  offers: "Offers",
+  tours: "Tours",
+  temple: "Temple Updates",
+};
 
 /** Maps an API feed post onto the fields this page renders. */
 function mapPost(p_, i) {
@@ -47,7 +63,23 @@ export default function MemberFeedPage() {
   const { items: fetchedPosts, loading, error, reload } = useMemberList("/feed/", { map: mapPost });
   const [posts, setPosts] = useState([]);
   useEffect(() => { setPosts(fetchedPosts); }, [fetchedPosts]);
-  const [category, setCategory] = useState("All");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlFilter = searchParams.get("filter");
+  const sponsoredOnly = urlFilter === "sponsored";
+  const [category, setCategory] = useState(FILTER_TO_CATEGORY[urlFilter] || "All");
+
+  // Keep the chips in step when the sidebar changes the URL under us.
+  useEffect(() => {
+    setCategory(FILTER_TO_CATEGORY[urlFilter] || "All");
+  }, [urlFilter]);
+
+  /** Selecting a chip updates the URL too, so the tab stays shareable. */
+  const selectCategory = (c) => {
+    setCategory(c);
+    const key = Object.keys(FILTER_TO_CATEGORY).find((k) => FILTER_TO_CATEGORY[k] === c);
+    if (key) setSearchParams({ filter: key });
+    else setSearchParams({});
+  };
   const [search, setSearch] = useState("");
 
   const onBookmark = (id) => {
@@ -68,6 +100,8 @@ export default function MemberFeedPage() {
   const sortedPosts = sortContent(posts);
 
   const filtered = sortedPosts.filter((p) => {
+    // ?filter=sponsored is the Sponsored Posts tab
+    if (sponsoredOnly && !p.isAd) return false;
     if (p.isAd) return true;
     if (search) {
       const q = search.toLowerCase();
@@ -75,7 +109,13 @@ export default function MemberFeedPage() {
       const matchId = p.entityPublicId?.toLowerCase().includes(q);
       if (!matchText && !matchId) return false;
     }
-    if (category !== "All" && !p.category?.toLowerCase().includes(category.toLowerCase().replace(" ", ""))) return false;
+    // Spaces were stripped from the needle but not the haystack, so any
+    // two-word category ("MS Updates", "Temple Updates") could never match.
+    // Normalise both sides.
+    if (category !== "All") {
+      const squash = (v) => String(v || "").toLowerCase().replace(/\s+/g, "");
+      if (!squash(p.category).includes(squash(category))) return false;
+    }
     return true;
   });
 
@@ -117,7 +157,7 @@ export default function MemberFeedPage() {
         {CATEGORIES.map((c) => (
           <button
             key={c}
-            onClick={() => setCategory(c)}
+            onClick={() => selectCategory(c)}
             className={cn(
               "px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all",
               category === c

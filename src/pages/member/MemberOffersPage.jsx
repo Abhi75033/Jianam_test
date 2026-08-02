@@ -55,7 +55,9 @@ export default function MemberOffersPage() {
   const [selectedCat, setSelectedCat] = useState("all");
   const [search, setSearch] = useState("");
 
-  const filtered = offers.filter((o) => {
+  // #coupons shows only offers with a redeemable code.
+  const couponsOnly = typeof window !== "undefined" && window.location.hash === "#coupons";
+  const filtered0 = offers.filter((o) => {
     if (selectedCat !== "all" && o.category !== selectedCat) return false;
     if (search && !o.title.toLowerCase().includes(search.toLowerCase()) && !o.sponsor.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -65,6 +67,8 @@ export default function MemberOffersPage() {
     navigator.clipboard.writeText(code);
     toast.success(t(`Coupon code "${code}" copied to clipboard!`));
   };
+
+  const filtered = couponsOnly ? filtered0.filter((o) => o.code) : filtered0;
 
   return (
     <div className="space-y-8">
@@ -122,6 +126,10 @@ export default function MemberOffersPage() {
       </div>
 
       {/* ── Category Chips Filter ────────────────────────────────────────── */}
+      {/* id targets for the sidebar's #categories and #coupons links, which
+          previously pointed at nothing and left all three Offers tabs identical. */}
+      <div id="categories" className="scroll-mt-24" />
+      <div id="coupons" className="scroll-mt-24" />
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {CATEGORIES.map(({ key, label, emoji }) => (
           <button

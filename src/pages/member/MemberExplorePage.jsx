@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search, MapPin, Navigation, Star, ChevronRight,
   Building2, Users, Sparkles, Newspaper, CalendarCheck,
   Heart, BookOpen, Map, Filter, X
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link , useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ListState from "@/components/member/ListState";
@@ -128,7 +128,24 @@ function mapResult(r, i) {
 export default function MemberExplorePage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState(null);
+  // The sidebar links to /member/explore?cat=jaincentre|dharamshala|bhojanshala
+  // and ?q=. Nothing read those params, so four sidebar tabs all rendered the
+  // same unfiltered directory.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeCategory, setActiveCategory] = useState(searchParams.get("cat"));
+
+  useEffect(() => {
+    setActiveCategory(searchParams.get("cat"));
+    const q = searchParams.get("q");
+    if (q) setSearch(q);
+  }, [searchParams]);
+
+  /** Category taps update the URL so each tab stays distinct and shareable. */
+  const chooseCategory = (key) => {
+    const next = activeCategory === key ? null : key;
+    setActiveCategory(next);
+    setSearchParams(next ? { cat: next } : {});
+  };
   const [viewMode, setViewMode] = useState("list"); // list | map
 
   const source = activeCategory ? CATEGORY_SOURCE[activeCategory] : null;
@@ -168,7 +185,7 @@ export default function MemberExplorePage() {
               {CATEGORIES.map(({ key, label, emoji }) => (
                 <button
                   key={key}
-                  onClick={() => setActiveCategory(activeCategory === key ? null : key)}
+                  onClick={() => chooseCategory(key)}
                   className={cn(
                     "flex flex-col items-center gap-1 p-2 rounded-2xl border transition-all",
                     activeCategory === key
