@@ -1,15 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, CheckCheck, ChevronRight, Info, AlertCircle, Calendar, Heart, Ticket } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ListState from "@/components/member/ListState";
+import { memberClient as api } from "@/lib/memberClient";
+import { useMemberList, relativeTime, compactNumber, longDate } from "@/hooks/useMemberList";
 import { cn } from "@/lib/utils";
 
-const DEMO_NOTIFS = [
-  { id: 1, type: "booking", emoji: "🏨", title: "Booking Confirmed", body: "Your Dharamshala stay at Palitana Board is confirmed. Check-in: 5 Aug 2025.", time: "2h ago", read: false },
-  { id: 2, type: "ms", emoji: "🙏", title: "MS Update — Acharya Dev", body: "Param Pujya Acharya Dev has arrived at Mumbai. Pravachan at 7:30 AM tomorrow.", time: "5h ago", read: false },
-  { id: 3, type: "event", emoji: "🎉", title: "Event Reminder", body: "Paryushan Pratikraman starts in 2 days. Don't forget to register.", time: "1d ago", read: true },
-  { id: 4, type: "donation", emoji: "🧾", title: "Donation Receipt Ready", body: "Your ₹5,000 donation receipt from Shree Ajitnath Derasar is ready for download.", time: "2d ago", read: true },
-  { id: 5, type: "feed", emoji: "📣", title: "New Post from Your Temple", body: "Shree Ajitnath Derasar has shared a new notice about Diwali timings.", time: "3d ago", read: true },
-];
 
 const ICON_MAP = { booking: "🏨", ms: "🙏", event: "🎉", donation: "🧾", feed: "📣" };
 const COLOR_MAP = {
@@ -20,13 +16,40 @@ const COLOR_MAP = {
   feed: "bg-orange-50 border-orange-100",
 };
 
+/** Maps an API notification row onto the fields this page renders. */
+function mapNotif(n, i) {
+  return {
+    id: n.id || i,
+    title: n.title,
+    body: n.body || n.message || "",
+    type: n.category || n.type || "SYSTEM",
+    time: relativeTime(n.createdAt || n.sentAt),
+    in: relativeTime(n.createdAt || n.sentAt),
+    read: Boolean(n.readAt || n.isRead || n.openedAt),
+    emoji: n.emoji || "🔔",
+  };
+}
+
 export default function MemberNotificationsPage() {
   const { t } = useLanguage();
-  const [notifs, setNotifs] = useState(DEMO_NOTIFS);
+  const { items: fetched, loading, error, reload } = useMemberList("/notifications/my", { map: mapNotif });
+
+  // Local copy so marking as read updates instantly; the server call follows.
+  const [notifs, setNotifs] = useState([]);
+  useEffect(() => { setNotifs(fetched); }, [fetched]);
+
   const unread = notifs.filter((n) => !n.read).length;
 
-  const markAll = () => setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-  const markOne = (id) => setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  /** §4.17 — reads are recorded server-side via /notifications/{id}/opened. */
+  const markOne = (id) => {
+    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    api.post(`/notifications/${id}/opened`).catch(() => {});
+  };
+  const markAll = () => {
+    const unreadIds = notifs.filter((n) => !n.read).map((n) => n.id);
+    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+    unreadIds.forEach((id) => api.post(`/notifications/${id}/opened`).catch(() => {}));
+  };
 
   return (
     <div className="space-y-4 pb-6">

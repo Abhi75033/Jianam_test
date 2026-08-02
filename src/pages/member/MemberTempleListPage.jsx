@@ -7,91 +7,38 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ListState from "@/components/member/ListState";
+import { useMemberList, compactNumber } from "@/hooks/useMemberList";
 import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
 import { toast } from "sonner";
 
-const DEMO_ORGANIZATIONS = [
-  {
-    id: "t-1",
-    publicId: "JFJT108",
-    name: "Shree Ajitnath Jain Derasar",
-    city: "Mumbai, Maharashtra",
-    area: "Thane West",
-    sect: "Shwetambar · Murtipujak (Tapa Gaccha)",
-    type: "Shikhar Baddha Temple",
-    distance: "1.2 km",
-    open: true,
-    rating: 4.8,
-    reviews: 320,
-    followers: "12,400",
-    timings: "Pakshal: 6:00 AM | Aarti: 7:00 PM",
-    bhojanshala: true,
-    dharamshala: true,
-    emoji: "🛕",
-    currentChaturmas: "Acharya Dev Chaturmas 2025 (Ongoing)",
-    dhajaYear: "2025 — Shri Rahul Shah (Booked)",
-  },
-  {
-    id: "sk-1",
-    publicId: "JFSK108",
-    name: "Shree Sthanakvasi Jain Stanak",
-    city: "Mumbai, Maharashtra",
-    area: "Mulund East",
-    sect: "Shwetambar · Sthanakvasi",
-    type: "Jain Stanak",
-    distance: "3.5 km",
-    open: true,
-    rating: 4.9,
-    reviews: 210,
-    followers: "9,800",
-    timings: "Samayik: 6:30 AM & 6:30 PM | Pravachan: 8:00 AM",
-    bhojanshala: true,
-    dharamshala: false,
-    emoji: "🏛️",
-    currentChaturmas: "Pujya Sadhvi Shri Chaturmas 2025",
-    dhajaYear: "Not Applicable (Sthanakvasi)",
-  },
-  {
-    id: "t-2",
-    publicId: "JFJT109",
-    name: "Palitana Shatrunjay Tirth",
-    city: "Palitana, Gujarat",
-    area: "Shatrunjay",
-    sect: "Shwetambar · Murtipujak",
-    type: "Maha Tirth",
-    distance: "450 km",
-    open: true,
-    rating: 4.9,
-    reviews: 1420,
-    followers: "85,000",
-    timings: "5:00 AM – 7:00 PM",
-    bhojanshala: true,
-    dharamshala: true,
-    emoji: "🌄",
-    currentChaturmas: "Sadhvi Sangha Chaturmas (Ongoing)",
-    dhajaYear: "2025 — Finalized",
-  },
-  {
-    id: "jc-1",
-    publicId: "JFJC108",
-    name: "JiNANAM Jain Centre (Mumbai)",
-    city: "Mumbai, Maharashtra",
-    area: "Thane West",
-    sect: "Shwetambar",
-    type: "Jain Centre",
-    distance: "2.5 km",
-    open: true,
-    rating: 4.7,
-    reviews: 190,
-    followers: "8,900",
-    timings: "6:00 AM – 9:00 PM",
-    bhojanshala: true,
-    dharamshala: false,
-    emoji: "🏬",
-    currentChaturmas: "Pathshala & Cultural Center",
-    dhajaYear: "Not Applicable",
-  },
-];
+
+/** Maps a temple/organisation row onto the fields this page renders (§4.5.2). */
+function mapOrg(o, i) {
+  return {
+    id: o.id || o.publicId || i,
+    publicId: o.publicId,
+    name: o.name,
+    type: o.type || "TEMPLE",
+    city: o.city || "",
+    area: o.area || "",
+    sect: [o.sect, o.subSect || o.gacchaName].filter(Boolean).join(" · "),
+    distance: o.distance || "",
+    open: o.isOpen ?? (o.status ? o.status === "ACTIVE" : true),
+    rating: o.rating ?? null,
+    reviews: o.reviewCount ?? 0,
+    followers: compactNumber(o.followerCount ?? 0),
+    emoji: o.emoji || "🛕",
+    timings: o.timings || {
+      Aarti: o.aartiTiming, Pakshal: o.pakshalTiming,
+      Pravachan: o.pravachanTiming, Samayik: o.samayikTiming,
+    },
+    dhajaYear: o.dhajaRecords?.[0]?.year || o.dhajaYear || null,
+    currentChaturmas: o.chaturmasStays?.[0]?.monk?.fullName || o.currentChaturmas || null,
+    bhojanshala: o.hasBhojanshala ?? o.bhojanshala ?? false,
+    dharamshala: o.hasDharamshala ?? o.dharamshala ?? false,
+  };
+}
 
 export default function MemberTempleListPage() {
   const { t } = useLanguage();
@@ -112,7 +59,12 @@ export default function MemberTempleListPage() {
     toast.success(t("Support Ticket created for reporting incorrect information on {0} ({1}). Track in Support.", [tName, tId]));
   };
 
-  const filtered = DEMO_ORGANIZATIONS.filter((tmpl) => {
+  const { items: orgs, loading, error, reload } = useMemberList("/temples", {
+    params: search.trim() ? { q: search.trim() } : undefined,
+    map: mapOrg,
+  });
+
+  const filtered = orgs.filter((tmpl) => {
     if (filter === "Open Now" && !tmpl.open) return false;
     if (filter === "Sthanakvasi" && !tmpl.sect.includes("Sthanakvasi")) return false;
     if (search) {

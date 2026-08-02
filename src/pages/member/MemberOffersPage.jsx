@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ListState from "@/components/member/ListState";
+import { useMemberList, relativeTime, compactNumber, longDate } from "@/hooks/useMemberList";
 import { toast } from "sonner";
 
 /* ─── Offer categories ────────────────────────────────────────────────────── */
@@ -26,73 +28,34 @@ const CATEGORIES = [
 ];
 
 /* ─── Demo offer items ───────────────────────────────────────────────────── */
-const DEMO_OFFERS = [
-  {
-    id: 1,
-    title: "Palitana Dharamshala AC Stay — 20% OFF",
-    sponsor: "Palitana Board Dharamshala Trust",
-    category: "hotels",
-    discount: "20% OFF",
-    code: "PALITANA20",
-    distance: "1.2 km",
-    validity: "Valid till 31 Oct 2025",
-    rating: 4.8,
-    sponsored: true,
-    exclusive: true,
-    emoji: "🏨",
-    bg: "from-[#0F172A] via-[#1E293B] to-[#334155]"
-  },
-  {
-    id: 2,
-    title: "Shree Mahavir Pure Jain Bhojanshala — Free Special Sweet",
-    sponsor: "Mahavir Seva Samiti",
-    category: "restaurants",
-    discount: "FREE DESSERT",
-    code: "JAINTHALI",
-    distance: "500 m",
-    validity: "Valid on all orders above ₹200",
-    rating: 4.9,
-    sponsored: true,
-    trending: true,
-    emoji: "🍱",
-    bg: "from-[#4C1D95] via-[#5B21B6] to-[#6D28D9]"
-  },
-  {
-    id: 3,
-    title: "Shatrunjay Yatra Bus Package — 15% Group Discount",
-    sponsor: "JiNANAM Yatra Services",
-    category: "tours",
-    discount: "15% OFF",
-    code: "YATRA15",
-    distance: "Citywide",
-    validity: "Booking open for Sep 2025",
-    rating: 4.7,
-    exclusive: true,
-    emoji: "🚌",
-    bg: "from-[#065F46] via-[#047857] to-[#059669]"
-  },
-  {
-    id: 4,
-    title: "Pooja Samagri & Brass Idol Set — Extra 10% Cashback",
-    sponsor: "Arihant Jain Puja Store",
-    category: "spiritual",
-    discount: "10% CASHBACK",
-    code: "PUJA10",
-    distance: "2.4 km",
-    validity: "Valid till 15 Nov 2025",
-    rating: 4.6,
-    trending: true,
-    emoji: "📿",
-    bg: "from-[#9A3412] via-[#C2410C] to-[#EA580C]"
-  },
-];
+
+/** Maps an API offer row onto the fields this page renders. */
+function mapOffer(o, i) {
+  return {
+    id: o.id || o.publicId || i,
+    title: o.title,
+    category: o.category || "General",
+    sponsor: o.sponsor || o.organization?.name || o.merchantName || "",
+    discount: o.discount || o.discountLabel || "",
+    code: o.couponCode || o.code || "",
+    validity: o.validTill ? `Valid till ${longDate(o.validTill)}` : "",
+    distance: o.distance || "",
+    rating: o.rating ?? null,
+    trending: Boolean(o.isTrending ?? o.trending),
+    exclusive: Boolean(o.isExclusive ?? o.exclusive),
+    sponsored: Boolean(o.isSponsored ?? o.sponsored),
+    emoji: o.emoji || "🎁",
+    bg: o.bg || "from-orange-500 to-amber-500",
+  };
+}
 
 export default function MemberOffersPage() {
+  const { items: offers, loading, error, reload } = useMemberList("/offers", { map: mapOffer });
   const { t } = useLanguage();
   const [selectedCat, setSelectedCat] = useState("all");
   const [search, setSearch] = useState("");
 
-  const filtered = DEMO_OFFERS.filter((o) => {
+  const filtered = offers.filter((o) => {
     if (selectedCat !== "all" && o.category !== selectedCat) return false;
     if (search && !o.title.toLowerCase().includes(search.toLowerCase()) && !o.sponsor.toLowerCase().includes(search.toLowerCase())) return false;
     return true;

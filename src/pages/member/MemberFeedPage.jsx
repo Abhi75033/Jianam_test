@@ -4,88 +4,49 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ListState from "@/components/member/ListState";
+import { useMemberList, relativeTime, compactNumber } from "@/hooks/useMemberList";
 import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
 import { toast } from "sonner";
 
-const INITIAL_POSTS = [
-  {
-    id: 1,
-    entityPublicId: "JFJT108",
-    entityType: "TEMPLE",
-    category: "Temple Update",
-    org: "Shree Ajitnath Derasar",
-    orgCity: "Mumbai",
-    orgArea: "Thane West",
-    sect: "Shwetambar",
-    subCommunity: "Murtipujak",
-    emoji: "🛕",
-    title: "Paryushan Parva 2025 — Special Pravachan Schedule Announced",
-    body: "This Paryushan, Param Pujya Acharya Dev will deliver Pravachan daily from 7:30 AM to 9:30 AM in the main hall. All devotees are welcome to join live or in person.",
-    views: 1240,
-    bookmarked: false,
-    liked: false,
-    daysAgo: 0,
-  },
-  {
-    id: 2,
-    entityPublicId: "JFMS108",
-    entityType: "MONK",
-    category: "MS Update",
-    org: "Palitana Tirth (Acharya Dev)",
-    orgCity: "Palitana",
-    orgArea: "Shatrunjay",
-    sect: "Shwetambar",
-    subCommunity: "Murtipujak",
-    emoji: "🙏",
-    title: "Chaturmas 2025 — Acharya Dev & Sadhvi Sangha arrive at Palitana",
-    body: "We are honoured to announce that Param Pujya Acharya Dev Shri and the Sadhvi Sangha will observe Chaturmas 2025 at Palitana. Daily Pravachan schedule will follow shortly.",
-    views: 5830,
-    bookmarked: true,
-    liked: true,
-    daysAgo: 1,
-  },
-  {
-    id: "ad-1",
-    isAd: true,
-    entityPublicId: "JFD108",
-    entityType: "DHARAMSHALA",
-    title: "Book your Palitana Dharamshala Stay (Common Facility)",
-    org: "Palitana Board Dharamshala",
-    emoji: "🏨",
-    body: "Comfortable AC rooms from ₹500/night. Common facility available for all Jain and Non-Jain members with instant confirmation.",
-    cta: "Book Now",
-    ctaTo: "/bookings",
-  },
-  {
-    id: 3,
-    entityPublicId: "JFJC108",
-    entityType: "JAIN_CENTER",
-    category: "Event",
-    org: "JiNANAM Jain Center",
-    orgCity: "Mumbai",
-    orgArea: "Thane West",
-    sect: "Shwetambar",
-    subCommunity: "Murtipujak",
-    emoji: "🎉",
-    title: "Mahavir Jayanti Grand Celebration — Register Now",
-    body: "Join thousands of devotees for a grand Mahavir Jayanti celebration. Free entry. Prasad and Bhojanshala available.",
-    views: 9200,
-    bookmarked: false,
-    liked: false,
-    daysAgo: 2,
-  },
-];
 
 const CATEGORIES = [
   "All", "Temple Updates", "MS Updates", "Events", "Tours",
   "Notices", "Offers", "JiNANAM"
 ];
 
+/** Maps an API feed post onto the fields this page renders. */
+function mapPost(p_, i) {
+  return {
+    id: p_.id || p_.publicId || i,
+    title: p_.title,
+    body: p_.body || p_.content || "",
+    category: p_.category || "Community",
+    org: p_.organization?.name || p_.author?.name || "",
+    orgCity: p_.organization?.city || "",
+    orgArea: p_.organization?.area || "",
+    sect: p_.organization?.sect || "",
+    subCommunity: p_.organization?.subSect || "",
+    entityType: p_.entityType || p_.organization?.type || "",
+    entityPublicId: p_.organization?.publicId || p_.entityPublicId || "",
+    daysAgo: relativeTime(p_.publishedAt || p_.createdAt),
+    views: compactNumber(p_.viewCount ?? 0),
+    liked: Boolean(p_.isLiked),
+    bookmarked: Boolean(p_.isBookmarked),
+    isAd: Boolean(p_.isSponsored ?? p_.isAd),
+    emoji: p_.emoji || "🛕",
+    cta: p_.ctaLabel || null,
+    ctaTo: p_.ctaTo || null,
+  };
+}
+
 export default function MemberFeedPage() {
   const { t } = useLanguage();
   const { userPreferences, followedIds, toggleFollow, isEntityFollowed, sortContent } = useVisibilityEngine();
 
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const { items: fetchedPosts, loading, error, reload } = useMemberList("/feed/", { map: mapPost });
+  const [posts, setPosts] = useState([]);
+  useEffect(() => { setPosts(fetchedPosts); }, [fetchedPosts]);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
 

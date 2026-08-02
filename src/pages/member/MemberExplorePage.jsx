@@ -7,6 +7,8 @@ import {
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ListState from "@/components/member/ListState";
+import { useMemberList, compactNumber } from "@/hooks/useMemberList";
 
 /* ─── Demo data ──────────────────────────────────────────────────────────── */
 const CATEGORIES = [
@@ -22,21 +24,6 @@ const CATEGORIES = [
   { key: "bhojanshala",label: "Bhojanshala",  emoji: "🍱" },
 ];
 
-const DEMO_RESULTS = {
-  temples: [
-    { id: 1, name: "Shree Ajitnath Derasar", city: "Mumbai", community: "Shwetambar · Tapa Gaccha", distance: "1.2 km", open: true, rating: 4.8, followers: "12.4k" },
-    { id: 2, name: "Palitana Shatrunjay Tirth", city: "Palitana", community: "Shwetambar · Murtipujak", distance: "450 km", open: true, rating: 4.9, followers: "85k" },
-    { id: 3, name: "Ranakpur Jain Temple", city: "Ranakpur", community: "Digambar", distance: "820 km", open: false, rating: 4.7, followers: "34k" },
-  ],
-  dharamshala: [
-    { id: 1, name: "Palitana Dharamshala Board", city: "Palitana", distance: "450 km", open: true, rating: 4.5, followers: "22k" },
-    { id: 2, name: "Shree Sangh Dharamshala", city: "Mumbai", distance: "2 km", open: true, rating: 4.2, followers: "5.1k" },
-  ],
-  ms: [
-    { id: 1, name: "Param Pujya Acharya Dev", city: "Mumbai", status: "Staying", followers: "45k" },
-    { id: 2, name: "Pujya Sadhvi Chandraprabhaji", city: "Ahmedabad", status: "Vihaar", followers: "18k" },
-  ],
-};
 
 const TRENDING = [
   { label: "Palitana Tirth", emoji: "🛕", type: "Temple" },
@@ -107,15 +94,49 @@ function MSResult({ item }) {
 }
 
 /* ─── Main Component ──────────────────────────────────────────────────────── */
+/**
+ * Each Explore category maps to its own endpoint. §4.18 search passes the term
+ * through as `q`; categories with no directory endpoint yet resolve to null and
+ * render the empty state rather than a broken request.
+ */
+const CATEGORY_SOURCE = {
+  temples:      { path: "/temples",        label: "temples" },
+  jaincentre:   { path: "/jain-centers",   label: "Jain centres" },
+  dharamshala:  { path: "/dharamshalas",   label: "dharamshalas" },
+  ms:           { path: "/monks/",         label: "Maharaj Saheb" },
+  events:       { path: "/events/member",  label: "events" },
+  news:         { path: "/news",           label: "news" },
+  offers:       { path: "/offers",         label: "offers" },
+  bhojanshala:  { path: "/temples/bhojanalay-directory", label: "bhojanshalas" },
+  community:    { path: "/community-pages", label: "community pages" },
+};
+
+/** Normalises rows from very different endpoints into one card shape. */
+function mapResult(r, i) {
+  return {
+    id: r.id || r.publicId || i,
+    name: r.name || r.fullName || r.title,
+    city: r.city || r.location || r.currentLocation || "",
+    community: [r.sect, r.subSect || r.gacchaName].filter(Boolean).join(" · "),
+    distance: r.distance || "",
+    open: r.isOpen ?? r.status === "ACTIVE" ?? true,
+    rating: r.rating ?? null,
+    followers: compactNumber(r.followerCount ?? 0),
+  };
+}
+
 export default function MemberExplorePage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState(null);
   const [viewMode, setViewMode] = useState("list"); // list | map
 
-  const results = activeCategory
-    ? (DEMO_RESULTS[activeCategory] || [])
-    : [];
+  const source = activeCategory ? CATEGORY_SOURCE[activeCategory] : null;
+  const { items: results, loading, error, reload } = useMemberList(source?.path, {
+    params: search.trim() ? { q: search.trim() } : undefined,
+    map: mapResult,
+    enabled: Boolean(source),
+  });
 
   return (
     <div className="space-y-4">

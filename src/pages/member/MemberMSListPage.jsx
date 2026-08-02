@@ -6,58 +6,35 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ListState from "@/components/member/ListState";
+import { useMemberList, relativeTime, compactNumber, longDate } from "@/hooks/useMemberList";
 
-const DEMO_MS = [
-  {
-    id: "ms-1",
-    name: "Param Pujya Acharya Dev Shri Vijay Ramchandrasuri Ji",
-    title: "Acharya Dev",
-    sect: "Shwetambar · Murtipujak (Tapa Gaccha)",
-    location: "Mumbai, Maharashtra",
-    currentPlace: "Shree Ajitnath Derasar, Dadar",
-    status: "Staying",
-    count: "12 Sadhus",
-    followers: "45,200",
-    chaturmas: "Palitana Tirth 2025",
-    pravachan: "Daily 7:30 AM – 9:30 AM",
-    image: "🙏"
-  },
-  {
-    id: "ms-2",
-    name: "Pujya Sadhvi Shri Chandraprabhaji M.S.",
-    title: "Sadhvi Shri",
-    sect: "Shwetambar · Tapa Gaccha",
-    location: "Ahmedabad, Gujarat",
-    currentPlace: "En route towards Palitana",
-    status: "Vihaar",
-    count: "6 Sadhvis",
-    followers: "18,400",
-    chaturmas: "Ahmedabad Sangh 2025",
-    pravachan: "Every Sunday 8:00 AM",
-    image: "🙏"
-  },
-  {
-    id: "ms-3",
-    name: "Param Pujya Muni Shri Sagar Anand Ji",
-    title: "Muni Shri",
-    sect: "Digambar",
-    location: "Jaipur, Rajasthan",
-    currentPlace: "Shree Mahavir Ji Temple",
-    status: "Staying",
-    count: "4 Sadhus",
-    followers: "22,100",
-    chaturmas: "Jaipur Tirth 2025",
-    pravachan: "Daily 8:30 AM",
-    image: "🙏"
-  },
-];
+
+/** Maps an API monk row onto the fields this page renders. */
+function mapMS(m, i) {
+  return {
+    id: m.id || m.publicId || i,
+    name: m.fullName || m.name,
+    title: m.title || m.designation || "",
+    sect: m.sect || "",
+    status: m.trackingStatus || m.status || "Offline",
+    location: m.currentLocation || m.city || "",
+    currentPlace: m.currentLocation || m.city || "",
+    chaturmas: m.chaturmasPlace || m.chaturmas || "",
+    followers: compactNumber(m.followerCount ?? 0),
+    count: m.followerCount ?? 0,
+    pravachan: m.pravachanTime || "",
+    image: m.photoUrl || m.image || null,
+  };
+}
 
 export default function MemberMSListPage() {
+  const { items: msList, loading, error, reload } = useMemberList("/monks/", { map: mapMS });
   const { t } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("All");
   const [search, setSearch] = useState("");
 
-  const filtered = DEMO_MS.filter((ms) => {
+  const filtered = msList.filter((ms) => {
     if (statusFilter !== "All" && ms.status !== statusFilter) return false;
     if (search && !ms.name.toLowerCase().includes(search.toLowerCase()) && !ms.location.toLowerCase().includes(search.toLowerCase())) return false;
     return true;

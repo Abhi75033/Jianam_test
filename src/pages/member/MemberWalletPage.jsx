@@ -1,24 +1,36 @@
 import { useState } from "react";
 import { Wallet, Receipt, Ticket, Award, Download, ChevronRight, Filter } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ListState from "@/components/member/ListState";
+import { useMemberList, longDate } from "@/hooks/useMemberList";
 import { cn } from "@/lib/utils";
 
 const TABS = ["All", "Receipts", "Tickets", "Certificates", "Passes"];
 
-const DEMO_ITEMS = [
-  { id: 1, type: "Receipt", label: "Donation Receipt", org: "Shree Ajitnath Derasar", date: "25 Jul 2025", amount: "₹5,000", emoji: "🧾", color: "bg-rose-50 border-rose-100" },
-  { id: 2, type: "Ticket", label: "Paryushan Event Ticket", org: "JiNANAM Events", date: "22 Aug 2025", amount: "Free", emoji: "🎟️", color: "bg-sky-50 border-sky-100" },
-  { id: 3, type: "Receipt", label: "Dharamshala Booking Receipt", org: "Palitana Board", date: "10 Jul 2025", amount: "₹2,400", emoji: "🧾", color: "bg-rose-50 border-rose-100" },
-  { id: 4, type: "Certificate", label: "80G Donation Certificate", org: "Mahavir Seva Trust", date: "01 Apr 2025", amount: "FY 2024–25", emoji: "🏆", color: "bg-amber-50 border-amber-100" },
-  { id: 5, type: "Certificate", label: "99 Jatra Completion Certificate", org: "JiNANAM 99 Management", date: "15 Mar 2025", amount: "Certificate", emoji: "🏅", color: "bg-amber-50 border-amber-100" },
-  { id: 6, type: "Ticket", label: "Ranakpur Yatra Registration", org: "JiNANAM Tours", date: "05 Sep 2025", amount: "₹8,500", emoji: "🗺️", color: "bg-sky-50 border-sky-100" },
-];
+
+/** Receipts and tickets are the wallet's two real sources (4.16.7, 4.8.9). */
+function mapReceipt(r, i) {
+  return { id: r.id || i, type: "Receipt", title: r.purpose || r.category || "Donation Receipt",
+           subtitle: r.organization?.name || "", amount: r.amount, date: longDate(r.createdAt),
+           emoji: "🧾", ref: r.receiptNumber || r.publicId };
+}
+function mapTicket(t_, i) {
+  return { id: t_.id || i, type: "Ticket", title: t_.event?.title || "Event Ticket",
+           subtitle: t_.event?.location || "", amount: t_.price, date: longDate(t_.event?.startsAt || t_.createdAt),
+           emoji: "🎟️", ref: t_.publicId };
+}
 
 export default function MemberWalletPage() {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("All");
 
-  const filtered = DEMO_ITEMS.filter((i) => activeTab === "All" || i.type === activeTab.slice(0, -1));
+  const receipts = useMemberList("/receipts/my", { map: mapReceipt });
+  const tickets  = useMemberList("/tickets/my",  { map: mapTicket });
+  const loading = receipts.loading || tickets.loading;
+  const error   = receipts.error || tickets.error;
+  const items   = [...receipts.items, ...tickets.items];
+
+  const filtered = items.filter((i) => activeTab === "All" || i.type === activeTab.slice(0, -1));
 
   return (
     <div className="space-y-4 pb-6">

@@ -4,55 +4,34 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ListState from "@/components/member/ListState";
+import { useMemberList, relativeTime, compactNumber, longDate } from "@/hooks/useMemberList";
 import { toast } from "sonner";
 
-const DEMO_TOURS = [
-  {
-    id: 1,
-    title: "Palitana Shatrunjay 99 Yatra Guided Tour",
-    destination: "Palitana, Gujarat",
-    duration: "4 Days / 3 Nights",
-    dates: "15 Sep – 18 Sep 2025",
-    price: "₹8,500 / person",
-    includes: "AC Stay, Bhojanshala, MS Escort, Local Transport",
-    rating: 4.9,
-    reviews: 140,
-    emoji: "🌄",
-    bg: "from-amber-500 to-orange-500"
-  },
-  {
-    id: 2,
-    title: "Ranakpur & Mount Abu Deluxe Yatra Circuit",
-    destination: "Rajasthan",
-    duration: "5 Days / 4 Nights",
-    dates: "02 Oct – 06 Oct 2025",
-    price: "₹12,000 / person",
-    includes: "Hotel Stay, Pure Jain Meal, Private Bus, Sightseeing",
-    rating: 4.8,
-    reviews: 98,
-    emoji: "🏛️",
-    bg: "from-purple-500 to-indigo-600"
-  },
-  {
-    id: 3,
-    title: "Shankheshwar & Girnar Mahatirth Pilgrimage",
-    destination: "Gujarat Circuit",
-    duration: "6 Days / 5 Nights",
-    dates: "10 Nov – 15 Nov 2025",
-    price: "₹14,500 / person",
-    includes: "Dharamshala AC Suite, Daily Navkarsi, Escort Guide",
-    rating: 4.9,
-    reviews: 210,
-    emoji: "🛕",
-    bg: "from-emerald-500 to-teal-600"
-  },
-];
+
+/** Maps an API tour row onto the fields this page renders. */
+function mapTour(t_, i) {
+  return {
+    id: t_.id || t_.publicId || i,
+    title: t_.title || t_.name,
+    destination: t_.destination || t_.endLocation || "",
+    dates: [t_.startDate, t_.endDate].filter(Boolean).map(longDate).join(" – "),
+    duration: t_.duration || "",
+    price: t_.price ?? t_.amount ?? null,
+    includes: t_.includes || t_.inclusions || [],
+    rating: t_.rating ?? null,
+    reviews: t_.reviewCount ?? 0,
+    emoji: t_.emoji || "🚌",
+    bg: t_.bg || "from-orange-500 to-rose-500",
+  };
+}
 
 export default function MemberToursPage() {
+  const { items: tours, loading, error, reload } = useMemberList("/tours/", { map: mapTour });
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
 
-  const filtered = DEMO_TOURS.filter((tr) => {
+  const filtered = tours.filter((tr) => {
     if (search && !tr.title.toLowerCase().includes(search.toLowerCase()) && !tr.destination.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });

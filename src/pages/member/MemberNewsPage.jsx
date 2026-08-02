@@ -7,68 +7,37 @@ import {
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
+import ListState from "@/components/member/ListState";
+import { useMemberList, relativeTime, compactNumber, longDate } from "@/hooks/useMemberList";
+
+/** Maps an API news row onto the fields this page's markup renders. */
+function mapNews(n, i) {
+  return {
+    id: n.id || n.publicId || i,
+    title: n.title,
+    summary: n.summary || n.excerpt || n.body?.slice(0, 180) || "",
+    category: n.category || "Community",
+    author: n.author || n.organization?.name || "JiNANAM News Desk",
+    date: longDate(n.publishedAt || n.createdAt),
+    time: relativeTime(n.publishedAt || n.createdAt),
+    views: compactNumber(n.viewCount ?? n.views ?? 0),
+    trending: Boolean(n.isTrending ?? n.trending),
+    emoji: n.emoji || "📰",
+    readTime: n.readTime || `${Math.max(1, Math.round((n.body?.length || 600) / 900))} min read`,
+  };
+}
 
 const CATEGORIES = ["All News", "Tirth & Temples", "MS & Saints", "Events & Utsav", "Community", "Global Jain News"];
 
-const DEMO_NEWS = [
-  {
-    id: 1,
-    title: "Historic 99 Yatra Commences at Palitana Shatrunjay Tirth",
-    summary: "Over 5,000 Jain pilgrims gather at Palitana for the annual 99 Yatra. Local trusts arrange special Bhojanshala and medical camps along the route.",
-    category: "Tirth & Temples",
-    author: "JiNANAM News Desk",
-    date: "31 July 2026",
-    time: "2 hours ago",
-    views: "14.2k",
-    trending: true,
-    emoji: "🛕",
-    readTime: "3 min read"
-  },
-  {
-    id: 2,
-    title: "Param Pujya Acharya Dev Announces Paryushan 2025 Pravachan Schedule",
-    summary: "Daily morning and evening spiritual discourses will be held at Mumbai Derasar premises. Live web broadcast will be available on JiNANAM App.",
-    category: "MS & Saints",
-    author: "Mahavir Seva Trust",
-    date: "30 July 2026",
-    time: "5 hours ago",
-    views: "9.8k",
-    trending: true,
-    emoji: "🙏",
-    readTime: "4 min read"
-  },
-  {
-    id: 3,
-    title: "New Bhojanshala Facility Inaugourated at Ranakpur Jain Temple",
-    summary: "Modern hygiene-compliant Bhojanshala capable of serving 2,000 devotees simultaneously opened today with Navkarsi facilities.",
-    category: "Tirth & Temples",
-    author: "Ranakpur Trust",
-    date: "29 July 2026",
-    time: "1 day ago",
-    views: "6.5k",
-    emoji: "🍱",
-    readTime: "2 min read"
-  },
-  {
-    id: 4,
-    title: "Global Jain Youth Summit 2025 Announced for October",
-    summary: "Youth leaders from over 40 countries to assemble for discussions on Ahimsa, Jain philosophy in modern corporate life, and community welfare.",
-    category: "Global Jain News",
-    author: "JiNANAM Foundation",
-    date: "28 July 2026",
-    time: "2 days ago",
-    views: "11.1k",
-    emoji: "🌍",
-    readTime: "5 min read"
-  },
-];
 
 export default function MemberNewsPage() {
   const { t } = useLanguage();
   const [selectedCat, setSelectedCat] = useState("All News");
   const [search, setSearch] = useState("");
 
-  const filtered = DEMO_NEWS.filter((n) => {
+  const { items: news, loading, error } = useMemberList("/news", { map: mapNews });
+
+  const filtered = news.filter((n) => {
     if (selectedCat !== "All News" && n.category !== selectedCat) return false;
     if (search && !n.title.toLowerCase().includes(search.toLowerCase()) && !n.summary.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -134,6 +103,11 @@ export default function MemberNewsPage() {
         
         {/* Main News List Column */}
         <div className="lg:col-span-8 space-y-6">
+          <ListState
+            loading={loading} error={error} count={filtered.length}
+            emptyTitle="No news yet"
+            emptyHint="Community news from your linked temples will appear here."
+          >
           {filtered.map((item) => (
             <article key={item.id} className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs hover:shadow-md transition-all">
               <div className="flex items-center justify-between gap-3 mb-3">
@@ -184,6 +158,7 @@ export default function MemberNewsPage() {
               </div>
             </article>
           ))}
+          </ListState>
         </div>
 
         {/* Sidebar Trending Column */}
@@ -193,7 +168,7 @@ export default function MemberNewsPage() {
               <TrendingUp className="h-4 w-4 text-orange-500" />
               <span>Trending Bulletins</span>
             </h3>
-            {DEMO_NEWS.filter(n => n.trending).map((n) => (
+            {news.filter(n => n.trending).map((n) => (
               <div key={n.id} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/60 hover:bg-orange-50/60 hover:border-orange-200 transition-all cursor-pointer">
                 <div className="text-[10px] font-bold text-orange-600">{n.category}</div>
                 <h4 className="text-xs font-bold text-slate-900 mt-1 line-clamp-2">{n.title}</h4>

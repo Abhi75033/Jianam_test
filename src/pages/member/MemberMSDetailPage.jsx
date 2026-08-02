@@ -7,46 +7,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ListState from "@/components/member/ListState";
+import { useMemberItem, compactNumber } from "@/hooks/useMemberList";
 import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
 import { toast } from "sonner";
 
-const DEMO_MS_DETAILS = {
-  "ms-1": {
-    id: "ms-1",
-    publicId: "JFMS108",
-    name: "Param Pujya Acharya Dev Shri Vijay Ramchandrasuri Ji",
-    title: "Acharya Dev",
-    sect: "Shwetambar · Murtipujak (Tapa Gaccha)",
-    guru: "Param Pujya Acharya Shri Prem Suriji M.S.",
-    location: "Mumbai, Maharashtra",
-    area: "Dadar East",
-    currentPlace: "Shree Ajitnath Derasar, Dadar",
-    status: "Staying",
-    vihaarGroupId: "JFMSV108",
-    groupLeader: "Param Pujya Acharya Dev",
-    groupMembersCount: 12,
-    followers: "45,200",
-    chaturmas: "Palitana Tirth 2025",
-    pravachan: "Daily 7:30 AM – 9:30 AM",
-    bio: "Param Pujya Acharya Dev Shri has conducted over 1,500 Dikshas and guided thousands of Jain families across India. He is currently observing Sthir (staying) at Dadar, Mumbai.",
-    upcomingVihaar: "Starting Vihaar towards Palitana on 15th August 2025",
-    tapasya: [
-      { name: "Varsitap", count: 4, status: "Completed" },
-      { name: "Ayambil", count: 180, status: "Completed" },
-      { name: "Upvas", count: 64, status: "Completed" }
-    ],
-    chaturmasHistory: [
-      { year: "2025", venue: "Palitana Shatrunjay Tirth", status: "Ongoing" },
-      { year: "2024", venue: "Shree Ajitnath Derasar, Mumbai", status: "Completed" },
-      { year: "2023", venue: "Jain Centre, Jaipur", status: "Completed" }
-    ],
-    contactRepresentative: {
-      jainPerson: "Shri Rahul Shah (JFJM108)",
-      phone: "+91 98765 43210"
-    },
-    image: "🙏"
-  }
-};
 
 export default function MemberMSDetailPage() {
   const { id } = useParams();
@@ -54,7 +19,15 @@ export default function MemberMSDetailPage() {
   const { t } = useLanguage();
   const { isEntityFollowed, toggleFollow } = useVisibilityEngine();
 
-  const ms = DEMO_MS_DETAILS[id] || DEMO_MS_DETAILS["ms-1"];
+  const { item: ms, loading, error } = useMemberItem(id ? `/monks/${id}` : null, {
+    map: (m) => ({
+      ...m,
+      name: m.fullName || m.name,
+      status: m.trackingStatus || m.status || "Offline",
+      location: m.currentLocation || m.city || "",
+      followers: compactNumber(m.followerCount ?? 0),
+    }),
+  });
   const followed = isEntityFollowed(ms.publicId);
 
   const onShare = () => {
