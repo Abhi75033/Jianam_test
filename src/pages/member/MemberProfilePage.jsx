@@ -8,6 +8,7 @@ import {
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import FamilyMembersCard from "@/components/member/FamilyMembersCard";
 
 function StatBadge({ label, value, icon: Icon, color }) {
   return (
@@ -109,6 +110,9 @@ export default function MemberProfilePage() {
             <SectionRow icon={Users} label={t("Sub-Sect")} value="Murtipujak (Deravasi)" iconBg="bg-amber-100 text-amber-600" />
             <SectionRow icon={Star} label={t("Gaccha")} value="Tapa Gaccha" iconBg="bg-yellow-100 text-yellow-600" />
           </div>
+
+          {/* §4.2.7 Family Member Addition */}
+          <FamilyMembersCard />
 
         </div>
 

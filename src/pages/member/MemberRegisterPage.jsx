@@ -75,6 +75,7 @@ export default function MemberRegisterPage() {
   const { requestOtp, verifyOtp } = useMemberAuth();
 
   const [step, setStep] = useState(0);
+
   const [busy, setBusy] = useState(false);
 
   // Step 1: Verification
@@ -90,6 +91,10 @@ export default function MemberRegisterPage() {
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [surname, setSurname] = useState("");
+  // §4.2.6 WhatsApp number, §4.21.8 calendar preference
+  const [whatsapp, setWhatsapp] = useState("");
+  const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(true);
+  const [calendarTypes, setCalendarTypes] = useState([{ name: "Gujarati" }, { name: "Kutchi" }, { name: "Marwari" }]);
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("Male");
   const [country, setCountry] = useState("India");
@@ -134,6 +139,17 @@ export default function MemberRegisterPage() {
   const [consentServices, setConsentServices] = useState(true);
   const [consentPromotional, setConsentPromotional] = useState(true);
   const [consentGuardian, setConsentGuardian] = useState(false);
+
+  // §4.21.8 — calendar options come from master data; the fallback list above
+  // keeps registration working if the lookup fails.
+  useEffect(() => {
+    api.get("/calendar/types")
+      .then((r) => {
+        const list = r.data?.data?.items || r.data?.data || [];
+        if (Array.isArray(list) && list.length) setCalendarTypes(list);
+      })
+      .catch(() => {});
+  }, []);
 
   // Success Modal State (§3 Unique ID Display: JFJM108 vs JFNJM108)
   const [createdMemberId, setCreatedMemberId] = useState(null);
@@ -205,6 +221,7 @@ export default function MemberRegisterPage() {
         gaccha: (memberType === "JAIN" && subCommunity.includes("Murtipujak")) ? gaccha : null,
         motherTongue,
         tithiCalendar,
+        whatsapp: whatsappSameAsMobile ? mobile : whatsapp,
         city,
         state,
         area,
@@ -405,6 +422,47 @@ export default function MemberRegisterPage() {
                       <option key={c}>{c}</option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              {/* §4.2.6 requires a WhatsApp number, and §4.21.8 requires the member
+                  to pick a calendar during profile creation — that choice drives the
+                  Tithi shown on the dashboard and the daily notification. */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs font-bold">{t("WhatsApp Number")}</Label>
+                  <PhoneField
+                    value={whatsapp}
+                    onChange={setWhatsapp}
+                    placeholder={t("WhatsApp Number")}
+                  />
+                  <label className="flex items-center gap-1.5 mt-1.5 text-[10px] text-slate-500 font-medium cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={whatsappSameAsMobile}
+                      onChange={(e) => {
+                        setWhatsappSameAsMobile(e.target.checked);
+                        if (e.target.checked) setWhatsapp(mobile);
+                      }}
+                      className="h-3 w-3 rounded border-slate-300"
+                    />
+                    {t("Same as mobile number")}
+                  </label>
+                </div>
+                <div>
+                  <Label className="text-xs font-bold">{t("Preferred Calendar *")}</Label>
+                  <select
+                    value={tithiCalendar}
+                    onChange={(e) => setTithiCalendar(e.target.value)}
+                    className="w-full mt-1 p-2 rounded-xl border text-xs font-bold bg-white"
+                  >
+                    {calendarTypes.map((c) => (
+                      <option key={c.id || c.name} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {t("Sets your Tithi and daily reminder.")}
+                  </p>
                 </div>
               </div>
 
