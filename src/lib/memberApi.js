@@ -84,7 +84,10 @@ export function fallbackMethodsFor(identifier = "") {
 export const bookingsApi = {
   /** Unified My Bookings across accommodation, general bookings, tickets and tours (§B16.7). */
   async mine(params = {}) {
-    return list(unwrap(await api.get("/bookings", { params })));
+    // GET /bookings/ is the platform-wide admin list and 403s for members
+    // ("Platform-wide booking list is Super Admin only"). /bookings/my is the
+    // member-scoped equivalent.
+    return list(unwrap(await api.get("/bookings/my", { params })));
   },
   /** Detail with the full status timeline (§B16.5). */
   async detail(uid) {
@@ -174,7 +177,9 @@ export const donationsApi = {
 export const eventsApi = {
   /** scope: upcoming | today | past (§B19.2). */
   async browse({ scope = "upcoming", category, lat, lng } = {}) {
-    return list(unwrap(await api.get("/events", { params: { scope, category, lat, lng } })));
+    // /events is the admin list and 403s for members; /events/member returns
+    // the events visible to this member (§4.7.2 temple-specific vs public).
+    return list(unwrap(await api.get("/events/member", { params: { scope, category, lat, lng } })));
   },
   async detail(displayId) {
     return unwrap(await api.get(`/events/${displayId}`));

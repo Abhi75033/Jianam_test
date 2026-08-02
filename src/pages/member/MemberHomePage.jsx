@@ -422,7 +422,7 @@ export default function MemberHomePage() {
       api.get("/dashboard/member").catch(() => null),
       api.get("/temples", { params: { take: 4 } }).catch(() => null),
       // §4.7.2 — member-scoped events, so temple-specific ones stay filtered
-      api.get("/events/member").catch(() => api.get("/events", { params: { take: 4 } }).catch(() => null)),
+      api.get("/events/member").catch(() => null),
       api.get("/feed/", { params: { take: 4 } }).catch(() => null),
       api.get("/news", { params: { take: 4 } }).catch(() => null),
       api.get("/monks/", { params: { take: 4 } }).catch(() => null),
