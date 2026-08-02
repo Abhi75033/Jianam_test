@@ -19,15 +19,37 @@ export default function MemberMSDetailPage() {
   const { t } = useLanguage();
   const { isEntityFollowed, toggleFollow } = useVisibilityEngine();
 
+  /**
+   * Maps the real /monks/{id} response onto the fields this page renders.
+   * The page was written against a demo object (contactRepresentative,
+   * vihaarGroupId, guru …) whose names don't match the API. Field names below
+   * are taken from the admin MonkDetailPage, which works against the live API.
+   */
   const { item: ms, loading, error } = useMemberItem(id ? `/monks/${id}` : null, {
     map: (m) => ({
       ...m,
-      name: m.fullName || m.name,
-      status: m.trackingStatus || m.status || "Offline",
-      location: m.currentLocation || m.city || "",
-      followers: compactNumber(m.followerCount ?? 0),
+      name: m.dikshaName || m.shortName || m.nameBeforeDiksha || m.fullName || m.name,
+      image: m.photoUrl || null,
+      status: m.tracking?.status || m.status || "Offline",
+      location: m.tracking?.currentLocation || m.currentTemple?.city || "",
+      currentPlace: m.currentTemple?.name || m.tracking?.currentLocation || "",
+      sect: [m.sect, m.subSect || m.gacchaName].filter(Boolean).join(" · "),
+      guru: m.dikshaGuru?.dikshaName || m.dikshaGuru?.shortName || m.discipleOf || "",
+      followers: compactNumber(m._count?.followers ?? 0),
+      // The demo shape nested these; the API keeps them flat or under group.
+      vihaarGroupId: m.group?.publicId || m.currentSangh?.publicId || "",
+      groupLeader: m.group?.leader?.dikshaName || m.currentSangh?.name || "",
+      groupMembersCount: m.group?._count?.members ?? m._count?.group ?? 0,
+      upcomingVihaar: m.tracking?.nextStop || m.timeline?.[0]?.title || "",
+      pravachan: m.routine?.pravachan || "",
+      contactRepresentative: {
+        jainPerson: m.sanghContacts?.[0]?.name || "",
+        phone: m.sanghContacts?.[0]?.mobile || "",
+      },
+      chaturmasHistory: m.chaturmasHistory || [],
     }),
   });
+
   // `ms` is null while loading, on error, and when the id doesn't resolve.
   // The previous code always fell back to a demo object so it was never null;
   // now every read has to tolerate that, and the render bails out below.
@@ -170,7 +192,7 @@ export default function MemberMSDetailPage() {
           <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3">
             <h2 className="text-base font-bold text-slate-900">Chaturmas History</h2>
             <div className="space-y-2">
-              {ms?.chaturmasHistory.map((c) => (
+              {ms?.chaturmasHistory?.map((c) => (
                 <div key={c.year} className="p-3 bg-slate-50 rounded-2xl border border-slate-200/60 flex items-center justify-between text-xs">
                   <div>
                     <span className="font-extrabold text-slate-900">{c.year} Chaturmas</span>
@@ -212,8 +234,8 @@ export default function MemberMSDetailPage() {
               <span>Sangh Representative Contact</span>
             </h3>
             <div className="text-xs space-y-1">
-              <div className="font-bold text-slate-800">{ms?.contactRepresentative.jainPerson}</div>
-              <div className="font-mono text-slate-600">{ms?.contactRepresentative.phone}</div>
+              <div className="font-bold text-slate-800">{ms?.contactRepresentative?.jainPerson}</div>
+              <div className="font-mono text-slate-600">{ms?.contactRepresentative?.phone}</div>
             </div>
           </div>
 
