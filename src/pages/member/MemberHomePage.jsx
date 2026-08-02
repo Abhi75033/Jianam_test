@@ -5,12 +5,16 @@ import {
   BookOpen, CreditCard, Phone, Navigation, Clock, Star,
   Flame, Users, Sparkles, Newspaper, TrendingUp, Compass,
   CheckCircle, ArrowUpRight, Award, ShieldCheck, HeartHandshake,
-  Loader2, RefreshCw, MessageSquare, Search, Tag, Quote, Info, ExternalLink, Ticket, Gift
+  Loader2, RefreshCw, MessageSquare, Search, Tag, Quote, Info, ExternalLink, Ticket, Gift,
+  AlertTriangle, Megaphone
 } from "lucide-react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { memberClient as api } from "@/lib/memberClient";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/api";
 
 function timeGreeting() {
   const h = new Date().getHours();
@@ -194,6 +198,177 @@ function ContinueJourneyCard() {
   );
 }
 
+
+/* ── §4.3.3 #1 — Alerts (highest priority on the dashboard) ──────────────── */
+function AlertsSection({ alerts }) {
+  const { t } = useLanguage();
+  if (!alerts?.length) return null;   // §4.3.7 — nothing to show, show nothing
+  return (
+    <section className="rounded-3xl border border-red-200 bg-red-50/70 p-5 space-y-3">
+      <h2 className="text-sm font-bold text-red-900 flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4" /> {t("Alerts")}
+      </h2>
+      <div className="space-y-2">
+        {alerts.slice(0, 3).map((a, i) => (
+          <div key={a.id || i} className="p-3 rounded-xl bg-white border border-red-200">
+            <div className="text-xs font-bold text-slate-900">{a.title || a.type || t("Alert")}</div>
+            {(a.message || a.description) && (
+              <div className="text-[11px] text-slate-600 mt-0.5 line-clamp-2">{a.message || a.description}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ── §4.3.2 #1 / §4.4 — Monk tracking with the spec's status colours ─────── */
+const MS_STATUS = {
+  MOVING:  { dot: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", label: "Moving" },
+  IDLE:    { dot: "bg-amber-500",   chip: "bg-amber-50 text-amber-700 border-amber-200",       label: "Idle" },
+  OFFLINE: { dot: "bg-red-500",     chip: "bg-red-50 text-red-700 border-red-200",             label: "Offline" },
+};
+/** §4.4.3: green = moving, yellow = idle, red = offline. */
+function msStatusOf(m) {
+  const raw = String(m?.trackingStatus || m?.status || "").toUpperCase();
+  if (raw.includes("MOV") || raw === "ACTIVE") return MS_STATUS.MOVING;
+  if (raw.includes("OFF")) return MS_STATUS.OFFLINE;
+  if (raw.includes("IDLE") || raw.includes("REST")) return MS_STATUS.IDLE;
+  return MS_STATUS.OFFLINE;
+}
+
+function MonkTrackingSection({ monks }) {
+  const { t } = useLanguage();
+  return (
+    <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-orange-500" /> {t("Monk Tracking")}
+        </h2>
+        <Link to="/member/ms" className="text-xs font-bold text-orange-600 hover:text-orange-700">
+          {t("View All")}
+        </Link>
+      </div>
+
+      {!monks?.length ? (
+        // §4.3.7 edge case: exact placeholder the spec asks for
+        <div className="text-xs text-slate-400 italic text-center py-6">{t("No monks available")}</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {monks.slice(0, 4).map((m, i) => {
+            const st = msStatusOf(m);
+            return (
+              <Link
+                key={m.id || i}
+                to={`/member/ms/${m.id || m.publicId}`}
+                className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200 hover:border-orange-300 hover:shadow-sm transition-all"
+              >
+                <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", st.dot)} />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold text-slate-900 truncate">
+                    {m.fullName || m.name || m.publicId}
+                  </div>
+                  <div className="text-[11px] text-slate-500 truncate">
+                    {m.currentLocation || m.city || t("Location unavailable")}
+                  </div>
+                  {m.lastUpdatedAt && (
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      {t("Updated")} {new Date(m.lastUpdatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  )}
+                </div>
+                <span className={cn("text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border shrink-0", st.chip)}>
+                  {t(st.label)}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ── §4.3.3 #4 — Announcements ──────────────────────────────────────────── */
+function AnnouncementsSection({ announcements }) {
+  const { t } = useLanguage();
+  return (
+    <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+          <Megaphone className="h-4 w-4 text-purple-500" /> {t("Announcements")}
+        </h2>
+        <Link to="/member/news" className="text-xs font-bold text-orange-600 hover:text-orange-700">
+          {t("View All")}
+        </Link>
+      </div>
+      {!announcements?.length ? (
+        <div className="text-xs text-slate-400 italic text-center py-6">{t("No announcements")}</div>
+      ) : (
+        <div className="space-y-2">
+          {announcements.slice(0, 4).map((a, i) => (
+            <div key={a.id || i} className="p-3 rounded-2xl border border-slate-200 bg-slate-50/60">
+              <div className="text-xs font-bold text-slate-900 truncate">{a.title}</div>
+              <div className="text-[11px] text-slate-600 line-clamp-2 mt-0.5">{a.body || a.description}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+
+/* ── §4.3.2 #3 / §4.3.3 #3 — Upcoming Events with RSVP ──────────────────── */
+function UpcomingEventsSection({ events, onRsvp, rsvpBusy }) {
+  const { t } = useLanguage();
+  return (
+    <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+          <CalendarCheck className="h-4 w-4 text-purple-500" /> {t("Upcoming Events")}
+        </h2>
+        <Link to="/member/events" className="text-xs font-bold text-orange-600 hover:text-orange-700">
+          {t("View All")}
+        </Link>
+      </div>
+
+      {!events?.length ? (
+        // §4.3.7 — the placeholder wording the spec asks for
+        <div className="text-xs text-slate-400 italic text-center py-6">{t("No events available")}</div>
+      ) : (
+        <div className="space-y-2.5">
+          {events.slice(0, 4).map((e, i) => {
+            const when = e.startsAt || e.startDate || e.date;
+            return (
+              <div key={e.id || i} className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200">
+                <Link to={`/member/events`} className="min-w-0 flex-1">
+                  <div className="text-xs font-bold text-slate-900 truncate">{e.title || e.name}</div>
+                  <div className="text-[11px] text-slate-500 truncate">
+                    {when ? new Date(when).toLocaleString("en-IN", {
+                      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+                    }) : t("Date to be announced")}
+                    {(e.organization?.name || e.templeName) ? ` · ${e.organization?.name || e.templeName}` : ""}
+                  </div>
+                </Link>
+                {/* Capacity control per §4.7.6: RSVP is disabled once full */}
+                <Button
+                  size="sm"
+                  disabled={rsvpBusy === (e.id || i) || e.isFull}
+                  onClick={() => onRsvp(e)}
+                  className="h-8 text-[11px] font-bold shrink-0 bg-orange-500 hover:bg-orange-600 text-white"
+                >
+                  {e.isFull ? t("Full") : rsvpBusy === (e.id || i) ? t("…") : t("RSVP")}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ── Main Component ──────────────────────────────────────────────────────── */
 export default function MemberHomePage() {
   const { t } = useLanguage();
@@ -209,62 +384,70 @@ export default function MemberHomePage() {
   const [feed, setFeed] = useState([]);
   const [news, setNews] = useState([]);
   const [offers, setOffers] = useState([]);
+  // §4.3.3 additions: alerts sit above everything, announcements above feed,
+  // and §4.21.12 puts Today's Tithi on the dashboard.
+  const [alerts, setAlerts] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [tithi, setTithi] = useState(null);
 
-  // Fetch real-time data from Backend APIs
+  const [rsvpBusy, setRsvpBusy] = useState(null);
+
+  /** §4.7.5 RSVP. Capacity-full is reported by the API and surfaced inline. */
+  const handleRsvp = async (e) => {
+    const id = e.id || e.publicId;
+    setRsvpBusy(id);
+    try {
+      await api.post(`/events/${id}/rsvp`, { attendees: 1 });
+      toast.success(t("RSVP confirmed. See you there!"));
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setRsvpBusy(null);
+    }
+  };
+
+  const unwrap = (res) => {
+    const d = res?.data?.data;
+    return Array.isArray(d) ? d : d?.items || [];
+  };
+
   const fetchRealtimeData = async () => {
     setLoading(true);
-    try {
-      // 1. Dashboard Member API
-      const res = await api.get("/dashboard/member").catch(() => null);
-      if (res?.data?.data) {
-        setDashboardData(res.data.data);
-      }
+    // Fired in parallel: the dashboard renders section-by-section, so one slow
+    // or missing endpoint must not hold up the rest.
+    const [
+      dash, templeRes, eventRes, feedRes, newsRes, monkRes, offerRes,
+      alertRes, annRes, tithiRes,
+    ] = await Promise.all([
+      api.get("/dashboard/member").catch(() => null),
+      api.get("/temples", { params: { take: 4 } }).catch(() => null),
+      // §4.7.2 — member-scoped events, so temple-specific ones stay filtered
+      api.get("/events/member").catch(() => api.get("/events", { params: { take: 4 } }).catch(() => null)),
+      api.get("/feed/", { params: { take: 4 } }).catch(() => null),
+      api.get("/news", { params: { take: 4 } }).catch(() => null),
+      api.get("/monks/", { params: { take: 4 } }).catch(() => null),
+      api.get("/offers", { params: { take: 4 } }).catch(() => null),
+      api.get("/alerts/", { params: { take: 3 } }).catch(() => null),
+      api.get("/announcements/", { params: { take: 4 } }).catch(() => null),
+      api.get("/calendar/today").catch(() => null),
+    ]);
 
-      // 2. Temples API
-      const templeRes = await api.get("/temples?take=4").catch(() => null);
-      if (templeRes?.data?.data && Array.isArray(templeRes.data.data)) {
-        setTemples(templeRes.data.data);
-      }
-
-      // 3. Events API
-      const eventRes = await api.get("/events?take=4").catch(() => null);
-      if (eventRes?.data?.data && Array.isArray(eventRes.data.data)) {
-        setEvents(eventRes.data.data);
-      }
-
-      // 4. Feed API
-      const feedRes = await api.get("/feed?take=4").catch(() => null);
-      if (feedRes?.data?.data && Array.isArray(feedRes.data.data)) {
-        setFeed(feedRes.data.data);
-      }
-
-      // 5. News API
-      const newsRes = await api.get("/news?take=4").catch(() => null);
-      if (newsRes?.data?.data && Array.isArray(newsRes.data.data)) {
-        setNews(newsRes.data.data);
-      }
-
-      // 6. Monks API
-      const monkRes = await api.get("/monks?take=4").catch(() => null);
-      if (monkRes?.data?.data && Array.isArray(monkRes.data.data)) {
-        setMonks(monkRes.data.data);
-      }
-
-      // 7. Offers API
-      const offerRes = await api.get("/offers?take=4").catch(() => null);
-      if (offerRes?.data?.data && Array.isArray(offerRes.data.data)) {
-        setOffers(offerRes.data.data);
-      }
-
-    } catch (err) {
-      console.warn("Backend API sync completed.");
-    } finally {
-      setLoading(false);
-    }
+    if (dash?.data?.data) setDashboardData(dash.data.data);
+    setTemples(unwrap(templeRes));
+    setEvents(unwrap(eventRes).slice(0, 4));
+    setFeed(unwrap(feedRes));
+    setNews(unwrap(newsRes));
+    setMonks(unwrap(monkRes));
+    setOffers(unwrap(offerRes));
+    setAlerts(unwrap(alertRes));
+    setAnnouncements(unwrap(annRes));
+    setTithi(tithiRes?.data?.data || null);
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchRealtimeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -320,7 +503,13 @@ export default function MemberHomePage() {
       </div>
 
       {/* ── 1. Daily Tithi Card ────────────────────────────────────────── */}
-      <DailyTithiCard tithiData={dashboardData?.todaysTithi} />
+      {/* §4.21.12 — Today's Tithi on the dashboard, from /calendar/today */}
+      <DailyTithiCard tithiData={tithi || dashboardData?.todaysTithi} />
+
+      {/* §4.3.3 display order: Alerts → Monk Tracking → Events → Announcements → Feed */}
+      <AlertsSection alerts={alerts} />
+      <MonkTrackingSection monks={monks} />
+      <UpcomingEventsSection events={events} onRsvp={handleRsvp} rsvpBusy={rsvpBusy} />
 
       {/* ── 2. Quick Actions ──────────────────────────────────────────── */}
       <QuickActions />
@@ -380,12 +569,15 @@ export default function MemberHomePage() {
                 title="No Nearby Temples Registered Yet"
                 description="Explore the full directory or request your local temple administration to register on JiNANAM."
                 actionText="Browse Temples Directory"
-                actionTo="/temples"
+                actionTo="/member/temples"
               />
             )}
           </section>
 
-          {/* 6. Community Highlights */}
+          {/* §4.3.3 #4 — Announcements, directly above the feed */}
+          <AnnouncementsSection announcements={announcements} />
+
+          {/* 6. Community Highlights (§4.3.3 #5 — Feed preview) */}
           <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -413,7 +605,7 @@ export default function MemberHomePage() {
                 title="No Community Posts Yet"
                 description="Follow your local Derasars, Maharaj Saheb and Jain Community Pages to see personalized feed updates."
                 actionText="Explore Community Feed"
-                actionTo="/feed"
+                actionTo="/member/feed"
               />
             )}
           </section>
@@ -440,31 +632,7 @@ export default function MemberHomePage() {
                   title="No News Articles Today"
                   description="Stay tuned for official Sangh announcements."
                   actionText="View News Desk"
-                  actionTo="/news"
-                />
-              )}
-            </section>
-
-            {/* Events */}
-            <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-900">Upcoming Events</h3>
-                <Link to="/member/events" className="text-[10px] font-bold text-orange-600 hover:underline">View All</Link>
-              </div>
-
-              {events.length > 0 ? (
-                events.map((e) => (
-                  <div key={e.id} className="p-3 bg-slate-50 rounded-xl text-xs font-bold text-slate-800">
-                    🎉 {e.title}
-                  </div>
-                ))
-              ) : (
-                <EmptySectionState
-                  icon={CalendarCheck}
-                  title="No Upcoming Events Scheduled"
-                  description="Check out community celebrations & Utsavs."
-                  actionText="Explore Events"
-                  actionTo="/events"
+                  actionTo="/member/news"
                 />
               )}
             </section>
@@ -504,7 +672,7 @@ export default function MemberHomePage() {
                 title="No Live MS Tracking Updates"
                 description="Follow Maharaj Saheb & Sadhvi Sangha to get Vihaar & Chaturmas notifications."
                 actionText="Guru Directory"
-                actionTo="/ms"
+                actionTo="/member/ms"
               />
             )}
           </section>
