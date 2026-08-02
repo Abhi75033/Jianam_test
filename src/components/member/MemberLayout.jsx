@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import MemberSidebar from "./MemberSidebar";
 import MemberTopbar from "./MemberTopbar";
+import MemberBottomNav from "./MemberBottomNav";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 /**
@@ -39,12 +40,16 @@ export default function MemberLayout() {
         <MemberTopbar onToggleSidebar={handleToggleSidebar} />
         
         <main
-          className="flex-1 p-4 sm:p-6 md:p-8 animate-fade-up"
+          // pb-24 on mobile keeps the last card clear of the fixed bottom nav.
+          className="flex-1 p-4 sm:p-6 md:p-8 pb-24 md:pb-8 animate-fade-up"
           data-testid="member-main"
         >
           <Outlet />
         </main>
       </div>
+
+      {/* Primary navigation on phones; the sidebar covers desktop. */}
+      <MemberBottomNav />
 
     </div>
   );
