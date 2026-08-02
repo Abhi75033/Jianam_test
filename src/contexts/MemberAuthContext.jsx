@@ -53,8 +53,11 @@ export function MemberAuthProvider({ children }) {
       const { data } = await memberClient.get("/auth/me");
       const me = data?.data || null;
       if (!me) return null;
-      // Guard: an admin account must never drive the member panel.
-      if (!isMemberRole(me.primaryRoleKey)) {
+      // Guard: an admin account must never drive the member panel. The role
+      // key varies by endpoint (`primaryRoleKey` on /auth/me, `role` on the
+      // login response), so check both before deciding to sign someone out.
+      const role = me.primaryRoleKey || me.role;
+      if (role && !isMemberRole(role)) {
         signOutLocal();
         return null;
       }
@@ -75,9 +78,29 @@ export function MemberAuthProvider({ children }) {
     })();
   }, [refreshMember]);
 
-  /** Store tokens from any successful auth call, rejecting non-member roles. */
+  /**
+   * Store tokens from any successful auth call, rejecting non-member roles.
+   *
+   * The API answers with FLAT fields — { userId, publicId, role, accessToken,
+   * refreshToken } — not a nested `user`. Reading `payload.user` therefore gave
+   * null, the session was never stored, and the route guard bounced a
+   * successful login straight back to the sign-in page.
+   */
   const acceptSession = useCallback((payload) => {
-    const user = payload?.user || payload?.member || null;
+    if (!payload) return null;
+    const user =
+      payload.user ||
+      payload.member ||
+      (payload.userId || payload.publicId
+        ? {
+            id: payload.userId,
+            userId: payload.userId,
+            publicId: payload.publicId,
+            primaryRoleKey: payload.role || payload.primaryRoleKey,
+            mobile: payload.mobile,
+          }
+        : null);
+
     if (user && !isMemberRole(user.primaryRoleKey)) {
       const err = new Error(
         "This is a member sign-in. Please use the admin portal for administrator accounts."
