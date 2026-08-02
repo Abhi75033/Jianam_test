@@ -5,7 +5,7 @@ import {
   MapPin, Phone, Mail, Heart, Users, CalendarCheck,
   Star, ChevronRight, Camera, LogOut, Bookmark, Globe, Info, Sparkles
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +38,7 @@ function SectionRow({ icon: Icon, label, value, to, iconBg = "bg-orange-100 text
 
 export default function MemberProfilePage() {
   const { t } = useLanguage();
-  const { user, logout } = useAuth();
+  const { user, logout } = useMemberAuth();
 
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.fullName || t("Member");
 
@@ -76,7 +76,7 @@ export default function MemberProfilePage() {
 
           <div className="flex items-center gap-3">
             <Link
-              to="/digital-id"
+              to="/member/digital-id"
               className="px-5 py-3 rounded-2xl bg-white text-orange-600 font-bold text-xs shadow-md hover:bg-orange-50 transition-colors flex items-center gap-2"
             >
               <QrCode className="h-4 w-4" />
@@ -129,9 +129,9 @@ export default function MemberProfilePage() {
           {/* Quick Shortcuts & Documents */}
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs">
             <h2 className="text-base font-bold text-slate-900 mb-4">{t("Documents & Wallet")}</h2>
-            <SectionRow icon={QrCode} label={t("Digital ID Card")} value="View & Share Verified ID" to="/digital-id" iconBg="bg-violet-100 text-violet-600" />
-            <SectionRow icon={Wallet} label={t("Digital Wallet")} value="Receipts, Passes & Certificates" to="/wallet" iconBg="bg-emerald-100 text-emerald-600" />
-            <SectionRow icon={Bell} label={t("Notifications")} value="Preferences & Alerts" to="/notifications" iconBg="bg-yellow-100 text-yellow-600" />
+            <SectionRow icon={QrCode} label={t("Digital ID Card")} value="View & Share Verified ID" to="/member/digital-id" iconBg="bg-violet-100 text-violet-600" />
+            <SectionRow icon={Wallet} label={t("Digital Wallet")} value="Receipts, Passes & Certificates" to="/member/wallet" iconBg="bg-emerald-100 text-emerald-600" />
+            <SectionRow icon={Bell} label={t("Notifications")} value="Preferences & Alerts" to="/member/notifications" iconBg="bg-yellow-100 text-yellow-600" />
           </div>
 
           {/* Logout Button */}

@@ -7,9 +7,9 @@ import {
   CheckCircle, ArrowUpRight, Award, ShieldCheck, HeartHandshake,
   Loader2, RefreshCw, MessageSquare, Search, Tag, Quote, Info, ExternalLink, Ticket, Gift
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { api } from "@/lib/api";
+import { memberClient as api } from "@/lib/memberClient";
 import { cn } from "@/lib/utils";
 
 function timeGreeting() {
@@ -75,7 +75,7 @@ function DailyTithiCard({ tithiData }) {
           </div>
 
           <Link
-            to="/spiritual"
+            to="/member/spiritual"
             className="px-4 py-2 rounded-xl bg-white text-orange-600 font-extrabold text-xs shadow-md hover:bg-orange-50 transition-all flex items-center gap-1.5"
           >
             <Sparkles className="h-3.5 w-3.5" />
@@ -153,7 +153,7 @@ function ContinueJourneyCard() {
           <Sparkles className="h-5 w-5 text-amber-400" />
           <h2 className="text-base font-extrabold text-white">Continue Your Journey</h2>
         </div>
-        <Link to="/spiritual" className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1">
+        <Link to="/member/spiritual" className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1">
           Spiritual Hub <ChevronRight className="h-4 w-4" />
         </Link>
       </div>
@@ -197,7 +197,7 @@ function ContinueJourneyCard() {
 /* ── Main Component ──────────────────────────────────────────────────────── */
 export default function MemberHomePage() {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user } = useMemberAuth();
   const firstName = user?.firstName || user?.fullName?.split(" ")[0] || t("Member");
 
   // Real-time backend state (NO hardcoded dummy data)
@@ -302,7 +302,7 @@ export default function MemberHomePage() {
           </button>
 
           <Link
-            to="/notifications"
+            to="/member/notifications"
             className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
             title="Notifications"
           >
@@ -310,7 +310,7 @@ export default function MemberHomePage() {
           </Link>
 
           <Link
-            to="/digital-id"
+            to="/member/digital-id"
             className="px-4 py-2.5 rounded-2xl bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold text-xs border border-orange-200 transition-colors flex items-center gap-2"
           >
             <Scan className="h-4 w-4" />
@@ -337,7 +337,7 @@ export default function MemberHomePage() {
           <h3 className="text-base font-black">Shree Palitana Shatrunjay Mahatirth Yatra 2025</h3>
           <p className="text-xs text-white/80">Guided group tours, daily Bhojanshala and Dharamshala booking available now.</p>
         </div>
-        <Link to="/tours" className="px-4 py-2.5 bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shrink-0 hover:bg-amber-300 transition-colors">
+        <Link to="/member/tours" className="px-4 py-2.5 bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shrink-0 hover:bg-amber-300 transition-colors">
           Explore Tour
         </Link>
       </div>
@@ -355,7 +355,7 @@ export default function MemberHomePage() {
                 <MapPin className="h-5 w-5 text-orange-500" />
                 <span>Nearby Temples & Jain Centres</span>
               </h2>
-              <Link to="/temples" className="text-xs font-bold text-orange-600 hover:underline">View Directory</Link>
+              <Link to="/member/temples" className="text-xs font-bold text-orange-600 hover:underline">View Directory</Link>
             </div>
 
             {temples.length > 0 ? (
@@ -392,7 +392,7 @@ export default function MemberHomePage() {
                 <Newspaper className="h-5 w-5 text-orange-500" />
                 <span>Community Feed Highlights</span>
               </h2>
-              <Link to="/feed" className="text-xs font-bold text-orange-600 hover:underline">View Feed</Link>
+              <Link to="/member/feed" className="text-xs font-bold text-orange-600 hover:underline">View Feed</Link>
             </div>
 
             {feed.length > 0 ? (
@@ -425,7 +425,7 @@ export default function MemberHomePage() {
             <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-slate-900">Today's News</h3>
-                <Link to="/news" className="text-[10px] font-bold text-orange-600 hover:underline">View All</Link>
+                <Link to="/member/news" className="text-[10px] font-bold text-orange-600 hover:underline">View All</Link>
               </div>
 
               {news.length > 0 ? (
@@ -449,7 +449,7 @@ export default function MemberHomePage() {
             <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-slate-900">Upcoming Events</h3>
-                <Link to="/events" className="text-[10px] font-bold text-orange-600 hover:underline">View All</Link>
+                <Link to="/member/events" className="text-[10px] font-bold text-orange-600 hover:underline">View All</Link>
               </div>
 
               {events.length > 0 ? (
@@ -483,7 +483,7 @@ export default function MemberHomePage() {
                 <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
                 <span>Live MS Updates</span>
               </h3>
-              <Link to="/ms" className="text-[10px] font-bold text-orange-600 hover:underline">View All</Link>
+              <Link to="/member/ms" className="text-[10px] font-bold text-orange-600 hover:underline">View All</Link>
             </div>
 
             {monks.length > 0 ? (

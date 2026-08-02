@@ -9,7 +9,7 @@
  * All responses are assumed to follow the platform envelope { data: ... }.
  * `unwrap` tolerates both `{data:{...}}` and a bare payload.
  */
-import { api } from "@/lib/api";
+import { memberClient as api } from "@/lib/memberClient";
 
 const unwrap = (res) => {
   const body = res?.data;

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { QrCode, Share2, RefreshCw, Download, CheckCircle, Shield, Briefcase, Building, Check, Printer } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 
 export default function MemberDigitalIdPage() {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user } = useMemberAuth();
   const [refreshing, setRefreshing] = useState(false);
 
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.fullName || "JiNANAM Member";

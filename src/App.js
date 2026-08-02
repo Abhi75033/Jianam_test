@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { VisibilityEngineProvider } from "@/contexts/VisibilityEngineContext";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import MemberProtectedRoute from "@/components/member/MemberProtectedRoute";
+import { MemberAuthProvider } from "@/contexts/MemberAuthContext";
 import AdminLayout from "@/components/layout/AdminLayout";
 import LoginPage from "@/pages/LoginPage";
 import LandingPage from "@/pages/LandingPage";
@@ -118,9 +120,21 @@ function SmartRouteResolver() {
     role === "JC_ADMIN" ||
     role === "MONK_ADMIN";
 
+  // A /member/* URL is never an admin URL. Without this the resolver rewrote
+  // /member/anything to /admin/member/anything for admin sessions, which is how
+  // member tabs ended up in the admin panel.
+  if (path.startsWith("/member")) {
+    return <Navigate to="/member/home" replace />;
+  }
+
   if (isOrgAdmin) {
-    if (path === "/" || path === "" || path === "/a-dashboard" || path === "/sa-dashboard") {
+    // "/" belongs to the member panel now; an admin who wants their dashboard
+    // goes to /admin explicitly. Only the admin-specific aliases redirect.
+    if (path === "/a-dashboard" || path === "/sa-dashboard") {
       return <Navigate to="/admin/a-dashboard" replace />;
+    }
+    if (path === "/" || path === "") {
+      return <Navigate to="/member/login" replace />;
     }
     const cleanPath = path.startsWith("/admin") ? path : `/admin${path.startsWith("/") ? path : `/${path}`}`;
     return <Navigate to={`${cleanPath}${search}`} replace />;
@@ -151,6 +165,7 @@ export default function App() {
     <BrowserRouter>
       <LanguageProvider>
         <AuthProvider>
+          <MemberAuthProvider>
           <VisibilityEngineProvider>
             {/* Pages are code-split (see the lazy() imports above), so each
                 route downloads only its own chunk instead of shipping all 60+
@@ -383,12 +398,14 @@ export default function App() {
               <Route path="/events" element={<Navigate to="/admin/events" replace />} />
 
               {/* Member Panel Root */}
+              {/* Guarded by the MEMBER session, not the admin one — an admin
+                  login no longer unlocks these screens. */}
               <Route
                 path="/member"
                 element={
-                  <ProtectedRoute>
+                  <MemberProtectedRoute>
                     <MemberLayout />
-                  </ProtectedRoute>
+                  </MemberProtectedRoute>
                 }
               >
                 <Route index element={<Navigate to="/member/home" replace />} />
@@ -412,6 +429,11 @@ export default function App() {
                 <Route path="donations" element={<MemberDonationsPage />} />
                 <Route path="events" element={<MemberEventsPage />} />
                 <Route path="tickets" element={<MyTicketsPage />} />
+                {/* Member-scoped catch-all. Without it an unknown /member/* URL
+                    fell through to SmartRouteResolver, which prefixes /admin for
+                    admin sessions — that is how member tabs landed in the admin
+                    panel. Nothing under /member may leave /member. */}
+                <Route path="*" element={<Navigate to="/member/home" replace />} />
               </Route>
 
               {/* Smart Catch-All Resolver for root "/" or any un-prefixed or mismatched URL */}
@@ -419,6 +441,7 @@ export default function App() {
             </Routes>
             </Suspense>
           </VisibilityEngineProvider>
+          </MemberAuthProvider>
         </AuthProvider>
       </LanguageProvider>
     </BrowserRouter>

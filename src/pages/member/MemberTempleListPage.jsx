@@ -245,7 +245,7 @@ export default function MemberTempleListPage() {
               <div className="space-y-3 pt-3 border-t border-slate-100">
                 <div className="grid grid-cols-3 gap-2">
                   <Link
-                    to="/donations"
+                    to="/member/donations"
                     className="py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 text-center font-bold text-xs border border-orange-200 transition-colors"
                   >
                     Donate
@@ -253,7 +253,7 @@ export default function MemberTempleListPage() {
 
                   {tmpl.dharamshala ? (
                     <Link
-                      to="/bookings"
+                      to="/member/bookings"
                       className="py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-center font-bold text-xs border border-sky-200 transition-colors"
                     >
                       Book Stay

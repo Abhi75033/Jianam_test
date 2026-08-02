@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Menu, Search, Bell, MessageSquare, Wallet, Globe, LogOut, User, QrCode
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,7 +11,7 @@ import { initials } from "@/lib/utils";
 
 export default function MemberTopbar({ onToggleSidebar }) {
   const { t } = useLanguage();
-  const { user, logout } = useAuth();
+  const { user, logout } = useMemberAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -59,7 +59,7 @@ export default function MemberTopbar({ onToggleSidebar }) {
 
         {/* Messages Icon */}
         <button
-          onClick={() => navigate("/notifications")}
+          onClick={() => navigate("/member/notifications")}
           className="relative p-2.5 rounded-xl text-slate-600 hover:text-orange-600 hover:bg-orange-50 transition-colors"
           title={t("Messages")}
         >
@@ -68,7 +68,7 @@ export default function MemberTopbar({ onToggleSidebar }) {
 
         {/* Notifications Bell */}
         <Link
-          to="/notifications"
+          to="/member/notifications"
           className="relative p-2.5 rounded-xl text-slate-600 hover:text-orange-600 hover:bg-orange-50 transition-colors"
           title={t("Notifications")}
         >
@@ -78,7 +78,7 @@ export default function MemberTopbar({ onToggleSidebar }) {
 
         {/* Wallet Quick Button */}
         <Link
-          to="/wallet"
+          to="/member/wallet"
           className="p-2.5 rounded-xl text-slate-600 hover:text-orange-600 hover:bg-orange-50 transition-colors hidden sm:flex items-center gap-1.5 text-xs font-bold"
           title={t("Digital Wallet")}
         >
@@ -89,7 +89,7 @@ export default function MemberTopbar({ onToggleSidebar }) {
 
         {/* User Profile Pill */}
         <Link
-          to="/profile"
+          to="/member/profile"
           className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200/80 hover:border-orange-300 hover:bg-orange-50/40 transition-all group"
         >
           <Avatar className="h-7 w-7 ring-2 ring-orange-400/30 shrink-0">

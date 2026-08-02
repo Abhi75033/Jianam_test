@@ -102,7 +102,7 @@ export default function BookingDetailPage() {
   if (!booking) {
     return (
       <div>
-        <Link to="/bookings" className="text-xs text-orange-600 font-semibold inline-flex items-center gap-1">
+        <Link to="/member/bookings" className="text-xs text-orange-600 font-semibold inline-flex items-center gap-1">
           <ArrowLeft className="h-3.5 w-3.5" /> {t("My Bookings")}
         </Link>
         <p className="mt-6 text-sm text-slate-500">{t("Unable to load data")}</p>
@@ -112,7 +112,7 @@ export default function BookingDetailPage() {
 
   return (
     <div data-testid="member-booking-detail">
-      <Link to="/bookings" className="text-xs text-orange-600 font-semibold inline-flex items-center gap-1">
+      <Link to="/member/bookings" className="text-xs text-orange-600 font-semibold inline-flex items-center gap-1">
         <ArrowLeft className="h-3.5 w-3.5" /> {t("My Bookings")}
       </Link>
 

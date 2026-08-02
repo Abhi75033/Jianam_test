@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import {
@@ -91,7 +91,7 @@ function checkIsActive(to, location) {
 
 export default function MemberSidebar({ collapsed, onNavigate }) {
   const { t } = useLanguage();
-  const { user, logout } = useAuth();
+  const { user, logout } = useMemberAuth();
   const location = useLocation();
 
   const [expandedState, setExpandedState] = useState({
@@ -114,7 +114,7 @@ export default function MemberSidebar({ collapsed, onNavigate }) {
     >
       {/* ── Top Header / Brand Logo ───────────────────────────────────────── */}
       <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 shrink-0">
-        <Link to="/home" onClick={onNavigate} className="flex items-center gap-3 min-w-0">
+        <Link to="/member/home" onClick={onNavigate} className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center text-white font-black text-lg shadow-md shadow-orange-500/20 shrink-0">
             J
           </div>

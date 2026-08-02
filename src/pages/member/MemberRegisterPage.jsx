@@ -9,8 +9,9 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Loader2, Check, ArrowLeft, ShieldCheck, Heart, Sparkles, User, Calendar, MapPin, Globe, CreditCard, FileText, Lock } from "lucide-react";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 import { memberAuthApi } from "@/lib/memberApi";
-import { api, extractErrorMessage } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
+import { memberClient as api } from "@/lib/memberClient";
+import { extractErrorMessage } from "@/lib/api";
+import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 
@@ -71,7 +72,7 @@ export default function MemberRegisterPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const { requestOtp, verifyOtp } = useAuth();
+  const { requestOtp, verifyOtp } = useMemberAuth();
 
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -564,7 +565,7 @@ export default function MemberRegisterPage() {
               onClick={() => {
                 navigator.clipboard.writeText(createdMemberId);
                 toast.success(t("Unique Member ID copied to clipboard!"));
-                navigate("/home");
+                navigate("/member/home");
               }}
               className="w-full font-black bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl py-3 shadow-lg"
             >

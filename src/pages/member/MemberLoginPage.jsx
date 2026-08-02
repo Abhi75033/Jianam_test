@@ -4,7 +4,7 @@ import {
   Mail, Lock, Eye, EyeOff, ArrowRight, Phone, Shield,
   HelpCircle, Loader2
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
@@ -39,7 +39,7 @@ export default function MemberLoginPage() {
     verifyOtp,
     loginWithGoogle,
     isAuthenticated
-  } = useAuth();
+  } = useMemberAuth();
 
   // Mode: "password" | "mobile_otp"
   const [loginMode, setLoginMode] = useState("password");
@@ -59,7 +59,7 @@ export default function MemberLoginPage() {
   const [error, setError] = useState("");
 
   if (isAuthenticated) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/member/home" replace />;
   }
 
   // Handle Phone / Email + Password Login
@@ -124,7 +124,7 @@ export default function MemberLoginPage() {
     try {
       await verifyOtp({ mobile: otpMobile.trim(), otp: otpValue.trim() });
       toast.success(t("Login successful! Jai Jinendra 🙏"));
-      navigate("/home", { replace: true });
+      navigate("/member/home", { replace: true });
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -138,7 +138,7 @@ export default function MemberLoginPage() {
     setLoading(true);
     try {
       await loginWithGoogle();
-      navigate("/home", { replace: true });
+      navigate("/member/home", { replace: true });
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -559,7 +559,7 @@ export default function MemberLoginPage() {
               <div className="pt-6 text-center">
                 <p className="text-xs text-slate-500 font-medium">
                   Don't have an account?{" "}
-                  <Link to="/register" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
+                  <Link to="/member/register" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
                     Create Account
                   </Link>
                 </p>
