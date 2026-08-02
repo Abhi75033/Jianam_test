@@ -136,7 +136,7 @@ export default function MyBookingsPage() {
 
         {!loading &&
           rows.map((b) => (
-            <Link key={b.uid || b.id} to={`/bookings/${b.uid || b.id}`} className="block">
+            <Link key={b.uid || b.id} to={`/member/bookings/${b.uid || b.id}`} className="block">
               <Card
                 className="p-4 rounded-xl hover:border-orange-300 transition-colors"
                 data-testid={`booking-card-${b.uid || b.id}`}

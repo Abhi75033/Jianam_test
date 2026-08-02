@@ -121,12 +121,12 @@ function QuickActions() {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         {[
-          { icon: Scan,          label: "Scan QR",       to: "/digital-id", color: "from-violet-500 to-purple-600" },
-          { icon: Heart,         label: "Donate",         to: "/donations",  color: "from-rose-500 to-pink-600" },
-          { icon: CalendarCheck, label: "Book Now",       to: "/bookings",   color: "from-sky-500 to-blue-600" },
-          { icon: Ticket,        label: "My Bookings",    to: "/bookings",   color: "from-emerald-500 to-green-600" },
-          { icon: CreditCard,    label: "My Digital ID",  to: "/digital-id", color: "from-amber-500 to-orange-600" },
-          { icon: Phone,         label: "Emergency Help", to: "/support",    color: "from-red-500 to-rose-700" },
+          { icon: Scan,          label: "Scan QR",       to: "/member/digital-id", color: "from-violet-500 to-purple-600" },
+          { icon: Heart,         label: "Donate",         to: "/member/donations",  color: "from-rose-500 to-pink-600" },
+          { icon: CalendarCheck, label: "Book Now",       to: "/member/bookings",   color: "from-sky-500 to-blue-600" },
+          { icon: Ticket,        label: "My Bookings",    to: "/member/bookings",   color: "from-emerald-500 to-green-600" },
+          { icon: CreditCard,    label: "My Digital ID",  to: "/member/digital-id", color: "from-amber-500 to-orange-600" },
+          { icon: Phone,         label: "Emergency Help", to: "/member/support",    color: "from-red-500 to-rose-700" },
         ].map(({ icon: Icon, label, to, color }) => (
           <Link
             key={label}
@@ -488,7 +488,7 @@ export default function MemberHomePage() {
 
             {monks.length > 0 ? (
               monks.map((ms) => (
-                <Link to={`/ms/${ms.id}`} key={ms.id} className="block p-3 bg-slate-50 rounded-2xl border border-slate-200/60 space-y-1">
+                <Link to={`/member/ms/${ms.id}`} key={ms.id} className="block p-3 bg-slate-50 rounded-2xl border border-slate-200/60 space-y-1">
                   <div className="flex items-center justify-between text-xs font-bold text-slate-900">
                     <span>🙏 {ms.dikshaName || ms.name}</span>
                     <span className={cn("text-[9px] px-2 py-0.5 rounded-full", ms.isVihaar ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700")}>

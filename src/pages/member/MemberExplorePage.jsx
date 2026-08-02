@@ -48,7 +48,7 @@ const TRENDING = [
 /* ─── Result cards ──────────────────────────────────────────────────────── */
 function TempleResult({ item }) {
   return (
-    <Link to={`/temples/${item.id}`} className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3 hover:shadow-md transition-shadow">
+    <Link to={`/member/temples/${item.id}`} className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3 hover:shadow-md transition-shadow">
       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center text-2xl shrink-0">
         🛕
       </div>
@@ -81,7 +81,7 @@ function TempleResult({ item }) {
 
 function MSResult({ item }) {
   return (
-    <Link to={`/ms/${item.id}`} className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3 hover:shadow-md transition-shadow">
+    <Link to={`/member/ms/${item.id}`} className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3 hover:shadow-md transition-shadow">
       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-saffron-50 to-amber-100 border-2 border-amber-200 flex items-center justify-center text-2xl shrink-0">
         🙏
       </div>
@@ -244,12 +244,12 @@ export default function MemberExplorePage() {
           <h2 className="text-sm font-bold text-slate-800 mb-3">{t("Quick Access")}</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Nearby Temples", emoji: "🛕", to: "/explore", q: "temples" },
-              { label: "Available Dharamshalas", emoji: "🏨", to: "/explore", q: "dharamshala" },
-              { label: "Follow MS", emoji: "🙏", to: "/ms" },
-              { label: "Ongoing Tours", emoji: "🗺️", to: "/tours" },
-              { label: "Today's Events", emoji: "🎉", to: "/events" },
-              { label: "Offers Near Me", emoji: "🏷️", to: "/offers" },
+              { label: "Nearby Temples", emoji: "🛕", to: "/member/explore", q: "temples" },
+              { label: "Available Dharamshalas", emoji: "🏨", to: "/member/explore", q: "dharamshala" },
+              { label: "Follow MS", emoji: "🙏", to: "/member/ms" },
+              { label: "Ongoing Tours", emoji: "🗺️", to: "/member/tours" },
+              { label: "Today's Events", emoji: "🎉", to: "/member/events" },
+              { label: "Offers Near Me", emoji: "🏷️", to: "/member/offers" },
             ].map(({ label, emoji, to }) => (
               <Link
                 key={label}

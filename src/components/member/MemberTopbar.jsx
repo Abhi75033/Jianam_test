@@ -18,7 +18,7 @@ export default function MemberTopbar({ onToggleSidebar }) {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/member/explore?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
