@@ -12,6 +12,8 @@ import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { memberClient as api } from "@/lib/memberClient";
 import { cn } from "@/lib/utils";
+import { useMemberSocket } from "@/hooks/useMemberSocket";
+import { LiveBadge } from "@/components/common/LiveBadge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/api";
@@ -237,13 +239,15 @@ function msStatusOf(m) {
   return MS_STATUS.OFFLINE;
 }
 
-function MonkTrackingSection({ monks }) {
+function MonkTrackingSection({ monks, live }) {
   const { t } = useLanguage();
   return (
     <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
           <MapPin className="h-4 w-4 text-orange-500" /> {t("Monk Tracking")}
+          {/* Positions arrive over the socket, so say whether it is connected. */}
+          {live && <LiveBadge label={t("Live")} />}
         </h2>
         <Link to="/member/ms" className="text-xs font-bold text-orange-600 hover:text-orange-700">
           {t("View All")}
@@ -449,6 +453,46 @@ export default function MemberHomePage() {
     fetchRealtimeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /*
+   * Live updates. Every member screen was a one-shot fetch on mount, so a monk
+   * moving or an alert being raised only showed up on a manual reload.
+   *
+   * These namespaces and event names are the ones the admin panel already
+   * subscribes to, so they are known to exist. Handlers are defensive: an event
+   * with an unexpected shape is ignored rather than corrupting the list.
+   */
+  const { connected: liveConnected } = useMemberSocket("/tracking", {
+    // A monk's position changed — patch that row in place.
+    "monk:location": (evt) => {
+      if (!evt?.monkId) return;
+      setMonks((prev) => prev.map((m) =>
+        (m.id === evt.monkId || m.publicId === evt.monkId)
+          ? { ...m, currentLocation: evt.location ?? m.currentLocation,
+              trackingStatus: evt.status ?? m.trackingStatus,
+              lastUpdatedAt: evt.timestamp || new Date().toISOString() }
+          : m
+      ));
+    },
+    "journey:advanced": (evt) => {
+      if (!evt?.monkId) return;
+      setMonks((prev) => prev.map((m) =>
+        (m.id === evt.monkId) ? { ...m, currentLocation: evt.location ?? m.currentLocation } : m
+      ));
+    },
+  });
+
+  useMemberSocket("/dashboards", {
+    // §4.3.3 puts alerts at the top, so they must arrive without a reload.
+    "alert:new": (evt) => {
+      if (!evt) return;
+      setAlerts((prev) => [evt, ...prev].slice(0, 3));
+    },
+    "alert:resolved": (evt) => {
+      if (!evt?.alertId) return;
+      setAlerts((prev) => prev.filter((a) => a.id !== evt.alertId));
+    },
+  });
 
   return (
     <div className="space-y-8">

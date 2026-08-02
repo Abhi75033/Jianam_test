@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { CalendarCheck, ChevronRight } from "lucide-react";
 import { bookingsApi, formatMinor } from "@/lib/memberApi";
+import { useMemberSocket } from "@/hooks/useMemberSocket";
 import { extractErrorMessage } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
@@ -59,6 +60,27 @@ export default function MyBookingsPage() {
   const [category, setCategory] = useState("");
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  /*
+   * Booking status is the thing a member refreshes for: submitted → approved →
+   * payment pending → confirmed. Patch the row in place when the server moves
+   * it, so the list reflects reality without a reload.
+   */
+  useMemberSocket("/dashboards", {
+    "booking:updated": (evt) => {
+      if (!evt?.bookingId) return;
+      setRows((prev) => prev.map((b) =>
+        (b.id === evt.bookingId || b.uid === evt.bookingId || b.display_id === evt.bookingId)
+          ? { ...b, status: evt.status ?? b.status }
+          : b
+      ));
+    },
+    "booking:new": (evt) => {
+      if (!evt?.bookingId) return;
+      // A booking made on another device belongs in this list too.
+      setRows((prev) => prev.some((b) => b.id === evt.bookingId) ? prev : [evt, ...prev]);
+    },
+  });
 
   useEffect(() => {
     let cancelled = false;

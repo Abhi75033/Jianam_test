@@ -7,6 +7,7 @@ import {
   saveMemberSession,
   clearMemberSession,
 } from "@/lib/memberClient";
+import { disconnectMemberSockets } from "@/lib/memberSocket";
 
 /**
  * MemberAuthContext — the Member panel's own session, fully separate from the
@@ -40,6 +41,9 @@ export function MemberAuthProvider({ children }) {
 
   const signOutLocal = useCallback(() => {
     clearMemberSession();
+    // Drop the realtime connection too — it holds the old token, and the next
+    // member on this device would otherwise inherit it.
+    disconnectMemberSockets();
     setMember(null);
   }, []);
 

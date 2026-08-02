@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useMemberSocket } from "@/hooks/useMemberSocket";
 import {
   Search, Bookmark, Share2, Bell, Filter, MapPin, Eye, Flag, Newspaper, TrendingUp, Sparkles, Plus, X, Heart, Star, Building2, Check
 } from "lucide-react";
@@ -63,6 +64,15 @@ export default function MemberFeedPage() {
   const { items: fetchedPosts, loading, error, reload } = useMemberList("/feed/", { map: mapPost });
   const [posts, setPosts] = useState([]);
   useEffect(() => { setPosts(fetchedPosts); }, [fetchedPosts]);
+
+  // Live: a post published while the feed is open is prepended rather than
+  // waiting for the next visit.
+  useMemberSocket("/dashboards", {
+    "feed:new": (evt) => {
+      if (!evt?.id) return;
+      setPosts((prev) => prev.some((p) => p.id === evt.id) ? prev : [mapPost(evt, 0), ...prev]);
+    },
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const urlFilter = searchParams.get("filter");
   const sponsoredOnly = urlFilter === "sponsored";

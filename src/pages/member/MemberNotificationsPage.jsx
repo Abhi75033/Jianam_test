@@ -3,6 +3,7 @@ import { Bell, CheckCheck, ChevronRight, Info, AlertCircle, Calendar, Heart, Tic
 import { useLanguage } from "@/contexts/LanguageContext";
 import ListState from "@/components/member/ListState";
 import { memberClient as api } from "@/lib/memberClient";
+import { useMemberSocket } from "@/hooks/useMemberSocket";
 import { useMemberList, relativeTime, compactNumber, longDate } from "@/hooks/useMemberList";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,15 @@ export default function MemberNotificationsPage() {
   // Local copy so marking as read updates instantly; the server call follows.
   const [notifs, setNotifs] = useState([]);
   useEffect(() => { setNotifs(fetched); }, [fetched]);
+
+  // Live: a notification pushed while the page is open should appear at the
+  // top immediately rather than waiting for the next mount.
+  useMemberSocket("/dashboards", {
+    "notification:new": (evt) => {
+      if (!evt) return;
+      setNotifs((prev) => [mapNotif(evt, 0), ...prev]);
+    },
+  });
 
   const unread = notifs.filter((n) => !n.read).length;
 
