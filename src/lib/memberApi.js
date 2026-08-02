@@ -159,7 +159,7 @@ export const donationsApi = {
   },
   /** History with filters and financial-year totals (§B18.9). */
   async mine(params = {}) {
-    const payload = unwrap(await api.get("/donations", { params }));
+    const payload = unwrap(await api.get("/donations/my", { params }));
     return {
       items: list(payload),
       totals: payload?.totals || null, // { financial_year, total_minor, eligible_80g_minor, currency }

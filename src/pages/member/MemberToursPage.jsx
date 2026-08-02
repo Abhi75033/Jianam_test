@@ -18,7 +18,10 @@ function mapTour(t_, i) {
     dates: [t_.startDate, t_.endDate].filter(Boolean).map(longDate).join(" – "),
     duration: t_.duration || "",
     price: t_.price ?? t_.amount ?? null,
-    includes: t_.includes || t_.inclusions || [],
+    // Rendered directly as text, so normalise a list into a readable string.
+    includes: Array.isArray(t_.includes || t_.inclusions)
+      ? (t_.includes || t_.inclusions).join(" · ")
+      : (t_.includes || t_.inclusions || ""),
     rating: t_.rating ?? null,
     reviews: t_.reviewCount ?? 0,
     emoji: t_.emoji || "🚌",

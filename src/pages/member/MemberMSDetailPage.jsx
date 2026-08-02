@@ -28,20 +28,41 @@ export default function MemberMSDetailPage() {
       followers: compactNumber(m.followerCount ?? 0),
     }),
   });
-  const followed = isEntityFollowed(ms.publicId);
+  // `ms` is null while loading, on error, and when the id doesn't resolve.
+  // The previous code always fell back to a demo object so it was never null;
+  // now every read has to tolerate that, and the render bails out below.
+  const followed = isEntityFollowed(ms?.publicId);
 
   const onShare = () => {
     if (navigator.share) {
-      navigator.share({ title: ms.name, text: `MS ID: ${ms.publicId} - Location: ${ms.location}`, url: window.location.href });
+      navigator.share({ title: ms?.name, text: `MS ID: ${ms?.publicId} - Location: ${ms?.location}`, url: window.location.href });
     } else {
-      navigator.clipboard.writeText(`${ms.name} (${ms.publicId})`);
+      navigator.clipboard.writeText(`${ms?.name} (${ms?.publicId})`);
       toast.success(t("MS link copied to clipboard"));
     }
   };
 
   const onReportInfo = () => {
-    toast.success(t("Support Ticket created for reporting incorrect info on MS {0} ({1}). Track in Support.", [ms.name, ms.publicId]));
+    toast.success(t("Support Ticket created for reporting incorrect info on MS {0} ({1}). Track in Support.", [ms?.name, ms?.publicId]));
   };
+
+  // Loading / error / not-found all resolve here rather than rendering a
+  // half-empty profile built from nulls.
+  if (loading || error || !ms) {
+    return (
+      <div className="space-y-8">
+        <ListState
+          loading={loading}
+          error={error}
+          count={ms ? 1 : 0}
+          emptyTitle="Maharaj Saheb not found"
+          emptyHint="This profile may have been removed, or the link is out of date."
+        >
+          {null}
+        </ListState>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -58,7 +79,7 @@ export default function MemberMSDetailPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => toggleFollow(ms.publicId)}
+            onClick={() => toggleFollow(ms?.publicId)}
             className={cn(
               "px-4 py-2 rounded-2xl text-xs font-bold border transition-all flex items-center gap-1.5",
               followed
@@ -84,28 +105,28 @@ export default function MemberMSDetailPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur border-2 border-white/40 flex items-center justify-center text-4xl shadow-lg shrink-0">
-              {ms.image}
+              {ms?.image}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="bg-white/20 backdrop-blur rounded-full px-3 py-1 text-xs font-mono font-bold">
-                  {ms.publicId}
+                  {ms?.publicId}
                 </span>
-                <span className={cn("text-xs font-bold px-3 py-1 rounded-full", ms.status === "Staying" ? "bg-blue-900/80 text-blue-200" : "bg-amber-900/80 text-amber-200")}>
-                  {ms.status}
+                <span className={cn("text-xs font-bold px-3 py-1 rounded-full", ms?.status === "Staying" ? "bg-blue-900/80 text-blue-200" : "bg-amber-900/80 text-amber-200")}>
+                  {ms?.status}
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">{ms.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">{ms?.name}</h1>
               <div className="text-xs text-white/90 font-medium mt-1">
-                {ms.sect} • Guru: {ms.guru}
+                {ms?.sect} • Guru: {ms?.guru}
               </div>
             </div>
           </div>
 
           <div className="bg-white/15 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-xs space-y-1">
             <div className="text-[10px] uppercase font-bold tracking-wider opacity-80">Current Location</div>
-            <div className="font-extrabold text-amber-200">{ms.currentPlace}</div>
-            <div className="text-[10px] opacity-80">{ms.location}</div>
+            <div className="font-extrabold text-amber-200">{ms?.currentPlace}</div>
+            <div className="text-[10px] opacity-80">{ms?.location}</div>
           </div>
         </div>
       </div>
@@ -119,7 +140,7 @@ export default function MemberMSDetailPage() {
           {/* About / Bio */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3">
             <h2 className="text-base font-bold text-slate-900">About & Biography</h2>
-            <p className="text-xs text-slate-600 leading-relaxed">{ms.bio}</p>
+            <p className="text-xs text-slate-600 leading-relaxed">{ms?.bio}</p>
           </div>
 
           {/* Vihaar Group & Route Info */}
@@ -127,21 +148,21 @@ export default function MemberMSDetailPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900">Current Vihaar Group Info</h2>
               <span className="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-200">
-                Group ID: {ms.vihaarGroupId}
+                Group ID: {ms?.vihaarGroupId}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/60">
                 <span className="text-[10px] text-slate-400 font-bold">Group Leader</span>
-                <div className="font-extrabold text-slate-800">{ms.groupLeader}</div>
+                <div className="font-extrabold text-slate-800">{ms?.groupLeader}</div>
               </div>
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/60">
                 <span className="text-[10px] text-slate-400 font-bold">Total Group Members</span>
-                <div className="font-extrabold text-slate-800">{ms.groupMembersCount} Sadhus & Devotees</div>
+                <div className="font-extrabold text-slate-800">{ms?.groupMembersCount} Sadhus & Devotees</div>
               </div>
             </div>
             <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs font-bold text-amber-900">
-              🚀 Upcoming Vihaar Schedule: {ms.upcomingVihaar}
+              🚀 Upcoming Vihaar Schedule: {ms?.upcomingVihaar}
             </div>
           </div>
 
@@ -149,7 +170,7 @@ export default function MemberMSDetailPage() {
           <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3">
             <h2 className="text-base font-bold text-slate-900">Chaturmas History</h2>
             <div className="space-y-2">
-              {ms.chaturmasHistory.map((c) => (
+              {ms?.chaturmasHistory.map((c) => (
                 <div key={c.year} className="p-3 bg-slate-50 rounded-2xl border border-slate-200/60 flex items-center justify-between text-xs">
                   <div>
                     <span className="font-extrabold text-slate-900">{c.year} Chaturmas</span>
@@ -175,7 +196,7 @@ export default function MemberMSDetailPage() {
               <span>Daily Pravachan & Interaction</span>
             </h3>
             <div className="p-3 bg-orange-50 rounded-2xl border border-orange-200 text-xs font-bold text-orange-900">
-              Pravachan: {ms.pravachan}
+              Pravachan: {ms?.pravachan}
             </div>
             <div className="text-[10px] text-slate-500 space-y-1">
               <div>• Morning Darshan: 6:30 AM – 7:15 AM</div>
@@ -191,8 +212,8 @@ export default function MemberMSDetailPage() {
               <span>Sangh Representative Contact</span>
             </h3>
             <div className="text-xs space-y-1">
-              <div className="font-bold text-slate-800">{ms.contactRepresentative.jainPerson}</div>
-              <div className="font-mono text-slate-600">{ms.contactRepresentative.phone}</div>
+              <div className="font-bold text-slate-800">{ms?.contactRepresentative.jainPerson}</div>
+              <div className="font-mono text-slate-600">{ms?.contactRepresentative.phone}</div>
             </div>
           </div>
 

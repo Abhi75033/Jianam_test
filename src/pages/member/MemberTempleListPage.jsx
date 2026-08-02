@@ -13,6 +13,16 @@ import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
 import { toast } from "sonner";
 
 
+/** {label: time} for the timings grid, or null when the org has none set. */
+function buildTimings(o) {
+  const t = {
+    Aarti: o.aartiTiming, Pakshal: o.pakshalTiming,
+    Pravachan: o.pravachanTiming, Samayik: o.samayikTiming,
+  };
+  const present = Object.entries(t).filter(([, v]) => v);
+  return present.length ? Object.fromEntries(present) : null;
+}
+
 /** Maps a temple/organisation row onto the fields this page renders (§4.5.2). */
 function mapOrg(o, i) {
   return {
@@ -29,10 +39,10 @@ function mapOrg(o, i) {
     reviews: o.reviewCount ?? 0,
     followers: compactNumber(o.followerCount ?? 0),
     emoji: o.emoji || "🛕",
-    timings: o.timings || {
-      Aarti: o.aartiTiming, Pakshal: o.pakshalTiming,
-      Pravachan: o.pravachanTiming, Samayik: o.samayikTiming,
-    },
+    // The card renders a string OR a {label: time} object. Only build the
+    // object when something is actually set — an all-undefined object is
+    // truthy and would render an empty grid.
+    timings: o.timings || buildTimings(o),
     dhajaYear: o.dhajaRecords?.[0]?.year || o.dhajaYear || null,
     currentChaturmas: o.chaturmasStays?.[0]?.monk?.fullName || o.currentChaturmas || null,
     bhojanshala: o.hasBhojanshala ?? o.bhojanshala ?? false,
@@ -178,10 +188,24 @@ export default function MemberTempleListPage() {
 
                 {/* Timings & Highlights */}
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/60 text-xs space-y-1">
-                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <div className="font-bold text-slate-800 flex items-center gap-1.5 mb-1">
                     <Clock className="h-3.5 w-3.5 text-orange-500" />
-                    <span>{tmpl.timings}</span>
+                    <span>Timings</span>
                   </div>
+                  {tmpl.timings && typeof tmpl.timings === "object" ? (
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                      {Object.entries(tmpl.timings).map(([label, value]) =>
+                        value ? (
+                          <div key={label} className="flex items-center gap-1 text-[11px] text-slate-600">
+                            <span className="font-semibold text-slate-700">{label}:</span>
+                            <span>{value}</span>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-slate-500">{tmpl.timings || "—"}</span>
+                  )}
                   <div className="text-[11px] text-slate-500 font-medium flex items-center gap-2 pt-1">
                     <span>🕉️ Chaturmas: {tmpl.currentChaturmas}</span>
                   </div>
