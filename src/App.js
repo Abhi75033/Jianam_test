@@ -50,6 +50,7 @@ const AccountStatusPage = lazy(() => import("@/pages/AccountStatusPage"));
 const RolesPermissionsPage = lazy(() => import("@/pages/RolesPermissionsPage"));
 const AdminsPage = lazy(() => import("@/pages/AdminsPage"));
 import ComingSoonPage from "@/pages/ComingSoonPage";
+import { Toaster } from "@/components/ui/sonner";
 const CommitteePage = StaffPage;
 const PassManagementPage = OrgListPage;
 const SthanaksPage = OrgListPage;
@@ -440,6 +441,11 @@ export default function App() {
               <Route path="*" element={<SmartRouteResolver />} />
             </Routes>
             </Suspense>
+            {/* One app-level Toaster. It used to live only in the two layouts,
+                so the public member login/register pages — which sit outside
+                both — silently swallowed every toast, making the Login button
+                look dead when validation failed. */}
+            <Toaster position="top-right" richColors />
           </VisibilityEngineProvider>
           </MemberAuthProvider>
         </AuthProvider>

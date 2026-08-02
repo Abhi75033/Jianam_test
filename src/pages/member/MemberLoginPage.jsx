@@ -66,7 +66,11 @@ export default function MemberLoginPage() {
   const handlePasswordLogin = async (e) => {
     e.preventDefault();
     if (!identifier.trim() || !password) {
-      toast.error(t("Please enter your email/phone and password."));
+      // Show it inline as well as in a toast — a toast alone made the Login
+      // button look dead when both fields were empty.
+      const msg = t("Please enter your mobile number and password.");
+      setError(msg);
+      toast.error(msg);
       return;
     }
     setError("");

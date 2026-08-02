@@ -5,7 +5,6 @@ import Topbar from "./Topbar";
 import MobileBottomNav from "./MobileBottomNav";
 import ModuleRouteGuard from "./ModuleRouteGuard";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Toaster } from "@/components/ui/sonner";
 
 
 export default function AdminLayout() {
@@ -49,7 +48,6 @@ export default function AdminLayout() {
       </div>
 
       <MobileBottomNav />
-      <Toaster position="top-right" richColors />
     </div>
   );
 }

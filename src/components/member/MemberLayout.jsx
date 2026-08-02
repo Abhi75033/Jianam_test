@@ -3,7 +3,6 @@ import { Outlet } from "react-router-dom";
 import MemberSidebar from "./MemberSidebar";
 import MemberTopbar from "./MemberTopbar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Toaster } from "@/components/ui/sonner";
 
 /**
  * MemberLayout.jsx — Admin-style Layout for Member Panel with Member Left Sidebar + Topbar.
@@ -47,7 +46,6 @@ export default function MemberLayout() {
         </main>
       </div>
 
-      <Toaster position="top-right" richColors />
     </div>
   );
 }
