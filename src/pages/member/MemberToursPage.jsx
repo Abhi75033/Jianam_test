@@ -1,12 +1,36 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
-  Compass, MapPin, Calendar, Users, Star, Clock, ChevronRight, Search, ShieldCheck
+  Compass, MapPin, Calendar, Users, Star, Clock, ChevronRight, Search, ShieldCheck, Loader2, Trophy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useMemberAuth } from "@/contexts/MemberAuthContext";
+import { memberClient } from "@/lib/memberClient";
+import { extractErrorMessage } from "@/lib/api";
 import ListState from "@/components/member/ListState";
 import { useMemberList, relativeTime, compactNumber, longDate } from "@/hooks/useMemberList";
 import { toast } from "sonner";
+
+/**
+ * Registration links a member to a tour's 99-Yatra progress tracking
+ * (jatra counts, milestones, certificate — see MemberJatraProgressPage).
+ * The API has no GET-my-registrations route, so the participant id this
+ * POST returns is the only way back to that screen; persisted locally so a
+ * returning member sees "View My Jatra Progress" instead of registering
+ * twice. Keyed per device, not per account — acceptable for a convenience
+ * shortcut, since the real source of truth is always the server record.
+ */
+const REG_KEY = "jinanam_member_tour_participants";
+function loadRegistrations() {
+  try { return JSON.parse(localStorage.getItem(REG_KEY) || "{}"); } catch { return {}; }
+}
+function saveRegistration(tourId, participantId) {
+  const all = loadRegistrations();
+  all[tourId] = participantId;
+  try { localStorage.setItem(REG_KEY, JSON.stringify(all)); } catch { /* storage unavailable */ }
+  return all;
+}
 
 
 /** Maps an API tour row onto the fields this page renders. */
@@ -32,7 +56,32 @@ function mapTour(t_, i) {
 export default function MemberToursPage() {
   const { items: tours, loading, error, reload } = useMemberList("/tours/", { map: mapTour });
   const { t } = useLanguage();
+  const { user } = useMemberAuth();
   const [search, setSearch] = useState("");
+  const [registrations, setRegistrations] = useState(loadRegistrations);
+  const [registeringId, setRegisteringId] = useState(null);
+
+  const register = async (tour) => {
+    if (!user?.publicId) {
+      toast.error(t("Your member ID isn't available. Please sign in again."));
+      return;
+    }
+    setRegisteringId(tour.id);
+    try {
+      const res = await memberClient.post(`/tours/${tour.id}/participants`, {
+        memberPublicId: user.publicId,
+      });
+      const participantId = res?.data?.data?.id || null;
+      if (participantId) {
+        setRegistrations(saveRegistration(tour.id, participantId));
+      }
+      toast.success(t("Registered for the yatra! Track your jatra progress from this card."));
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setRegisteringId(null);
+    }
+  };
 
   const filtered = tours.filter((tr) => {
     if (search && !tr.title.toLowerCase().includes(search.toLowerCase()) && !tr.destination.toLowerCase().includes(search.toLowerCase())) return false;
@@ -107,12 +156,23 @@ export default function MemberToursPage() {
 
             <div className="p-5 pt-0 border-t border-slate-100 flex items-center justify-between gap-3">
               <div className="text-sm font-black text-slate-900">{tr.price}</div>
-              <button
-                onClick={() => toast.success(t("Yatra booking inquiry sent!"))}
-                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
-              >
-                Book Yatra
-              </button>
+              {registrations[tr.id] ? (
+                <Link
+                  to={`/member/tours/${tr.id}/jatra/${registrations[tr.id]}`}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                >
+                  <Trophy className="h-3.5 w-3.5" /> {t("My Jatra Progress")}
+                </Link>
+              ) : (
+                <button
+                  onClick={() => register(tr)}
+                  disabled={registeringId === tr.id}
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-xs transition-colors disabled:opacity-60 flex items-center gap-1.5"
+                >
+                  {registeringId === tr.id && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {t("Book Yatra")}
+                </button>
+              )}
             </div>
           </div>
         ))}
