@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { distanceToEntity } from "@/lib/geo";
 
 /**
  * visibilityEngine.js — Core Visibility & Sorting Engine for Jinanam Member Platform.
@@ -36,6 +37,20 @@ export function calculateContentPriority(item, userPreferences, followedIds = []
   }
 
   // Location Match Checks
+  //
+  // Real GPS distance is used when both sides have coordinates — it is a truer
+  // "nearby" than string-matching an area name, and it is what actually moves
+  // when the member travels (§4.3.4, §4.15.6). When either side lacks
+  // coordinates this falls through to the original area/city/state text match,
+  // so nothing regresses for content that has no lat/lng yet.
+  const km = distanceToEntity(userPreferences?.deviceCoords, item);
+  if (km != null) {
+    if (km <= 10) return 2;   // Current area
+    if (km <= 50) return 3;   // Nearby
+    // Beyond 50km, fall through to the state/country text tiers below —
+    // distance alone can't tell "same state" from "same country".
+  }
+
   const userArea = (userPreferences?.area || userPreferences?.currentLocation?.area || "").toLowerCase();
   const userCity = (userPreferences?.city || userPreferences?.currentLocation?.city || "").toLowerCase();
   const userState = (userPreferences?.state || userPreferences?.currentLocation?.state || "").toLowerCase();
@@ -94,8 +109,13 @@ export function VisibilityEngineProvider({ children }) {
     return saved ? JSON.parse(saved) : ["JFJT108", "JFMS108", "JFJC108"];
   });
 
-  // Active Travel Location
+  // Active Travel Location (manual override, e.g. "I'm visiting Palitana")
   const [travelLocation, setTravelLocation] = useState(null);
+
+  // Real device GPS fix, supplied by useMemberLocation() at the app root.
+  // Kept separate from travelLocation: this is the raw coordinate pair used
+  // for distance math; travelLocation is the resolved place name shown in UI.
+  const [deviceCoords, setDeviceCoords] = useState(null);
 
   useEffect(() => {
     localStorage.setItem("jinanam_user_community_prefs", JSON.stringify(userPreferences));
@@ -133,9 +153,13 @@ export function VisibilityEngineProvider({ children }) {
     city: travelLocation?.city || userPreferences.city,
     area: travelLocation?.area || userPreferences.area,
     state: travelLocation?.state || userPreferences.state,
+    deviceCoords,
   };
 
   const sortContent = (items) => prioritizeContentList(items, effectivePrefs, followedIds);
+
+  /** Distance in km from the current device fix to any entity with coordinates. */
+  const distanceTo = (entity) => distanceToEntity(deviceCoords, entity);
 
   return (
     <VisibilityEngineContext.Provider
@@ -143,10 +167,14 @@ export function VisibilityEngineProvider({ children }) {
         userPreferences: effectivePrefs,
         followedIds,
         travelLocation,
+        deviceCoords,
+        hasDeviceLocation: Boolean(deviceCoords),
         toggleFollow,
         isEntityFollowed,
         updateCommunityPreferences,
         updateTravelLocation,
+        updateDeviceCoords: setDeviceCoords,
+        distanceTo,
         sortContent,
       }}
     >
@@ -163,10 +191,14 @@ export function useVisibilityEngine() {
       userPreferences: { sect: "Shwetambar", city: "Mumbai", area: "Thane West" },
       followedIds: ["JFJT108", "JFMS108"],
       travelLocation: null,
+      deviceCoords: null,
+      hasDeviceLocation: false,
       toggleFollow: () => {},
       isEntityFollowed: (id) => ["JFJT108", "JFMS108"].includes(id),
       updateCommunityPreferences: () => {},
       updateTravelLocation: () => {},
+      updateDeviceCoords: () => {},
+      distanceTo: () => null,
       sortContent: (items) => items,
     };
   }

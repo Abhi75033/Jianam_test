@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import MemberSidebar from "./MemberSidebar";
 import MemberTopbar from "./MemberTopbar";
 import MemberBottomNav from "./MemberBottomNav";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useMemberLocation } from "@/hooks/useMemberLocation";
+import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
 
 /**
  * MemberLayout.jsx — Admin-style Layout for Member Panel with Member Left Sidebar + Topbar.
@@ -11,6 +13,18 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 export default function MemberLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  /*
+   * §4.3.4 / §4.15.6 — content priority runs off "current GPS location, else
+   * registered address". The GPS half didn't exist anywhere in the member
+   * panel; mounting the hook here means every screen under this layout gets a
+   * live device fix through the visibility engine without fetching it itself.
+   */
+  const location = useMemberLocation();
+  const { updateDeviceCoords } = useVisibilityEngine();
+  useEffect(() => {
+    updateDeviceCoords(location.coords);
+  }, [location.coords, updateDeviceCoords]);
 
   const handleToggleSidebar = () => {
     if (window.innerWidth < 768) {
@@ -44,7 +58,11 @@ export default function MemberLayout() {
           className="flex-1 p-4 sm:p-6 md:p-8 pb-24 md:pb-8 animate-fade-up"
           data-testid="member-main"
         >
-          <Outlet />
+          {/* Pages reach GPS status/request via useOutletContext(), so the
+              "Use my current location" button can live next to whatever
+              nearby content it unlocks (Home, Explore, Offers) without a
+              dedicated context provider. */}
+          <Outlet context={location} />
         </main>
       </div>
 

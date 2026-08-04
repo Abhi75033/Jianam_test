@@ -4,11 +4,14 @@ import {
   Building2, Users, Sparkles, Newspaper, CalendarCheck,
   Heart, BookOpen, Map, Filter, X
 } from "lucide-react";
-import { Link , useSearchParams } from "react-router-dom";
+import { Link , useSearchParams, useOutletContext } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ListState from "@/components/member/ListState";
 import { useMemberList, compactNumber } from "@/hooks/useMemberList";
+import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
+import { formatDistance } from "@/lib/geo";
+import LocationPrompt from "@/components/member/LocationPrompt";
 
 /* ─── Demo data ──────────────────────────────────────────────────────────── */
 const CATEGORIES = [
@@ -118,7 +121,11 @@ function mapResult(r, i) {
     name: r.name || r.fullName || r.title,
     city: r.city || r.location || r.currentLocation || "",
     community: [r.sect, r.subSect || r.gacchaName].filter(Boolean).join(" · "),
+    // Kept for the distance calc at render time (§4.3.4/§4.15.6); the API's
+    // own `distance` string, if present, is used until a GPS fix is available.
     distance: r.distance || "",
+    latitude: r.latitude ?? r.lat ?? null,
+    longitude: r.longitude ?? r.lng ?? null,
     open: r.isOpen ?? r.status === "ACTIVE" ?? true,
     rating: r.rating ?? null,
     followers: compactNumber(r.followerCount ?? 0),
@@ -147,13 +154,30 @@ export default function MemberExplorePage() {
     setSearchParams(next ? { cat: next } : {});
   };
   const [viewMode, setViewMode] = useState("list"); // list | map
+  const { status: locStatus, error: locError, request: requestLocation } = useOutletContext() || {};
 
   const source = activeCategory ? CATEGORY_SOURCE[activeCategory] : null;
-  const { items: results, loading, error, reload } = useMemberList(source?.path, {
+  const { items: rawResults, loading, error, reload } = useMemberList(source?.path, {
     params: search.trim() ? { q: search.trim() } : undefined,
     map: mapResult,
     enabled: Boolean(source),
   });
+
+  /*
+   * Overlay real GPS distance when a device fix is available, and sort by it —
+   * the directory is exactly where "nearby" needs to mean something. Falls
+   * back to whatever string the API sent (often empty) when there is no fix or
+   * the entity carries no coordinates.
+   */
+  const { distanceTo, hasDeviceLocation } = useVisibilityEngine();
+  const results = hasDeviceLocation
+    ? [...rawResults]
+        .map((r) => {
+          const km = distanceTo(r);
+          return km != null ? { ...r, distance: formatDistance(km), _km: km } : r;
+        })
+        .sort((a, b) => (a._km ?? Infinity) - (b._km ?? Infinity))
+    : rawResults;
 
   return (
     <div className="space-y-4">
@@ -174,6 +198,11 @@ export default function MemberExplorePage() {
             </button>
           )}
         </div>
+        {activeCategory && (
+          <div className="mt-2">
+            <LocationPrompt status={locStatus} error={locError} onRequest={requestLocation} />
+          </div>
+        )}
       </div>
 
       {/* ── Browse categories ───────────────────────────────────────── */}

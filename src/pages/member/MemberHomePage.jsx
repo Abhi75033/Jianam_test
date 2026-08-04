@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import {
   MapPin, Bell, ChevronRight, Scan, Heart, CalendarCheck,
   BookOpen, CreditCard, Phone, Navigation, Clock, Star,
@@ -14,6 +14,9 @@ import { memberClient as api } from "@/lib/memberClient";
 import { cn } from "@/lib/utils";
 import { useMemberSocket } from "@/hooks/useMemberSocket";
 import { LiveBadge } from "@/components/common/LiveBadge";
+import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
+import { formatDistance } from "@/lib/geo";
+import LocationPrompt from "@/components/member/LocationPrompt";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/api";
@@ -293,6 +296,50 @@ function MonkTrackingSection({ monks, live }) {
   );
 }
 
+/* ── §4.3.2 #9 — Offers Near You ─────────────────────────────────────────── */
+function OffersNearYouSection({ offers, distanceTo }) {
+  const { t } = useLanguage();
+  if (!offers?.length) return null;
+
+  const withDistance = offers
+    .map((o) => ({ ...o, _km: distanceTo(o) }))
+    .sort((a, b) => (a._km ?? Infinity) - (b._km ?? Infinity));
+
+  return (
+    <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+          <Tag className="h-5 w-5 text-emerald-500" />
+          <span>{t("Offers Near You")}</span>
+        </h2>
+        <Link to="/member/offers" className="text-xs font-bold text-orange-600 hover:underline">
+          {t("View All")}
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {withDistance.slice(0, 4).map((o, i) => (
+          <Link
+            key={o.id || i}
+            to="/member/offers"
+            className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200/60 bg-slate-50/60 hover:border-emerald-300 transition-colors"
+          >
+            <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm shrink-0">
+              {o.emoji || "🎁"}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-slate-900 truncate">{o.title || o.sponsor}</div>
+              <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                {o.discount && <span className="font-bold text-emerald-600">{o.discount}</span>}
+                {o._km != null && <span>· {formatDistance(o._km)}</span>}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /* ── §4.3.3 #4 — Announcements ──────────────────────────────────────────── */
 function AnnouncementsSection({ announcements }) {
   const { t } = useLanguage();
@@ -378,6 +425,10 @@ export default function MemberHomePage() {
   const { t } = useLanguage();
   const { user } = useMemberAuth();
   const firstName = user?.firstName || user?.fullName?.split(" ")[0] || t("Member");
+
+  // GPS status/request come from MemberLayout via Outlet context (§4.3.4).
+  const { status: locStatus, error: locError, request: requestLocation } = useOutletContext() || {};
+  const { distanceTo, hasDeviceLocation } = useVisibilityEngine();
 
   // Real-time backend state (NO hardcoded dummy data)
   const [loading, setLoading] = useState(true);
@@ -583,22 +634,34 @@ export default function MemberHomePage() {
           
           {/* 4. Nearby Temples & Jain Centres */}
           <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-orange-500" />
                 <span>Nearby Temples & Jain Centres</span>
               </h2>
-              <Link to="/member/temples" className="text-xs font-bold text-orange-600 hover:underline">View Directory</Link>
+              <div className="flex items-center gap-3">
+                <LocationPrompt status={locStatus} error={locError} onRequest={requestLocation} />
+                <Link to="/member/temples" className="text-xs font-bold text-orange-600 hover:underline">View Directory</Link>
+              </div>
             </div>
 
             {temples.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {temples.map((t) => (
+                {/* Real GPS distance when we have a fix; falls back to city text. */}
+                {[...temples]
+                  .map((t) => ({ ...t, _km: distanceTo(t) }))
+                  .sort((a, b) => (a._km ?? Infinity) - (b._km ?? Infinity))
+                  .map((t) => (
                   <div key={t.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200/60 space-y-2">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-xs font-bold text-slate-900">{t.name}</h3>
-                        <div className="text-[10px] text-slate-500">{t.city || "India"}</div>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                          {t._km != null && (
+                            <span className="font-bold text-orange-600">{formatDistance(t._km)}</span>
+                          )}
+                          <span>{t._km != null ? "·" : ""} {t.city || "India"}</span>
+                        </div>
                       </div>
                       <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full", t.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600")}>
                         {t.status === "ACTIVE" ? "Open Now" : "Active"}
@@ -617,6 +680,10 @@ export default function MemberHomePage() {
               />
             )}
           </section>
+
+          {/* §4.3.2 #9 — Offers Near You. The page already fetched `offers`
+              for this section but nothing rendered them; the data sat unused. */}
+          <OffersNearYouSection offers={offers} distanceTo={distanceTo} />
 
           {/* §4.3.3 #4 — Announcements, directly above the feed */}
           <AnnouncementsSection announcements={announcements} />

@@ -40,6 +40,8 @@ function mapOffer(o, i) {
     code: o.couponCode || o.code || "",
     validity: o.validTill ? `Valid till ${longDate(o.validTill)}` : "",
     distance: o.distance || "",
+    latitude: o.latitude ?? o.lat ?? null,
+    longitude: o.longitude ?? o.lng ?? null,
     rating: o.rating ?? null,
     trending: Boolean(o.isTrending ?? o.trending),
     exclusive: Boolean(o.isExclusive ?? o.exclusive),
