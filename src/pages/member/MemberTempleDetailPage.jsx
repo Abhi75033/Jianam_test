@@ -159,7 +159,7 @@ export default function MemberTempleDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => toggleFollow(org.publicId || org.id, { type: orgType, apiId: org.id })}
+                    onClick={() => toggleFollow(org.publicId || org.id, { type: orgType, apiId: org.id, name: org.name, image: org.logoSrc, category: orgType })}
                     className={`px-4 py-2.5 rounded-2xl text-xs font-bold border flex items-center gap-1.5 transition-all ${
                       followed ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-white text-orange-600 border-white"
                     }`}

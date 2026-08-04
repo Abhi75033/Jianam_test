@@ -201,6 +201,7 @@ export default function MemberProfilePage() {
             <SectionRow icon={Bell} label={t("Notifications")} value="Preferences & Alerts" to="/member/notifications" iconBg="bg-yellow-100 text-yellow-600" />
             <SectionRow icon={Settings} label={t("Notification Settings")} value="Push, WhatsApp, SMS, Email" to="/member/notifications/preferences" iconBg="bg-slate-100 text-slate-600" />
             <SectionRow icon={MapPin} label={t("My Temple Visits")} value="Check-in & check-out history" to="/member/visits" iconBg="bg-indigo-100 text-indigo-600" />
+            <SectionRow icon={Star} label={t("Following")} value={`${followedIds.length} ${followedIds.length === 1 ? t("entity") : t("entities")}`} to="/member/following" iconBg="bg-amber-100 text-amber-600" />
           </div>
 
           {/* Logout Button */}
