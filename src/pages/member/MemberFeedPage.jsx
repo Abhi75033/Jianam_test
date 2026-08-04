@@ -99,9 +99,21 @@ export default function MemberFeedPage() {
   };
   const [search, setSearch] = useState("");
 
-  const onBookmark = (id) => {
+  // Toggling the icon only ever flipped local state — a refresh silently
+  // reverted every save. POST/DELETE /feed/posts/{id}/bookmark are the real
+  // endpoints (see admin FeedPage.jsx's toggleBookmark); this makes the
+  // toggle actually persist, and rolls back the optimistic flip if it 404s.
+  const onBookmark = async (id) => {
+    const wasBookmarked = posts.find((p) => p.id === id)?.bookmarked;
     setPosts((prev) => prev.map((p) => p.id === id ? { ...p, bookmarked: !p.bookmarked } : p));
-    toast.success(t("Saved to bookmarks"));
+    try {
+      if (wasBookmarked) await memberClient.delete(`/feed/posts/${id}/bookmark`);
+      else await memberClient.post(`/feed/posts/${id}/bookmark`);
+      toast.success(wasBookmarked ? t("Removed from bookmarks") : t("Saved to bookmarks"));
+    } catch (err) {
+      setPosts((prev) => prev.map((p) => p.id === id ? { ...p, bookmarked: wasBookmarked } : p));
+      toast.error(extractErrorMessage(err));
+    }
   };
 
   const votePoll = async (postId, pollId, optionIndex) => {
