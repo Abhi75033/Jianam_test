@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Newspaper, Search, Clock, Eye, Share2, Bookmark, MapPin,
@@ -9,6 +9,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import ListState from "@/components/member/ListState";
 import { useMemberList, relativeTime, compactNumber, longDate } from "@/hooks/useMemberList";
+import { memberClient } from "@/lib/memberClient";
+import { extractErrorMessage } from "@/lib/api";
 
 /** Maps an API news row onto the fields this page's markup renders. */
 function mapNews(n, i) {
@@ -36,6 +38,41 @@ export default function MemberNewsPage() {
   const [search, setSearch] = useState("");
 
   const { items: news, loading, error } = useMemberList("/news", { map: mapNews });
+
+  // The bookmark icon used to be a no-op toast with no state behind it.
+  // GET /news/bookmarks/my and POST /news/{id}/bookmark|unbookmark are real
+  // and already used by admin's NewsPage.jsx toggleBookmark for the same
+  // action — unlike Feed's bookmark endpoint, News toggles via two POSTs,
+  // not POST/DELETE.
+  const [bookmarkedIds, setBookmarkedIds] = useState(() => new Set());
+  useEffect(() => {
+    memberClient.get("/news/bookmarks/my")
+      .then((res) => {
+        const rows = res?.data?.data?.items || res?.data?.data || [];
+        setBookmarkedIds(new Set(rows.map((r) => r.id)));
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggleBookmark = async (item) => {
+    const wasBookmarked = bookmarkedIds.has(item.id);
+    setBookmarkedIds((prev) => {
+      const next = new Set(prev);
+      wasBookmarked ? next.delete(item.id) : next.add(item.id);
+      return next;
+    });
+    try {
+      await memberClient.post(`/news/${item.id}/${wasBookmarked ? "unbookmark" : "bookmark"}`);
+      toast.success(wasBookmarked ? t("Article removed from bookmarks.") : t("Article bookmarked!"));
+    } catch (err) {
+      setBookmarkedIds((prev) => {
+        const next = new Set(prev);
+        wasBookmarked ? next.add(item.id) : next.delete(item.id);
+        return next;
+      });
+      toast.error(extractErrorMessage(err));
+    }
+  };
 
   const filtered = news.filter((n) => {
     if (selectedCat !== "All News" && n.category !== selectedCat) return false;
@@ -151,8 +188,14 @@ export default function MemberNewsPage() {
                   <button onClick={() => onShare(item)} className="p-2 rounded-xl text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-colors">
                     <Share2 className="h-4 w-4" />
                   </button>
-                  <button onClick={() => toast.success(t("Article bookmarked"))} className="p-2 rounded-xl text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-colors">
-                    <Bookmark className="h-4 w-4" />
+                  <button
+                    onClick={() => toggleBookmark(item)}
+                    className={cn(
+                      "p-2 rounded-xl transition-colors",
+                      bookmarkedIds.has(item.id) ? "text-orange-600 bg-orange-50" : "text-slate-400 hover:text-orange-600 hover:bg-orange-50"
+                    )}
+                  >
+                    <Bookmark className={cn("h-4 w-4", bookmarkedIds.has(item.id) && "fill-orange-500")} />
                   </button>
                 </div>
               </div>
