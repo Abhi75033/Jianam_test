@@ -277,7 +277,11 @@ export default function MemberFeedPage() {
                     </div>
                   </div>
 
-                  {/* Follow Button */}
+                  {/* Follow Button — local-only. A feed post's backing org
+                      exposes publicId but not its real backend id or a
+                      reliable type (temple/dharamshala/jain centre), both
+                      required to call the real follow endpoint safely; see
+                      toggleFollow's opts in VisibilityEngineContext.jsx. */}
                   <button
                     onClick={() => toggleFollow(post.entityPublicId)}
                     className={cn(

@@ -71,6 +71,9 @@ export default function MemberTempleDetailPage() {
   // the temple endpoint first (the common case) and falls back across the
   // other two on a 404 rather than requiring the caller to know the type.
   const [org, setOrg] = useState(null);
+  // Which of the three endpoints actually matched — needed to pick the
+  // right follow endpoint (/temples, /dharamshalas or /jain-centers) below.
+  const [orgType, setOrgType] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -78,12 +81,13 @@ export default function MemberTempleDetailPage() {
     if (!id) return;
     setLoading(true);
     setError("");
-    for (const prefix of [ORG_ENDPOINTS.temple, ORG_ENDPOINTS.dharamshala, ORG_ENDPOINTS.jaincentre]) {
+    for (const [type, prefix] of [["temple", ORG_ENDPOINTS.temple], ["dharamshala", ORG_ENDPOINTS.dharamshala], ["jaincentre", ORG_ENDPOINTS.jaincentre]]) {
       try {
         const res = await memberClient.get(`${prefix}/${id}`);
         const data = res?.data?.data;
         if (data) {
           setOrg(mapOrg(data));
+          setOrgType(type);
           setLoading(false);
           return;
         }
@@ -155,7 +159,7 @@ export default function MemberTempleDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => toggleFollow(org.publicId || org.id)}
+                    onClick={() => toggleFollow(org.publicId || org.id, { type: orgType, apiId: org.id })}
                     className={`px-4 py-2.5 rounded-2xl text-xs font-bold border flex items-center gap-1.5 transition-all ${
                       followed ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-white text-orange-600 border-white"
                     }`}

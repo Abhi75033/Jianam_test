@@ -161,7 +161,7 @@ export default function MemberTempleListPage() {
                   </div>
 
                   <button
-                    onClick={() => toggleFollow(tmpl.publicId)}
+                    onClick={() => toggleFollow(tmpl.publicId, { type: "temple", apiId: tmpl.id })}
                     className={cn(
                       "p-2 rounded-xl text-xs font-bold border transition-colors",
                       followed ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"

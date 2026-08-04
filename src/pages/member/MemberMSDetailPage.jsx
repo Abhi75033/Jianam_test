@@ -101,7 +101,7 @@ export default function MemberMSDetailPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => toggleFollow(ms?.publicId)}
+            onClick={() => toggleFollow(ms?.publicId, { type: "monk", apiId: ms?.id })}
             className={cn(
               "px-4 py-2 rounded-2xl text-xs font-bold border transition-all flex items-center gap-1.5",
               followed

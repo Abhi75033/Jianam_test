@@ -1,5 +1,31 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "sonner";
 import { distanceToEntity } from "@/lib/geo";
+import { memberClient } from "@/lib/memberClient";
+
+/**
+ * Real follow/unfollow endpoints, by entity type. Confirmed against admin's
+ * own usage: MonkDetailPage.jsx calls POST /monks/{id}/follow AND
+ * /monks/{id}/unfollow (both directions); OrgDetailPage.jsx only ever calls
+ * POST {prefix}/{id}/follow for temples/dharamshalas/jain-centers — no
+ * unfollow route exists anywhere in the codebase for org-type entities.
+ * `supportsUnfollow: false` is load-bearing, not an oversight: it decides
+ * whether toggleFollow is allowed to flip local state back to "not
+ * following" (see toggleFollow below).
+ */
+const FOLLOW_ENDPOINTS = {
+  monk: { prefix: "/monks", supportsUnfollow: true },
+  ms: { prefix: "/monks", supportsUnfollow: true },
+  temple: { prefix: "/temples", supportsUnfollow: false },
+  dharamshala: { prefix: "/dharamshalas", supportsUnfollow: false },
+  jaincentre: { prefix: "/jain-centers", supportsUnfollow: false },
+  jaincenter: { prefix: "/jain-centers", supportsUnfollow: false },
+};
+
+function resolveFollowEndpoint(type) {
+  if (!type) return null;
+  return FOLLOW_ENDPOINTS[String(type).toLowerCase().replace(/[\s_-]/g, "")] || null;
+}
 
 /**
  * visibilityEngine.js — Core Visibility & Sorting Engine for Jinanam Member Platform.
@@ -104,9 +130,13 @@ export function VisibilityEngineProvider({ children }) {
   });
 
   // Followed Entities List (Unique IDs: JFJT108, JFMS108, JFD108, etc.)
+  // A brand-new member follows nothing — the previous default seeded three
+  // demo ids into every fresh session, so new members opened the Feed and
+  // saw entities marked "Following" and boosted to Priority 1 that they
+  // had never actually followed.
   const [followedIds, setFollowedIds] = useState(() => {
     const saved = localStorage.getItem("jinanam_followed_entities");
-    return saved ? JSON.parse(saved) : ["JFJT108", "JFMS108", "JFJC108"];
+    return saved ? JSON.parse(saved) : [];
   });
 
   // Active Travel Location (manual override, e.g. "I'm visiting Palitana")
@@ -125,14 +155,50 @@ export function VisibilityEngineProvider({ children }) {
     localStorage.setItem("jinanam_followed_entities", JSON.stringify(followedIds));
   }, [followedIds]);
 
-  const toggleFollow = (entityId) => {
-    setFollowedIds((prev) => {
-      if (prev.includes(entityId)) {
-        return prev.filter((id) => id !== entityId);
-      } else {
-        return [...prev, entityId];
+  /**
+   * `entityId` is whatever key the caller already sorts/dedupes by
+   * (publicId in most member screens) — it drives local priority-sort
+   * state and is never sent to the API. `opts.apiId` is the entity's real
+   * backend id (the same id used to fetch its detail page), required to
+   * actually call the follow endpoint; `opts.type` picks which endpoint.
+   *
+   * Callers that omit `opts` keep the pre-existing local-only behavior —
+   * this covers screens (like the Feed, where a post's backing org id
+   * isn't reliably available) that can't yet supply a confirmed real id.
+   */
+  const toggleFollow = async (entityId, opts = {}) => {
+    const { type, apiId } = opts;
+    const wasFollowed = followedIds.includes(entityId);
+    const endpoint = resolveFollowEndpoint(type);
+
+    if (!endpoint || !apiId) {
+      setFollowedIds((prev) => (wasFollowed ? prev.filter((id) => id !== entityId) : [...prev, entityId]));
+      return;
+    }
+
+    if (wasFollowed) {
+      if (!endpoint.supportsUnfollow) {
+        // No unfollow route exists for this entity type. Flipping local
+        // state to "not following" here would desync it from what the
+        // server still has on record — worse than just explaining why.
+        toast.info("Unfollowing isn't available for this yet.");
+        return;
       }
-    });
+      try {
+        await memberClient.post(`${endpoint.prefix}/${apiId}/unfollow`);
+        setFollowedIds((prev) => prev.filter((id) => id !== entityId));
+      } catch {
+        toast.error("Couldn't unfollow — please try again.");
+      }
+      return;
+    }
+
+    try {
+      await memberClient.post(`${endpoint.prefix}/${apiId}/follow`);
+      setFollowedIds((prev) => [...prev, entityId]);
+    } catch {
+      toast.error("Couldn't follow — please try again.");
+    }
   };
 
   const isEntityFollowed = (entityId) => {
@@ -189,12 +255,12 @@ export function useVisibilityEngine() {
     // Fallback safe context if invoked outside provider
     return {
       userPreferences: { sect: "Shwetambar", city: "Mumbai", area: "Thane West" },
-      followedIds: ["JFJT108", "JFMS108"],
+      followedIds: [],
       travelLocation: null,
       deviceCoords: null,
       hasDeviceLocation: false,
       toggleFollow: () => {},
-      isEntityFollowed: (id) => ["JFJT108", "JFMS108"].includes(id),
+      isEntityFollowed: () => false,
       updateCommunityPreferences: () => {},
       updateTravelLocation: () => {},
       updateDeviceCoords: () => {},
