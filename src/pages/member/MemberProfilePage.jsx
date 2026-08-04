@@ -39,6 +39,43 @@ function SectionRow({ icon: Icon, label, value, to, iconBg = "bg-orange-100 text
   return inner;
 }
 
+/**
+ * Inline language switcher. useLanguage()'s setLanguage already persists to
+ * localStorage and re-renders the whole app instantly — it was simply never
+ * exposed anywhere in the UI, admin or member. Purely client-side, so unlike
+ * the rest of "Settings" this needed no endpoint to verify.
+ */
+function LanguagePicker() {
+  const { t, currentLanguage, setLanguage, languages } = useLanguage();
+  return (
+    <div className="flex items-center gap-3.5 py-3 border-b border-slate-100 last:border-0">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs bg-purple-100 text-purple-600">
+        <Globe className="h-4.5 w-4.5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-semibold text-slate-400 mb-1.5">{t("Preferred Language")}</div>
+        <div className="flex flex-wrap gap-1.5">
+          {languages.map((lang) => (
+            <button
+              key={lang.code}
+              type="button"
+              onClick={() => setLanguage(lang.code)}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors flex items-center gap-1",
+                currentLanguage === lang.code
+                  ? "bg-orange-500 border-orange-500 text-white"
+                  : "bg-white border-slate-200 text-slate-600 hover:border-orange-300"
+              )}
+            >
+              <span>{lang.flag}</span> {lang.nativeName}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MemberProfilePage() {
   const { t } = useLanguage();
   const { user, logout } = useMemberAuth();
@@ -125,7 +162,7 @@ export default function MemberProfilePage() {
             <SectionRow icon={User} label={t("Full Name")} value={displayName} />
             <SectionRow icon={Phone} label={t("Mobile Number")} value={user?.mobile} iconBg="bg-green-100 text-green-600" />
             <SectionRow icon={Mail} label={t("Email Address")} value={user?.email} iconBg="bg-sky-100 text-sky-600" />
-            <SectionRow icon={Globe} label={t("Preferred Language")} value={user?.preferredLanguage} iconBg="bg-purple-100 text-purple-600" />
+            <LanguagePicker />
             <SectionRow icon={MapPin} label={t("City / State")} value={[user?.city, user?.state].filter(Boolean).join(", ")} iconBg="bg-amber-100 text-amber-600" />
           </div>
 
