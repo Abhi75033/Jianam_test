@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft, MapPin, Phone, Clock, Landmark, Share2,
   Star, Flag, Navigation, Image as ImageIcon, CalendarCheck, Route as RouteIcon,
-  Facebook, Instagram, CreditCard, Users, ScrollText,
+  Facebook, Instagram, CreditCard, Users, ScrollText, BedDouble,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -303,6 +303,9 @@ export default function MemberTempleDetailPage() {
                 {/* Quick actions */}
                 <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-2.5">
                   <h2 className="text-sm font-bold text-slate-900 mb-1">{t("Explore")}</h2>
+                  <Link to={`/member/temples/${id}/book`} className="flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-orange-600">
+                    <BedDouble className="h-4 w-4 text-slate-400" /> {t("Book a Room / Hall")}
+                  </Link>
                   <Link to="/member/events" className="flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-orange-600">
                     <CalendarCheck className="h-4 w-4 text-slate-400" /> {t("Upcoming Events")}
                   </Link>

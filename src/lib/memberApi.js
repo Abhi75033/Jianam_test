@@ -89,6 +89,31 @@ export const bookingsApi = {
     // member-scoped equivalent.
     return list(unwrap(await api.get("/bookings/my", { params })));
   },
+  /**
+   * Bookable rooms/halls/dorms/bhojanshala packages configured for one org.
+   * Same endpoint admin's BookingsPage reads to populate its item selector
+   * (see BookingsPage.jsx's loadData: GET /bookings/org/{orgId}).
+   */
+  async items(orgId) {
+    return list(unwrap(await api.get(`/bookings/org/${orgId}`)));
+  },
+  /**
+   * Create a booking request against one item. Same payload shape and
+   * endpoint as admin's "Submit Member Booking" handler
+   * (BookingsPage.jsx handleSubmitBooking: POST /bookings), which already
+   * puts the request in PENDING state awaiting administrator approval.
+   */
+  async create({ bookingItemId, dateFrom, dateTo, slot, peopleCount }) {
+    return unwrap(
+      await api.post("/bookings", {
+        bookingItemId,
+        dateFrom: new Date(dateFrom).toISOString(),
+        dateTo: dateTo ? new Date(dateTo).toISOString() : undefined,
+        slot,
+        peopleCount: Number(peopleCount),
+      })
+    );
+  },
   /** Detail with the full status timeline (§B16.5). */
   async detail(uid) {
     return unwrap(await api.get(`/bookings/${uid}`));
