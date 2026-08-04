@@ -58,6 +58,8 @@ const MENU_GROUPS = [
       { to: "/member/news", label: "Today's News" },
       { to: "/member/events", label: "Events & Programs" },
       { to: "/member/tours", label: "Tours & Yatras" },
+      { to: "/member/volunteers", label: "Volunteer Opportunities" },
+      { to: "/member/announcements", label: "Announcements" },
       { to: "/member/spiritual", label: "Spiritual Tools" },
     ],
   },

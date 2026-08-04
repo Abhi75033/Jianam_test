@@ -26,7 +26,7 @@ const TABS = [
     // Explore is the directory, so every browsable entity lives under it.
     match: [
       "/member/explore", "/member/temples", "/member/ms", "/member/tours",
-      "/member/events", "/member/spiritual",
+      "/member/events", "/member/spiritual", "/member/volunteers", "/member/announcements",
     ],
   },
   {

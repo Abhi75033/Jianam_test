@@ -349,7 +349,9 @@ function AnnouncementsSection({ announcements }) {
         <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
           <Megaphone className="h-4 w-4 text-purple-500" /> {t("Announcements")}
         </h2>
-        <Link to="/member/news" className="text-xs font-bold text-orange-600 hover:text-orange-700">
+        {/* Used to point at /member/news — a different feed entirely — because
+            the full announcements screen did not exist yet. */}
+        <Link to="/member/announcements" className="text-xs font-bold text-orange-600 hover:text-orange-700">
           {t("View All")}
         </Link>
       </div>
