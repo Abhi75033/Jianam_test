@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   User, Edit3, QrCode, Wallet, Settings, Bell, Shield,
@@ -7,8 +7,10 @@ import {
 } from "lucide-react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
 import { cn } from "@/lib/utils";
 import FamilyMembersCard from "@/components/member/FamilyMembersCard";
+import { bookingsApi, donationsApi, eventsApi } from "@/lib/memberApi";
 
 function StatBadge({ label, value, icon: Icon, color }) {
   return (
@@ -40,8 +42,31 @@ function SectionRow({ icon: Icon, label, value, to, iconBg = "bg-orange-100 text
 export default function MemberProfilePage() {
   const { t } = useLanguage();
   const { user, logout } = useMemberAuth();
+  const { followedIds } = useVisibilityEngine();
 
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.fullName || t("Member");
+
+  // "My Platform Activity" used to show fixed numbers (8/12/5/4) with no data
+  // behind them. bookingsApi.mine / donationsApi.mine / eventsApi.myEvents
+  // are the same real, already-verified endpoints MyBookingsPage, My
+  // Donations and the Events tab use — this just counts what they return.
+  const [stats, setStats] = useState({ events: null, donations: null, bookings: null });
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      eventsApi.myEvents().catch(() => []),
+      donationsApi.mine().catch(() => ({ items: [] })),
+      bookingsApi.mine().catch(() => []),
+    ]).then(([events, donations, bookings]) => {
+      if (cancelled) return;
+      setStats({
+        events: events.length,
+        donations: donations.items.length,
+        bookings: bookings.length,
+      });
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -62,14 +87,15 @@ export default function MemberProfilePage() {
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{displayName}</h1>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                <span className="bg-white/20 backdrop-blur rounded-full px-3 py-1 text-xs font-bold font-mono">
-                  {user?.publicId || "JM108"}
-                </span>
+                {user?.publicId && (
+                  <span className="bg-white/20 backdrop-blur rounded-full px-3 py-1 text-xs font-bold font-mono">
+                    {user.publicId}
+                  </span>
+                )}
                 <span className="bg-white/20 backdrop-blur rounded-full px-3 py-1 text-xs font-bold">
-                  ✅ Verified Member
-                </span>
-                <span className="bg-white/20 backdrop-blur rounded-full px-3 py-1 text-xs font-bold">
-                  🙏 Jain Member
+                  {String(user?.primaryRoleKey || user?.role).toUpperCase() === "NON_JAIN_MEMBER"
+                    ? t("🌐 Community Member")
+                    : t("🙏 Jain Member")}
                 </span>
               </div>
             </div>
@@ -97,18 +123,18 @@ export default function MemberProfilePage() {
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs">
             <h2 className="text-base font-bold text-slate-900 mb-4">{t("Personal Information")}</h2>
             <SectionRow icon={User} label={t("Full Name")} value={displayName} />
-            <SectionRow icon={Phone} label={t("Mobile Number")} value={user?.mobile || "+91 9999900000"} iconBg="bg-green-100 text-green-600" />
-            <SectionRow icon={Mail} label={t("Email Address")} value={user?.email || "member@jinanam.app"} iconBg="bg-sky-100 text-sky-600" />
-            <SectionRow icon={Globe} label={t("Preferred Language")} value={user?.preferredLanguage || "English"} iconBg="bg-purple-100 text-purple-600" />
-            <SectionRow icon={MapPin} label={t("City / State")} value={user?.city || "Mumbai, Maharashtra"} iconBg="bg-amber-100 text-amber-600" />
+            <SectionRow icon={Phone} label={t("Mobile Number")} value={user?.mobile} iconBg="bg-green-100 text-green-600" />
+            <SectionRow icon={Mail} label={t("Email Address")} value={user?.email} iconBg="bg-sky-100 text-sky-600" />
+            <SectionRow icon={Globe} label={t("Preferred Language")} value={user?.preferredLanguage} iconBg="bg-purple-100 text-purple-600" />
+            <SectionRow icon={MapPin} label={t("City / State")} value={[user?.city, user?.state].filter(Boolean).join(", ")} iconBg="bg-amber-100 text-amber-600" />
           </div>
 
           {/* Community Details */}
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs">
             <h2 className="text-base font-bold text-slate-900 mb-4">{t("Community & Sect")}</h2>
-            <SectionRow icon={Info} label={t("Sect")} value="Shwetambar" iconBg="bg-orange-100 text-orange-600" />
-            <SectionRow icon={Users} label={t("Sub-Sect")} value="Murtipujak (Deravasi)" iconBg="bg-amber-100 text-amber-600" />
-            <SectionRow icon={Star} label={t("Gaccha")} value="Tapa Gaccha" iconBg="bg-yellow-100 text-yellow-600" />
+            <SectionRow icon={Info} label={t("Sect")} value={user?.sect} iconBg="bg-orange-100 text-orange-600" />
+            <SectionRow icon={Users} label={t("Sub-Sect")} value={user?.subCommunity} iconBg="bg-amber-100 text-amber-600" />
+            <SectionRow icon={Star} label={t("Gaccha")} value={user?.gaccha} iconBg="bg-yellow-100 text-yellow-600" />
           </div>
 
           {/* §4.2.7 Family Member Addition */}
@@ -123,10 +149,10 @@ export default function MemberProfilePage() {
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs">
             <h2 className="text-base font-bold text-slate-900 mb-4">{t("My Platform Activity")}</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatBadge label="Events" value="8" icon={CalendarCheck} color="bg-orange-50/80 text-orange-600" />
-              <StatBadge label="Donations" value="12" icon={Heart} color="bg-rose-50/80 text-rose-600" />
-              <StatBadge label="Bookings" value="5" icon={Bookmark} color="bg-sky-50/80 text-sky-600" />
-              <StatBadge label="Seva" value="4" icon={Star} color="bg-amber-50/80 text-amber-600" />
+              <StatBadge label="Events" value={stats.events ?? "—"} icon={CalendarCheck} color="bg-orange-50/80 text-orange-600" />
+              <StatBadge label="Donations" value={stats.donations ?? "—"} icon={Heart} color="bg-rose-50/80 text-rose-600" />
+              <StatBadge label="Bookings" value={stats.bookings ?? "—"} icon={Bookmark} color="bg-sky-50/80 text-sky-600" />
+              <StatBadge label="Following" value={followedIds.length} icon={Star} color="bg-amber-50/80 text-amber-600" />
             </div>
           </div>
 
