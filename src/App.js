@@ -71,6 +71,7 @@ const MemberMSDetailPage = lazy(() => import("@/pages/member/MemberMSDetailPage"
 const MemberTempleListPage = lazy(() => import("@/pages/member/MemberTempleListPage"));
 const MemberTempleDetailPage = lazy(() => import("@/pages/member/MemberTempleDetailPage"));
 const MemberGalleryPage = lazy(() => import("@/pages/member/MemberGalleryPage"));
+const MemberVisitsPage = lazy(() => import("@/pages/member/MemberVisitsPage"));
 const MemberVolunteersPage = lazy(() => import("@/pages/member/MemberVolunteersPage"));
 const MemberAnnouncementsPage = lazy(() => import("@/pages/member/MemberAnnouncementsPage"));
 const MemberCommunityPagesPage = lazy(() => import("@/pages/member/MemberCommunityPagesPage"));
@@ -440,6 +441,7 @@ export default function App() {
                 <Route path="bookings" element={<MyBookingsPage />} />
                 <Route path="bookings/:uid" element={<BookingDetailPage />} />
                 <Route path="donations" element={<MemberDonationsPage />} />
+                <Route path="visits" element={<MemberVisitsPage />} />
                 <Route path="events" element={<MemberEventsPage />} />
                 <Route path="tickets" element={<MyTicketsPage />} />
                 {/* Member-scoped catch-all. Without it an unknown /member/* URL

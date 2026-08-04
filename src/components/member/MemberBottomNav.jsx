@@ -37,7 +37,7 @@ const TABS = [
     match: [
       "/member/profile", "/member/digital-id", "/member/wallet",
       "/member/bookings", "/member/donations", "/member/tickets",
-      "/member/notifications", "/member/support",
+      "/member/notifications", "/member/support", "/member/visits",
     ],
   },
 ];

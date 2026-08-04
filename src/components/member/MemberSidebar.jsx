@@ -74,6 +74,7 @@ const MENU_GROUPS = [
       { to: "/member/wallet", label: "My Digital Wallet" },
       { to: "/member/bookings", label: "My Bookings & Tickets" },
       { to: "/member/donations", label: "My Donations" },
+      { to: "/member/visits", label: "My Temple Visits" },
       { to: "/member/notifications", label: "Notifications History" },
       { to: "/member/support", label: "Support & Help Desk" },
     ],

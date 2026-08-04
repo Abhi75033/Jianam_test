@@ -162,6 +162,7 @@ export default function MemberProfilePage() {
             <SectionRow icon={QrCode} label={t("Digital ID Card")} value="View & Share Verified ID" to="/member/digital-id" iconBg="bg-violet-100 text-violet-600" />
             <SectionRow icon={Wallet} label={t("Digital Wallet")} value="Receipts, Passes & Certificates" to="/member/wallet" iconBg="bg-emerald-100 text-emerald-600" />
             <SectionRow icon={Bell} label={t("Notifications")} value="Preferences & Alerts" to="/member/notifications" iconBg="bg-yellow-100 text-yellow-600" />
+            <SectionRow icon={MapPin} label={t("My Temple Visits")} value="Check-in & check-out history" to="/member/visits" iconBg="bg-indigo-100 text-indigo-600" />
           </div>
 
           {/* Logout Button */}
