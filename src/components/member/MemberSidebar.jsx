@@ -41,7 +41,7 @@ const MENU_GROUPS = [
     children: [
       { to: "/member/offers", label: "Featured Offers" },
       { to: "/member/offers#categories", label: "Categories Grid" },
-      { to: "/member/offers#coupons", label: "Coupons & Deals" },
+      { to: "/member/offers#saved", label: "Saved Offers" },
     ],
   },
   {

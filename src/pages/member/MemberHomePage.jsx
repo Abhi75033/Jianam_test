@@ -296,42 +296,46 @@ function MonkTrackingSection({ monks, live }) {
   );
 }
 
-/* ── §4.3.2 #9 — Offers Near You ─────────────────────────────────────────── */
-function OffersNearYouSection({ offers, distanceTo }) {
+/**
+ * §4.3.2 #9 — Offers Near You.
+ *
+ * Offers carry no latitude/longitude (only a nested visibilityConfig.geo of
+ * area/city/district/state names — see admin OffersPage.jsx's create form),
+ * so distanceTo(o) always resolved to null here and the "near you" sort was
+ * silently a no-op. o.sponsor/o.discount/o.emoji don't exist on the real
+ * offer schema either (confirmed by grepping every field admin's OffersPage
+ * actually reads) — this rendered blank on every real offer. Shows the
+ * fetched offers as-is with their real fields instead of claiming a
+ * distance ranking that was never actually happening.
+ */
+function OffersNearYouSection({ offers }) {
   const { t } = useLanguage();
   if (!offers?.length) return null;
-
-  const withDistance = offers
-    .map((o) => ({ ...o, _km: distanceTo(o) }))
-    .sort((a, b) => (a._km ?? Infinity) - (b._km ?? Infinity));
 
   return (
     <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
           <Tag className="h-5 w-5 text-emerald-500" />
-          <span>{t("Offers Near You")}</span>
+          <span>{t("Offers For You")}</span>
         </h2>
         <Link to="/member/offers" className="text-xs font-bold text-orange-600 hover:underline">
           {t("View All")}
         </Link>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {withDistance.slice(0, 4).map((o, i) => (
+        {offers.slice(0, 4).map((o, i) => (
           <Link
             key={o.id || i}
             to="/member/offers"
             className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200/60 bg-slate-50/60 hover:border-emerald-300 transition-colors"
           >
-            <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm shrink-0">
-              {o.emoji || "🎁"}
+            <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <Tag className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-slate-900 truncate">{o.title || o.sponsor}</div>
-              <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                {o.discount && <span className="font-bold text-emerald-600">{o.discount}</span>}
-                {o._km != null && <span>· {formatDistance(o._km)}</span>}
-              </div>
+              <div className="text-xs font-bold text-slate-900 truncate">{o.title}</div>
+              {o.companyName && <div className="text-[10px] text-slate-500 truncate">{o.companyName}</div>}
             </div>
           </Link>
         ))}
@@ -683,9 +687,9 @@ export default function MemberHomePage() {
             )}
           </section>
 
-          {/* §4.3.2 #9 — Offers Near You. The page already fetched `offers`
-              for this section but nothing rendered them; the data sat unused. */}
-          <OffersNearYouSection offers={offers} distanceTo={distanceTo} />
+          {/* §4.3.2 #9 — Offers. The page already fetched `offers` for this
+              section but nothing rendered them; the data sat unused. */}
+          <OffersNearYouSection offers={offers} />
 
           {/* §4.3.3 #4 — Announcements, directly above the feed */}
           <AnnouncementsSection announcements={announcements} />
