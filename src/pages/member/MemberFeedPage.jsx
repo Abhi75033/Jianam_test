@@ -161,6 +161,24 @@ export default function MemberFeedPage() {
     return true;
   });
 
+  // Sponsored posts previously clustered wherever sortContent happened to
+  // place them — the spec calls for one every 7 organic items, spaced out
+  // rather than bunched. Sponsored Posts tab already isolates ads (all of
+  // `filtered` is ads there), so interleaving only applies to the mixed feed.
+  const interleaved = sponsoredOnly ? filtered : (() => {
+    const organic = filtered.filter((p) => !p.isAd);
+    const ads = filtered.filter((p) => p.isAd);
+    if (!ads.length) return organic;
+    const out = [];
+    let adIdx = 0;
+    organic.forEach((post, i) => {
+      out.push(post);
+      if ((i + 1) % 7 === 0 && adIdx < ads.length) out.push(ads[adIdx++]);
+    });
+    out.push(...ads.slice(adIdx));
+    return out;
+  })();
+
   return (
     <div className="space-y-6">
       
@@ -217,7 +235,7 @@ export default function MemberFeedPage() {
         
         {/* Main Feed Column */}
         <div className="lg:col-span-8 space-y-4">
-          {filtered.map((post) => {
+          {interleaved.map((post) => {
             if (post.isAd) {
               return (
                 <div key={post.id} className="p-6 bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-3xl border border-indigo-900 shadow-lg space-y-3">
