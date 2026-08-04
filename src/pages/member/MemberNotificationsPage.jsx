@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Bell, CheckCheck, ChevronRight, Info, AlertCircle, Calendar, Heart, Ticket } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Bell, CheckCheck, ChevronRight, Info, AlertCircle, Calendar, Heart, Ticket, Settings } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ListState from "@/components/member/ListState";
 import { memberClient as api } from "@/lib/memberClient";
@@ -71,11 +72,16 @@ export default function MemberNotificationsPage() {
             <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{unread}</span>
           )}
         </div>
-        {unread > 0 && (
-          <button onClick={markAll} className="flex items-center gap-1 text-[10px] text-orange-600 font-bold hover:underline">
-            <CheckCheck className="h-3.5 w-3.5" /> {t("Mark all read")}
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {unread > 0 && (
+            <button onClick={markAll} className="flex items-center gap-1 text-[10px] text-orange-600 font-bold hover:underline">
+              <CheckCheck className="h-3.5 w-3.5" /> {t("Mark all read")}
+            </button>
+          )}
+          <Link to="/member/notifications/preferences" className="p-1.5 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-colors">
+            <Settings className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-2">

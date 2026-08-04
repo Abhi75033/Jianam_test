@@ -73,6 +73,7 @@ const MemberTempleDetailPage = lazy(() => import("@/pages/member/MemberTempleDet
 const MemberGalleryPage = lazy(() => import("@/pages/member/MemberGalleryPage"));
 const MemberVisitsPage = lazy(() => import("@/pages/member/MemberVisitsPage"));
 const MemberBookingPage = lazy(() => import("@/pages/member/MemberBookingPage"));
+const MemberNotificationPreferencesPage = lazy(() => import("@/pages/member/MemberNotificationPreferencesPage"));
 const MemberVolunteersPage = lazy(() => import("@/pages/member/MemberVolunteersPage"));
 const MemberAnnouncementsPage = lazy(() => import("@/pages/member/MemberAnnouncementsPage"));
 const MemberCommunityPagesPage = lazy(() => import("@/pages/member/MemberCommunityPagesPage"));
@@ -440,6 +441,7 @@ export default function App() {
                 <Route path="digital-id" element={<MemberDigitalIdPage />} />
                 <Route path="wallet" element={<MemberWalletPage />} />
                 <Route path="notifications" element={<MemberNotificationsPage />} />
+                <Route path="notifications/preferences" element={<MemberNotificationPreferencesPage />} />
                 <Route path="bookings" element={<MyBookingsPage />} />
                 <Route path="bookings/:uid" element={<BookingDetailPage />} />
                 <Route path="donations" element={<MemberDonationsPage />} />
