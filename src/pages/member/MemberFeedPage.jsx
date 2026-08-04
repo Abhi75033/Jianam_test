@@ -2,13 +2,16 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMemberSocket } from "@/hooks/useMemberSocket";
 import {
-  Search, Bookmark, Share2, Bell, Filter, MapPin, Eye, Flag, Newspaper, TrendingUp, Sparkles, Plus, X, Heart, Star, Building2, Check
+  Search, Bookmark, Share2, Bell, Filter, MapPin, Eye, Flag, Newspaper, TrendingUp, Sparkles, Plus, X, Heart, Star, Building2, Check, BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ListState from "@/components/member/ListState";
 import { useMemberList, relativeTime, compactNumber } from "@/hooks/useMemberList";
 import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
+import { useMemberAuth } from "@/contexts/MemberAuthContext";
+import { memberClient } from "@/lib/memberClient";
+import { extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 
 
@@ -54,11 +57,15 @@ function mapPost(p_, i) {
     emoji: p_.emoji || "🛕",
     cta: p_.ctaLabel || null,
     ctaTo: p_.ctaTo || null,
+    // §4.11.4 — polls have no standalone listing endpoint (only vote/results),
+    // so they ride along on whichever feed post embeds them.
+    poll: p_.poll || null,
   };
 }
 
 export default function MemberFeedPage() {
   const { t } = useLanguage();
+  const { user } = useMemberAuth();
   const { userPreferences, followedIds, toggleFollow, isEntityFollowed, sortContent } = useVisibilityEngine();
 
   const { items: fetchedPosts, loading, error, reload } = useMemberList("/feed/", { map: mapPost });
@@ -95,6 +102,19 @@ export default function MemberFeedPage() {
   const onBookmark = (id) => {
     setPosts((prev) => prev.map((p) => p.id === id ? { ...p, bookmarked: !p.bookmarked } : p));
     toast.success(t("Saved to bookmarks"));
+  };
+
+  const votePoll = async (postId, pollId, optionIndex) => {
+    try {
+      await memberClient.post(`/feed/polls/${pollId}/vote`, { optionIndex });
+      setPosts((prev) => prev.map((p) => {
+        if (p.id !== postId || !p.poll) return p;
+        const votes = [...(p.poll.votes || []), { optionIndex, memberId: user?.id }];
+        return { ...p, poll: { ...p.poll, votes } };
+      }));
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    }
   };
 
   const onShare = (post) => {
@@ -255,6 +275,40 @@ export default function MemberFeedPage() {
                   <h2 className="text-sm font-black text-slate-900 leading-snug">{post.title}</h2>
                   <p className="text-xs text-slate-600 leading-relaxed">{post.body}</p>
                 </div>
+
+                {/* Poll (§4.11.4) */}
+                {post.poll && (
+                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+                    <div className="font-bold text-slate-800 text-xs flex items-center gap-2">
+                      <BarChart3 className="h-3.5 w-3.5 text-purple-500" />
+                      <span>{post.poll.question}</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {(Array.isArray(post.poll.options) ? post.poll.options : []).map((opt, oIdx) => {
+                        const totalVotes = post.poll.votes?.length || 0;
+                        const optVotes = post.poll.votes?.filter((v) => v.optionIndex === oIdx).length || 0;
+                        const optPct = totalVotes > 0 ? Math.round((optVotes / totalVotes) * 100) : 0;
+                        const hasVoted = post.poll.votes?.some((v) => v.memberId === user?.id);
+
+                        return (
+                          <button
+                            key={oIdx}
+                            type="button"
+                            disabled={hasVoted}
+                            onClick={() => votePoll(post.id, post.poll.id, oIdx)}
+                            className="w-full text-left p-2 rounded-lg border border-slate-200 bg-white hover:bg-purple-50/50 transition-all text-xs relative overflow-hidden disabled:cursor-default"
+                          >
+                            <div className="absolute left-0 top-0 bottom-0 bg-purple-100/60 transition-all" style={{ width: `${optPct}%` }} />
+                            <div className="relative flex justify-between items-center font-semibold text-slate-700">
+                              <span>{opt}</span>
+                              <span className="text-[10px] text-slate-400">{optPct}% ({optVotes} {t("votes")})</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Footer Actions */}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-400 font-bold">
