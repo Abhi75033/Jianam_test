@@ -27,6 +27,7 @@ const TABS = [
     match: [
       "/member/explore", "/member/temples", "/member/ms", "/member/tours",
       "/member/events", "/member/spiritual", "/member/volunteers", "/member/announcements",
+      "/member/community-pages",
     ],
   },
   {
