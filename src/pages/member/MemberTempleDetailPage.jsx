@@ -258,9 +258,16 @@ export default function MemberTempleDetailPage() {
                 {/* Gallery preview */}
                 {org.gallery?.length > 0 && (
                   <section className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-3">
-                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                      <ImageIcon className="h-4 w-4 text-purple-500" /> {t("Gallery")}
-                    </h2>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-purple-500" /> {t("Gallery")}
+                      </h2>
+                      {org.gallery.length > 8 && (
+                        <Link to={`/member/temples/${id}/gallery`} className="text-xs font-bold text-purple-600 hover:text-purple-700">
+                          {t("View all")} ({org.gallery.length})
+                        </Link>
+                      )}
+                    </div>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {org.gallery.slice(0, 8).map((g, i) => {
                         const src = g.url?.startsWith("http") ? g.url : `${STATIC_URL}/${g.url}`;
