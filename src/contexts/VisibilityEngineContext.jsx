@@ -28,6 +28,27 @@ function resolveFollowEndpoint(type) {
 }
 
 /**
+ * Primary/secondary/tertiary follow tiers — §4.15's "1+2+6 temples, 1+9
+ * monks" cap. This is deliberately NOT the backend model the spec actually
+ * describes: the API has no concept of a follow tier at all, so a tier
+ * assigned here only reorders *this device's own* sort of *this member's*
+ * feed. It doesn't sync to another device, isn't visible to the backend or
+ * to anyone else, and doesn't change what admins can report on. That part
+ * — persisting tier as a real relationship other systems can see — is the
+ * genuine backend gap flagged throughout this branch's work. What's below
+ * is the client-visible half of the spec (sort order), built honestly as
+ * a local preference rather than left undone or faked as more than it is.
+ */
+const TIER_CAPS = {
+  temple: { primary: 1, secondary: 2, tertiary: 6 },
+  monk: { primary: 1, secondary: 9 },
+};
+
+const TIER_RANK = { primary: 1, secondary: 1.1, tertiary: 1.2 };
+/** Followed but untiered (org types with no defined caps, or follows with no meta at all). */
+const UNTIERED_FOLLOWED_RANK = 1.3;
+
+/**
  * visibilityEngine.js — Core Visibility & Sorting Engine for Jinanam Member Platform.
  *
  * Rules Enforced:
@@ -40,16 +61,20 @@ function resolveFollowEndpoint(type) {
  * 7. Dharamshalas → Common Facility (No community restriction)
  */
 
-export function calculateContentPriority(item, userPreferences, followedIds = []) {
+export function calculateContentPriority(item, userPreferences, followedIds = [], followedMeta = {}) {
   // Dharamshala Exception: Common facility for all
   const isDharamshala = item.entityType === "DHARAMSHALA" || item.type === "DHARAMSHALA" || item.publicId?.startsWith("JFD");
-  
+
   // Rule 1: Check if entity is followed by user
   const entityId = item.entityPublicId || item.publicId || item.entityId || item.id;
   const isFollowed = followedIds.includes(entityId) || item.isFollowed;
 
   if (isFollowed) {
-    return 1; // Priority 1: Followed Entity (Highest)
+    // Sub-rank within "followed" by tier when one has been set (see
+    // TIER_RANK above) — still always ahead of every non-followed
+    // priority (2-6), so untiered follows behave exactly as before.
+    const tier = followedMeta[entityId]?.tier;
+    return TIER_RANK[tier] || UNTIERED_FOLLOWED_RANK;
   }
 
   // Community Match Check
@@ -101,12 +126,12 @@ export function calculateContentPriority(item, userPreferences, followedIds = []
 /**
  * Sorts array of content items by calculating visibility priority.
  */
-export function prioritizeContentList(items, userPreferences, followedIds = []) {
+export function prioritizeContentList(items, userPreferences, followedIds = [], followedMeta = {}) {
   if (!Array.isArray(items)) return [];
 
   return [...items].sort((a, b) => {
-    const priorityA = calculateContentPriority(a, userPreferences, followedIds);
-    const priorityB = calculateContentPriority(b, userPreferences, followedIds);
+    const priorityA = calculateContentPriority(a, userPreferences, followedIds, followedMeta);
+    const priorityB = calculateContentPriority(b, userPreferences, followedIds, followedMeta);
     return priorityA - priorityB;
   });
 }
@@ -239,6 +264,49 @@ export function VisibilityEngineProvider({ children }) {
     return followedIds.includes(entityId);
   };
 
+  /**
+   * Assigns a follow tier, enforcing the spec's per-category caps
+   * (TIER_CAPS) against however many *other* followed entities of the same
+   * category already hold that tier. Local-only — see the note on
+   * TIER_CAPS above for what that does and doesn't mean.
+   */
+  const setFollowTier = (entityId, tier) => {
+    const meta = followedMeta[entityId];
+    if (!meta?.category) {
+      toast.error("Can't set a tier — this entity's type isn't known.");
+      return;
+    }
+    const caps = TIER_CAPS[meta.category];
+    if (!caps || !(tier in caps)) {
+      toast.error("Tiering isn't available for this entity type yet.");
+      return;
+    }
+    const usedByOthers = Object.entries(followedMeta).filter(
+      ([id, m]) => id !== entityId && m.category === meta.category && m.tier === tier
+    ).length;
+    if (usedByOthers >= caps[tier]) {
+      toast.error(`You can mark at most ${caps[tier]} ${meta.category}${caps[tier] > 1 ? "s" : ""} as ${tier}.`);
+      return;
+    }
+    setFollowedMeta((prev) => ({ ...prev, [entityId]: { ...prev[entityId], tier } }));
+  };
+
+  const clearFollowTier = (entityId) => {
+    setFollowedMeta((prev) => {
+      if (!prev[entityId]?.tier) return prev;
+      const { tier, ...rest } = prev[entityId];
+      return { ...prev, [entityId]: rest };
+    });
+  };
+
+  /** How many of `tier` (within `category`) are already assigned, and the cap. */
+  const tierUsage = (category, tier) => {
+    const caps = TIER_CAPS[category];
+    if (!caps || !(tier in caps)) return null;
+    const used = Object.values(followedMeta).filter((m) => m.category === category && m.tier === tier).length;
+    return { used, cap: caps[tier] };
+  };
+
   const updateCommunityPreferences = (newPrefs) => {
     setUserPreferences((prev) => ({ ...prev, ...newPrefs }));
   };
@@ -256,7 +324,7 @@ export function VisibilityEngineProvider({ children }) {
     deviceCoords,
   };
 
-  const sortContent = (items) => prioritizeContentList(items, effectivePrefs, followedIds);
+  const sortContent = (items) => prioritizeContentList(items, effectivePrefs, followedIds, followedMeta);
 
   /** Distance in km from the current device fix to any entity with coordinates. */
   const distanceTo = (entity) => distanceToEntity(deviceCoords, entity);
@@ -272,6 +340,10 @@ export function VisibilityEngineProvider({ children }) {
         hasDeviceLocation: Boolean(deviceCoords),
         toggleFollow,
         isEntityFollowed,
+        setFollowTier,
+        clearFollowTier,
+        tierUsage,
+        tierCaps: TIER_CAPS,
         updateCommunityPreferences,
         updateTravelLocation,
         updateDeviceCoords: setDeviceCoords,
@@ -297,6 +369,10 @@ export function useVisibilityEngine() {
       hasDeviceLocation: false,
       toggleFollow: () => {},
       isEntityFollowed: () => false,
+      setFollowTier: () => {},
+      clearFollowTier: () => {},
+      tierUsage: () => null,
+      tierCaps: {},
       updateCommunityPreferences: () => {},
       updateTravelLocation: () => {},
       updateDeviceCoords: () => {},
