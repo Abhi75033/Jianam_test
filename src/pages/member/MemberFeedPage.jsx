@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMemberSocket } from "@/hooks/useMemberSocket";
 import {
@@ -49,6 +49,12 @@ function mapPost(p_, i) {
     subCommunity: p_.organization?.subSect || "",
     entityType: p_.entityType || p_.organization?.type || "",
     entityPublicId: p_.organization?.publicId || p_.entityPublicId || "",
+    // organizationId is a real top-level field on the post (confirmed by
+    // admin FeedPage.jsx's own org-scoping check at its "edit" gate) — the
+    // org's actual backend id, unlike entityPublicId above. Needed to call
+    // the real follow endpoint; see followPost below for why the org's
+    // *type* still has to be resolved separately.
+    orgId: p_.organizationId || p_.organization?.id || "",
     daysAgo: relativeTime(p_.publishedAt || p_.createdAt),
     views: compactNumber(p_.viewCount ?? 0),
     liked: Boolean(p_.isLiked),
@@ -63,10 +69,37 @@ function mapPost(p_, i) {
   };
 }
 
+/**
+ * A feed post carries its org's real backend id (orgId, above) but not its
+ * type — there's no `organization.type` field anywhere in the API (checked
+ * every org list/select in the codebase; useOrgs.js merges temples,
+ * dharamshalas, jain centers, sthanaks and community pages into one flat
+ * list with no type tag at all). The only way to learn an org's type is to
+ * ask each endpoint until one has it — same fallback MemberTempleDetailPage
+ * already uses to load the org itself.
+ */
+const ORG_TYPE_ENDPOINTS = [["temple", "/temples"], ["dharamshala", "/dharamshalas"], ["jaincentre", "/jain-centers"]];
+async function resolveOrgType(orgId) {
+  for (const [type, prefix] of ORG_TYPE_ENDPOINTS) {
+    try {
+      const res = await memberClient.get(`${prefix}/${orgId}`);
+      if (res?.data?.data) return type;
+    } catch {
+      /* try the next org type */
+    }
+  }
+  return null;
+}
+
 export default function MemberFeedPage() {
   const { t } = useLanguage();
   const { user } = useMemberAuth();
-  const { userPreferences, followedIds, toggleFollow, isEntityFollowed, sortContent } = useVisibilityEngine();
+  const { userPreferences, followedIds, followedMeta, toggleFollow, isEntityFollowed, sortContent } = useVisibilityEngine();
+  const [resolvingFollowId, setResolvingFollowId] = useState(null);
+  // Persists across renders without a re-render of its own — a follow-type
+  // lookup for one org shouldn't repeat for every other post from the same
+  // org further down the same feed.
+  const orgTypeCache = useRef({});
 
   const { items: fetchedPosts, loading, error, reload } = useMemberList("/feed/", { map: mapPost });
   const [posts, setPosts] = useState([]);
@@ -126,6 +159,41 @@ export default function MemberFeedPage() {
       }));
     } catch (err) {
       toast.error(extractErrorMessage(err));
+    }
+  };
+
+  /**
+   * The Follow button used to be local-only here because a feed post's org
+   * type was unknowable. It's still unknowable *up front*, but resolvable —
+   * see resolveOrgType above. Reuses a real type+id the moment one is known
+   * (cached from an earlier resolve, or already captured in followedMeta by
+   * another screen), so most clicks don't need a lookup at all.
+   */
+  const followPost = async (post) => {
+    const existing = followedMeta[post.entityPublicId];
+    if (existing?.type && existing?.apiId) {
+      toggleFollow(post.entityPublicId, existing);
+      return;
+    }
+    if (!post.orgId) {
+      toggleFollow(post.entityPublicId); // no real id at all — local-only, unchanged from before
+      return;
+    }
+    const cached = orgTypeCache.current[post.orgId];
+    if (cached) {
+      toggleFollow(post.entityPublicId, { type: cached, apiId: post.orgId, name: post.org, image: post.emoji, category: cached });
+      return;
+    }
+    setResolvingFollowId(post.id);
+    const type = await resolveOrgType(post.orgId);
+    setResolvingFollowId(null);
+    if (type) {
+      orgTypeCache.current[post.orgId] = type;
+      toggleFollow(post.entityPublicId, { type, apiId: post.orgId, name: post.org, image: post.emoji, category: type });
+    } else {
+      // Couldn't place it under any known org type — fall back rather than
+      // block the member from following at all.
+      toggleFollow(post.entityPublicId);
     }
   };
 
@@ -277,15 +345,14 @@ export default function MemberFeedPage() {
                     </div>
                   </div>
 
-                  {/* Follow Button — local-only. A feed post's backing org
-                      exposes publicId but not its real backend id or a
-                      reliable type (temple/dharamshala/jain centre), both
-                      required to call the real follow endpoint safely; see
-                      toggleFollow's opts in VisibilityEngineContext.jsx. */}
+                  {/* Follow Button. Resolves the post's org type on first
+                      click (see followPost above) so this calls the real
+                      follow endpoint instead of only updating local state. */}
                   <button
-                    onClick={() => toggleFollow(post.entityPublicId)}
+                    onClick={() => followPost(post)}
+                    disabled={resolvingFollowId === post.id}
                     className={cn(
-                      "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 shrink-0",
+                      "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 shrink-0 disabled:opacity-60",
                       followed
                         ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                         : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
