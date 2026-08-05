@@ -28,12 +28,6 @@ const CATEGORIES = [
 ];
 
 
-const TRENDING = [
-  { label: "Palitana Tirth", emoji: "🛕", type: "Temple" },
-  { label: "Paryushan 2025", emoji: "📿", type: "Event" },
-  { label: "Ranakpur Yatra", emoji: "🗺️", type: "Tour" },
-  { label: "Acharya Dev Chaturmas", emoji: "🙏", type: "MS Update" },
-];
 
 /* ─── Result cards ──────────────────────────────────────────────────────── */
 function TempleResult({ item }) {
@@ -229,28 +223,6 @@ export default function MemberExplorePage() {
             </div>
           </section>
 
-          {/* ── Trending ─────────────────────────────────────────────── */}
-          {!activeCategory && (
-            <section>
-              <h2 className="text-sm font-bold text-slate-800 mb-3">🔥 {t("Trending")}</h2>
-              <div className="space-y-2">
-                {TRENDING.map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={() => setSearch(item.label)}
-                    className="w-full flex items-center gap-3 bg-white rounded-xl border border-slate-100 px-3 py-2.5 shadow-sm hover:shadow-md transition-shadow text-left"
-                  >
-                    <span className="text-xl">{item.emoji}</span>
-                    <div className="flex-1">
-                      <div className="text-xs font-semibold text-slate-800">{item.label}</div>
-                      <div className="text-[9px] text-slate-400">{item.type}</div>
-                    </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
         </>
       )}
 
