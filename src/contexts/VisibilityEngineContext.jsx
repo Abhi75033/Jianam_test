@@ -4,22 +4,27 @@ import { distanceToEntity } from "@/lib/geo";
 import { memberClient } from "@/lib/memberClient";
 
 /**
- * Real follow/unfollow endpoints, by entity type. Confirmed against admin's
- * own usage: MonkDetailPage.jsx calls POST /monks/{id}/follow AND
- * /monks/{id}/unfollow (both directions); OrgDetailPage.jsx only ever calls
- * POST {prefix}/{id}/follow for temples/dharamshalas/jain-centers — no
- * unfollow route exists anywhere in the codebase for org-type entities.
- * `supportsUnfollow: false` is load-bearing, not an oversight: it decides
- * whether toggleFollow is allowed to flip local state back to "not
- * following" (see toggleFollow below).
+ * Real follow/unfollow endpoints, by entity type.
+ *
+ * MonkDetailPage.jsx's own usage already proved POST /monks/{id}/follow and
+ * /monks/{id}/unfollow. Org-type unfollow looked unsupported because no
+ * admin or member code anywhere ever called it — but that only proves it
+ * was never *wired up*, not that the route doesn't *exist*. Verified
+ * directly against the live API (unauthenticated probe, controlled against
+ * a fake action on the same resource to rule out a wildcard route):
+ * POST /temples/{id}/unfollow, /dharamshalas/{id}/unfollow and
+ * /jain-centers/{id}/unfollow all return 401 "Missing bearer token" — the
+ * same shape as the confirmed-real .../follow routes — while a made-up
+ * action on the same resource (.../totally-fake-xyz) cleanly 404s. The
+ * routes are real; admin's UI just never exposed a way to call them.
  */
 const FOLLOW_ENDPOINTS = {
   monk: { prefix: "/monks", supportsUnfollow: true },
   ms: { prefix: "/monks", supportsUnfollow: true },
-  temple: { prefix: "/temples", supportsUnfollow: false },
-  dharamshala: { prefix: "/dharamshalas", supportsUnfollow: false },
-  jaincentre: { prefix: "/jain-centers", supportsUnfollow: false },
-  jaincenter: { prefix: "/jain-centers", supportsUnfollow: false },
+  temple: { prefix: "/temples", supportsUnfollow: true },
+  dharamshala: { prefix: "/dharamshalas", supportsUnfollow: true },
+  jaincentre: { prefix: "/jain-centers", supportsUnfollow: true },
+  jaincenter: { prefix: "/jain-centers", supportsUnfollow: true },
 };
 
 function resolveFollowEndpoint(type) {
