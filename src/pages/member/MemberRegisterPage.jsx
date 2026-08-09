@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Loader2, Check, ArrowLeft, ShieldCheck, Heart, Sparkles, User,
   Calendar, MapPin, Globe, CreditCard, FileText, Lock, Phone, ArrowRight,
-  UserPlus, CheckCircle2, Shield
+  UserPlus, CheckCircle2, Shield, HelpCircle
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 import { PhoneField } from "@/components/common/PhoneInput";
@@ -89,7 +89,7 @@ export default function MemberRegisterPage() {
   const [registrationToken, setRegistrationToken] = useState(null);
 
   // Step 2: Member Type
-  const [memberType, setMemberType] = useState("JAIN"); // "JAIN" or "NON_JAIN"
+  const [memberType, setMemberType] = useState("JAIN");
 
   // Step 3: Personal Details
   const [firstName, setFirstName] = useState("");
@@ -252,7 +252,7 @@ export default function MemberRegisterPage() {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 items-center p-6 md:p-10 gap-8">
           
           {/* ======================================================================= */}
-          {/* LEFT SIDE: Brand, Tagline, Central Artwork & Orbiting Nodes             */}
+          {/* LEFT SIDE: Brand, Tagline, Central Temple Orb & Orbiting Nodes          */}
           {/* ======================================================================= */}
           <div className="lg:col-span-7 flex flex-col justify-between h-full space-y-6">
             
@@ -299,66 +299,14 @@ export default function MemberRegisterPage() {
               {/* Background Glow Ring */}
               <div className="absolute w-[260px] h-[260px] rounded-full bg-gradient-to-tr from-sky-400/20 via-indigo-400/20 to-purple-400/20 blur-2xl animate-pulse" />
               
-              {/* Animated Spiritual Mandala */}
-              <div className="relative w-[240px] h-[240px] rounded-full border-4 border-white/80 shadow-[0_15px_35px_rgba(37,99,235,0.15)] bg-gradient-to-br from-[#0B1A48] via-[#1E3A8A] to-[#0B1A48] flex items-center justify-center overflow-hidden">
-                {/* Outer slow spin ring */}
-                <div className="absolute inset-0 flex items-center justify-center" style={{ animation: "spin 18s linear infinite" }}>
-                  <svg width="220" height="220" viewBox="0 0 220 220" fill="none">
-                    <circle cx="110" cy="110" r="104" stroke="url(#g1-reg)" strokeWidth="1.5" strokeDasharray="8 5" opacity="0.6"/>
-                    <circle cx="110" cy="110" r="88" stroke="#F97316" strokeWidth="0.8" strokeDasharray="4 8" opacity="0.4"/>
-                    <defs>
-                      <linearGradient id="g1-reg" x1="0" y1="0" x2="220" y2="220" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#F97316"/>
-                        <stop offset="1" stopColor="#EAB308"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                {/* Counter-spin inner ring */}
-                <div className="absolute inset-0 flex items-center justify-center" style={{ animation: "spin 10s linear infinite reverse" }}>
-                  <svg width="160" height="160" viewBox="0 0 160 160" fill="none">
-                    <circle cx="80" cy="80" r="74" stroke="#EAB308" strokeWidth="1" strokeDasharray="6 6" opacity="0.5"/>
-                    {[0,45,90,135,180,225,270,315].map((deg, i) => (
-                      <circle key={i}
-                        cx={80 + 68 * Math.cos((deg * Math.PI) / 180)}
-                        cy={80 + 68 * Math.sin((deg * Math.PI) / 180)}
-                        r="4" fill="#F97316" opacity="0.7"
-                      />
-                    ))}
-                  </svg>
-                </div>
-                {/* Static petal SVG */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-                    {[0,60,120,180,240,300].map((deg, i) => (
-                      <ellipse key={i}
-                        cx="60" cy="60" rx="18" ry="36"
-                        fill="url(#petal-reg)"
-                        opacity="0.22"
-                        transform={`rotate(${deg} 60 60)`}
-                      />
-                    ))}
-                    <defs>
-                      <linearGradient id="petal-reg" x1="60" y1="24" x2="60" y2="96" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#F97316"/>
-                        <stop offset="1" stopColor="#EAB308" stopOpacity="0"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                {/* Centre Star symbol */}
-                <div className="relative z-10 flex flex-col items-center gap-1.5">
-                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2L15 8L22 9L17 14L18 21L12 17.5L6 21L7 14L2 9L9 8L12 2Z" fill="url(#starG-reg)" />
-                    <defs>
-                      <linearGradient id="starG-reg" x1="2" y1="2" x2="22" y2="21" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#F97316"/>
-                        <stop offset="1" stopColor="#EAB308"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <span className="text-[10px] font-bold tracking-[0.2em] text-white/80 uppercase">JiNANAM</span>
-                </div>
+              {/* Central Temple Orb with /images/login_temple_bg.png */}
+              <div className="relative w-[240px] h-[240px] rounded-full border-4 border-white shadow-[0_15px_35px_rgba(37,99,235,0.18)] bg-gradient-to-br from-[#0B1A48] via-[#1E3A8A] to-[#0B1A48] flex items-center justify-center overflow-hidden">
+                <img
+                  src="/images/login_temple_bg.png"
+                  alt="JiNANAM Temple"
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                />
               </div>
 
               {/* Orbiting Category Nodes */}
@@ -777,6 +725,37 @@ export default function MemberRegisterPage() {
               </div>
 
             </div>
+          </div>
+
+        </div>
+
+        {/* ======================================================================= */}
+        {/* BOTTOM FOOTER BAR (Matches mock specification)                           */}
+        {/* ======================================================================= */}
+        <div className="border-t border-slate-200/60 bg-white/40 backdrop-blur-md px-6 md:px-10 py-3.5 flex flex-col md:flex-row items-center justify-between text-[11px] font-medium text-slate-500 gap-2">
+          
+          {/* Left Footer: Secure Registration */}
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Shield className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <span className="font-bold text-slate-700">{t("Secure Registration")}</span>
+              <span className="mx-1.5 text-slate-300">|</span>
+              <span>{t("Your data is protected with enterprise-grade security")}</span>
+            </div>
+          </div>
+
+          {/* Center Footer: Foundation Text */}
+          <div className="text-center font-semibold text-slate-600">
+            <span className="font-bold text-[#0B1A48]">JiNANAM Foundation</span>
+            <span className="hidden lg:inline text-slate-400 font-normal"> — Building a united, empowered and compassionate Jain community.</span>
+          </div>
+
+          {/* Right Footer: Support Link */}
+          <div className="flex items-center gap-1.5 text-blue-600 font-semibold hover:underline cursor-pointer">
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>{t("Need Help? Contact our support team")}</span>
           </div>
 
         </div>
