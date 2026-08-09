@@ -186,21 +186,67 @@ export default function MemberLoginPage() {
               {/* Background Glow Ring */}
               <div className="absolute w-[260px] h-[260px] rounded-full bg-gradient-to-tr from-sky-400/20 via-indigo-400/20 to-purple-400/20 blur-2xl animate-pulse" />
               
-              {/* Temple Artwork Image */}
-              <div className="relative w-[240px] h-[240px] rounded-full overflow-hidden border-4 border-white/80 shadow-[0_15px_35px_rgba(37,99,235,0.15)] bg-gradient-to-b from-sky-100 to-indigo-50 flex items-center justify-center">
-                <img 
-                  src="/images/login_temple_bg.png" 
-                  alt="JiNANAM Jain Temple" 
-                  className="w-full h-full object-cover scale-105"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                />
-                <div className="hidden flex-col items-center justify-center text-center p-4">
-                  <span className="text-6xl">🛕</span>
-                  <span className="text-xs font-bold text-indigo-900 mt-2">JiNANAM Temple</span>
+              {/* Animated Spiritual Mandala — no image file needed */}
+              <div className="relative w-[240px] h-[240px] rounded-full border-4 border-white/80 shadow-[0_15px_35px_rgba(37,99,235,0.15)] bg-gradient-to-br from-[#0B1A48] via-[#1E3A8A] to-[#0B1A48] flex items-center justify-center overflow-hidden">
+                {/* Outer slow spin ring */}
+                <div className="absolute inset-0 flex items-center justify-center" style={{ animation: "spin 18s linear infinite" }}>
+                  <svg width="220" height="220" viewBox="0 0 220 220" fill="none">
+                    <circle cx="110" cy="110" r="104" stroke="url(#g1)" strokeWidth="1.5" strokeDasharray="8 5" opacity="0.6"/>
+                    <circle cx="110" cy="110" r="88" stroke="#F97316" strokeWidth="0.8" strokeDasharray="4 8" opacity="0.4"/>
+                    <defs>
+                      <linearGradient id="g1" x1="0" y1="0" x2="220" y2="220" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#F97316"/>
+                        <stop offset="1" stopColor="#EAB308"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
                 </div>
+                {/* Counter-spin inner ring */}
+                <div className="absolute inset-0 flex items-center justify-center" style={{ animation: "spin 10s linear infinite reverse" }}>
+                  <svg width="160" height="160" viewBox="0 0 160 160" fill="none">
+                    <circle cx="80" cy="80" r="74" stroke="#EAB308" strokeWidth="1" strokeDasharray="6 6" opacity="0.5"/>
+                    {[0,45,90,135,180,225,270,315].map((deg, i) => (
+                      <circle key={i}
+                        cx={80 + 68 * Math.cos((deg * Math.PI) / 180)}
+                        cy={80 + 68 * Math.sin((deg * Math.PI) / 180)}
+                        r="4" fill="#F97316" opacity="0.7"
+                      />
+                    ))}
+                  </svg>
+                </div>
+                {/* Static petal SVG */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                    {[0,60,120,180,240,300].map((deg, i) => (
+                      <ellipse key={i}
+                        cx="60" cy="60" rx="18" ry="36"
+                        fill="url(#petal)"
+                        opacity="0.22"
+                        transform={`rotate(${deg} 60 60)`}
+                      />
+                    ))}
+                    <defs>
+                      <linearGradient id="petal" x1="60" y1="24" x2="60" y2="96" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#F97316"/>
+                        <stop offset="1" stopColor="#EAB308" stopOpacity="0"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                {/* Centre Om / Star symbol */}
+                <div className="relative z-10 flex flex-col items-center gap-1.5">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15 8L22 9L17 14L18 21L12 17.5L6 21L7 14L2 9L9 8L12 2Z" fill="url(#starG)" />
+                    <defs>
+                      <linearGradient id="starG" x1="2" y1="2" x2="22" y2="21" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#F97316"/>
+                        <stop offset="1" stopColor="#EAB308"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-white/80 uppercase">JiNANAM</span>
+                </div>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               </div>
 
               {/* Orbiting Category Nodes */}

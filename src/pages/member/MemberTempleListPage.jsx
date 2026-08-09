@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Building2, Search, MapPin, Navigation, Star, Clock, Users,
-  Heart, Phone, Globe, ChevronRight, ShieldCheck, CheckCircle,
-  Share2, Bookmark, Flag, CalendarCheck, Sparkles, MessageSquare, AlertCircle, Home
+  Heart, Phone, Globe, ChevronRight, ShieldCheck, CheckCircle2,
+  Share2, Bookmark, Flag, CalendarCheck, Sparkles, MessageSquare,
+  AlertCircle, Home, Utensils, Hotel, ArrowUpRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,8 +13,6 @@ import { useMemberList, compactNumber } from "@/hooks/useMemberList";
 import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
 import { toast } from "sonner";
 
-
-/** {label: time} for the timings grid, or null when the org has none set. */
 function buildTimings(o) {
   const t = {
     Aarti: o.aartiTiming, Pakshal: o.pakshalTiming,
@@ -23,7 +22,6 @@ function buildTimings(o) {
   return present.length ? Object.fromEntries(present) : null;
 }
 
-/** Maps a temple/organisation row onto the fields this page renders (§4.5.2). */
 function mapOrg(o, i) {
   return {
     id: o.id || o.publicId || i,
@@ -38,10 +36,6 @@ function mapOrg(o, i) {
     rating: o.rating ?? null,
     reviews: o.reviewCount ?? 0,
     followers: compactNumber(o.followerCount ?? 0),
-    emoji: o.emoji || "🛕",
-    // The card renders a string OR a {label: time} object. Only build the
-    // object when something is actually set — an all-undefined object is
-    // truthy and would render an empty grid.
     timings: o.timings || buildTimings(o),
     dhajaYear: o.dhajaRecords?.[0]?.year || o.dhajaYear || null,
     currentChaturmas: o.chaturmasStays?.[0]?.monk?.fullName || o.currentChaturmas || null,
@@ -65,10 +59,6 @@ export default function MemberTempleListPage() {
     }
   };
 
-  const onReportInfo = (tName, tId) => {
-    toast.success(t("Support Ticket created for reporting incorrect information on {0} ({1}). Track in Support.", [tName, tId]));
-  };
-
   const { items: orgs, loading, error, reload } = useMemberList("/temples", {
     params: search.trim() ? { q: search.trim() } : undefined,
     map: mapOrg,
@@ -87,44 +77,46 @@ export default function MemberTempleListPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 max-w-7xl mx-auto">
       
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-orange-500" />
-            <span>{t("Temples, Stanaks & Jain Centres Directory")}</span>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+              <Building2 className="h-4.5 w-4.5" />
+            </div>
+            <span>{t("Temples, Sthanaks & Jain Centres")}</span>
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Explore Derasars (JFJT), Stanaks (JFSK), Jain Centres (JFJC), Samayik & Pravachan timings, Chaturmas schedules & Bookings.
+            {t("Explore Derasars, Sthanaks, Jain Centres, Darshan timings, Dharamshalas and facilities.")}
           </p>
         </div>
 
-        {/* Unique ID & Name Search */}
+        {/* Search */}
         <div className="relative w-full md:w-80">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("Search Name or ID (e.g. JFSK108, JFJT108)…")}
-            className="w-full pl-10 pr-4 py-2.5 text-xs rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all"
+            placeholder={t("Search Derasar, city, or ID…")}
+            className="w-full pl-10 pr-4 py-2.5 text-xs rounded-2xl border border-slate-200 bg-slate-50/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all shadow-inner"
           />
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {["All", "Open Now", "Sthanakvasi", "With Bhojanshala", "With Dharamshala"].map((f) => (
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {["All", "Open Now", "Sthanakvasi"].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={cn(
-              "px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap",
+              "text-xs font-bold px-4 py-2 rounded-2xl border transition-all active:scale-95 shadow-xs whitespace-nowrap",
               filter === f
-                ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-gradient-to-r from-orange-500 to-amber-500 border-transparent text-white shadow-orange-500/20"
+                : "bg-white border-slate-200/80 text-slate-700 hover:bg-slate-50"
             )}
           >
             {t(f)}
@@ -132,145 +124,109 @@ export default function MemberTempleListPage() {
         ))}
       </div>
 
-      {/* Directory Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filtered.map((tmpl) => {
-          const followed = isEntityFollowed(tmpl.publicId);
+      {/* Temples Grid */}
+      <ListState
+        loading={loading}
+        error={error}
+        count={filtered.length}
+        onRetry={reload}
+        emptyTitle={t("No temples match your search")}
+        emptyHint={t("Try searching for another temple name, city, or check back soon.")}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {filtered.map((tmpl) => {
+            const followed = isEntityFollowed(tmpl.publicId);
 
-          return (
-            <div key={tmpl.id} className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 relative flex flex-col justify-between">
-              
-              <div className="space-y-3">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-2xl shrink-0">
-                      {tmpl.emoji}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-sm font-black text-slate-900">{tmpl.name}</h2>
-                        <span className="text-[10px] font-mono font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
-                          {tmpl.publicId}
-                        </span>
+            return (
+              <div
+                key={tmpl.id}
+                className="bg-white rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-orange-300 transition-all overflow-hidden flex flex-col justify-between p-5 sm:p-6 group"
+              >
+                <div className="space-y-4">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-50 to-orange-100 border border-orange-200/70 text-orange-600 flex items-center justify-center font-bold text-xl shrink-0 shadow-2xs">
+                        <Building2 className="h-6 w-6" />
                       </div>
-                      <div className="text-[11px] text-slate-500 font-medium">
-                        {tmpl.city} • {tmpl.sect}
+                      <div className="min-w-0">
+                        <Link to={`/member/temples/${tmpl.id}`}>
+                          <h3 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-orange-600 transition-colors truncate">
+                            {tmpl.name}
+                          </h3>
+                        </Link>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="font-mono text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                            {tmpl.publicId}
+                          </span>
+                          <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0", tmpl.open ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600")}>
+                            {tmpl.open ? t("Open") : t("Closed")}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => toggleFollow(tmpl.publicId, { type: "temple", apiId: tmpl.id, name: tmpl.name, image: tmpl.emoji, category: "temple" })}
-                    className={cn(
-                      "p-2 rounded-xl text-xs font-bold border transition-colors",
-                      followed ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                  {/* Address & Sect */}
+                  <div className="space-y-1.5 text-xs text-slate-500 font-medium">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">{tmpl.area ? `${tmpl.area}, ` : ""}{tmpl.city || "India"}</span>
+                    </div>
+                    {tmpl.sect && (
+                      <div className="text-[11px] text-slate-400 truncate">
+                        {tmpl.sect}
+                      </div>
                     )}
-                    title={followed ? "Followed" : "Follow Entity"}
-                  >
-                    <Bookmark className={cn("h-4 w-4", followed && "fill-amber-500 text-amber-500")} />
-                  </button>
-                </div>
-
-                {/* Rating & Distance */}
-                <div className="flex items-center gap-4 text-xs font-bold">
-                  <span className="flex items-center gap-1 text-amber-500">
-                    <Star className="h-4 w-4 fill-amber-500" />
-                    <span>{tmpl.rating}</span>
-                    <span className="text-slate-400 font-normal">({tmpl.reviews} reviews)</span>
-                  </span>
-                  <span className="text-slate-400">•</span>
-                  <span className="text-slate-600 flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5 text-orange-500" />
-                    <span>{tmpl.distance} away</span>
-                  </span>
-                </div>
-
-                {/* Timings & Highlights */}
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/60 text-xs space-y-1">
-                  <div className="font-bold text-slate-800 flex items-center gap-1.5 mb-1">
-                    <Clock className="h-3.5 w-3.5 text-orange-500" />
-                    <span>Timings</span>
                   </div>
-                  {tmpl.timings && typeof tmpl.timings === "object" ? (
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                      {Object.entries(tmpl.timings).map(([label, value]) =>
-                        value ? (
-                          <div key={label} className="flex items-center gap-1 text-[11px] text-slate-600">
-                            <span className="font-semibold text-slate-700">{label}:</span>
-                            <span>{value}</span>
-                          </div>
-                        ) : null
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-[11px] text-slate-500">{tmpl.timings || "—"}</span>
-                  )}
-                  <div className="text-[11px] text-slate-500 font-medium flex items-center gap-2 pt-1">
-                    <span>🕉️ Chaturmas: {tmpl.currentChaturmas}</span>
+
+                  {/* Facilities Badges */}
+                  <div className="flex items-center gap-2 flex-wrap pt-1">
+                    {tmpl.dharamshala && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-sky-50 text-sky-700 text-[10px] font-bold border border-sky-100">
+                        <Hotel className="h-3 w-3" />
+                        <span>{t("Dharamshala")}</span>
+                      </span>
+                    )}
+                    {tmpl.bhojanshala && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-100">
+                        <Utensils className="h-3 w-3" />
+                        <span>{t("Bhojanshala")}</span>
+                      </span>
+                    )}
                   </div>
-                  {tmpl.dhajaYear !== "Not Applicable (Sthanakvasi)" && (
-                    <div className="text-[11px] text-slate-500 font-medium flex items-center gap-2">
-                      <span>🚩 Dhaja Record: {tmpl.dhajaYear}</span>
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-3 pt-3 border-t border-slate-100">
-                <div className="grid grid-cols-3 gap-2">
-                  <Link
-                    to="/member/donations"
-                    className="py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 text-center font-bold text-xs border border-orange-200 transition-colors"
-                  >
-                    Donate
-                  </Link>
+                {/* Footer Controls */}
+                <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-1 text-xs font-bold text-slate-500">
+                    <Users className="h-3.5 w-3.5" />
+                    <span>{tmpl.followers}</span>
+                  </div>
 
-                  {tmpl.dharamshala ? (
-                    <Link
-                      to="/member/bookings"
-                      className="py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-center font-bold text-xs border border-sky-200 transition-colors"
-                    >
-                      Book Stay
-                    </Link>
-                  ) : (
+                  <div className="flex items-center gap-2">
                     <button
+                      type="button"
                       onClick={() => onShare(tmpl.name, tmpl.publicId)}
-                      className="py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-center font-bold text-xs border border-slate-200 transition-colors flex items-center justify-center gap-1"
+                      className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 active:scale-95 transition-all"
+                      title={t("Share")}
                     >
-                      <Share2 className="h-3.5 w-3.5" /> Share
+                      <Share2 className="h-4 w-4" />
                     </button>
-                  )}
-
-                  <button
-                    onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(tmpl.name + " " + tmpl.city)}`, "_blank")}
-                    className="py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-center font-bold text-xs border border-emerald-200 transition-colors flex items-center justify-center gap-1"
-                  >
-                    <Navigation className="h-3.5 w-3.5" /> Maps
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium pt-1">
-                  <button
-                    onClick={() => onReportInfo(tmpl.name, tmpl.publicId)}
-                    className="hover:text-red-600 flex items-center gap-1"
-                  >
-                    <AlertCircle className="h-3 w-3" /> Report Incorrect Info
-                  </button>
-                  <span>Last Updated: Today</span>
+                    <Link
+                      to={`/member/temples/${tmpl.id}`}
+                      className="px-3.5 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold text-xs active:scale-95 transition-all flex items-center gap-1"
+                    >
+                      <span>{t("View Details")}</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
                 </div>
               </div>
-
-              {/* Section 21 Disclaimer Banner */}
-              <div className="mt-2 text-[9px] text-slate-400 leading-tight bg-slate-50 p-2 rounded-xl border border-slate-200">
-                📌 <em>All timings, facilities, and contact details are subject to change. Please contact the Stanak/Derasar directly before planning your visit.</em>
-              </div>
-
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </ListState>
 
     </div>
   );

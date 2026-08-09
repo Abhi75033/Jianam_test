@@ -51,24 +51,21 @@ export const memberAuthApi = {
   },
 
   /**
-   * §B1.4 — minimum fields only: name + verified mobile + community.
-   * Registration is category-specific on the API (`/members/register/jain` vs
-   * `/members/register/non-jain`); there is no `/auth/register`.
+   * §B1.4 — Registration is category-specific on the API
+   * (`/members/register/jain` vs `/members/register/non-jain`).
+   *
+   * The full payload from MemberRegisterPage is forwarded so that ALL fields
+   * the user fills in (DOB, gender, address, Jain community / gaccha details,
+   * government ID documents, WhatsApp, consents, etc.) are actually persisted.
+   * Previously only 5 fields were extracted and the rest were silently dropped.
    */
-  async register({ registrationToken, firstName, surname, mobile, memberType, communityId }) {
+  async register(payload) {
+    const memberType = String(payload.memberType || "").toUpperCase();
     const path =
-      String(memberType).toUpperCase() === "NON_JAIN"
+      memberType === "NON_JAIN"
         ? "/members/register/non-jain"
         : "/members/register/jain";
-    return unwrap(
-      await api.post(path, {
-        registrationToken,
-        firstName,
-        surname,
-        mobile,
-        communityId,
-      })
-    );
+    return unwrap(await api.post(path, payload));
   },
 };
 

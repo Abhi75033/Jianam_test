@@ -1,14 +1,9 @@
-import { Loader2, Inbox, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, Inbox, AlertCircle, RefreshCw, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { cn } from "@/lib/utils";
 
 /**
- * ListState — loading / error / empty for the member list screens.
- *
- * The member pages previously rendered hardcoded arrays, so none of them had
- * any of these states. Now that they fetch, all three are real possibilities
- * and each needs to say something useful rather than showing a blank column.
- *
- * Renders `children` when there is data and nothing is loading or failing.
+ * ListState — Elegant loading skeletons, error recovery, and empty states.
  */
 export default function ListState({
   loading,
@@ -16,36 +11,50 @@ export default function ListState({
   count = 0,
   emptyTitle,
   emptyHint,
+  emptyActionText,
+  emptyActionTo,
+  onEmptyAction,
   onRetry,
+  skeletonCount = 3,
+  skeletonType = "card",
   children,
 }) {
   const { t } = useLanguage();
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        <span className="text-xs font-medium">{t("Loading…")}</span>
+      <div className="space-y-4 animate-pulse">
+        {Array.from({ length: skeletonCount }).map((_, i) => (
+          <div
+            key={i}
+            className="p-4 sm:p-5 rounded-3xl border border-slate-200/70 bg-white/80 shadow-xs flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-2xl skeleton-shimmer shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-1/3 rounded-md skeleton-shimmer" />
+              <div className="h-3 w-2/3 rounded-md skeleton-shimmer" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-6">
-        <div className="h-11 w-11 rounded-full bg-red-50 text-red-500 flex items-center justify-center">
-          <AlertCircle className="h-5 w-5" />
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-3xl bg-red-50/50 border border-red-100/80 shadow-xs">
+        <div className="h-12 w-12 rounded-2xl bg-red-100 text-red-500 flex items-center justify-center mb-3 shadow-xs">
+          <AlertCircle className="h-6 w-6" />
         </div>
-        <div>
-          <div className="text-sm font-bold text-slate-800">{t("Couldn't load this")}</div>
-          <div className="text-xs text-slate-500 mt-0.5 max-w-sm">{error}</div>
-        </div>
+        <div className="text-sm font-bold text-slate-800">{t("Unable to load data")}</div>
+        <div className="text-xs text-slate-500 mt-1 max-w-sm">{error}</div>
         {onRetry && (
           <button
             onClick={onRetry}
-            className="mt-1 inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:text-orange-700"
+            className="mt-4 px-4 py-2 rounded-xl bg-white border border-red-200 text-red-600 font-bold text-xs shadow-xs hover:bg-red-50 active:scale-95 transition-all inline-flex items-center gap-1.5"
           >
-            <RefreshCw className="h-3.5 w-3.5" /> {t("Try again")}
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>{t("Try Again")}</span>
           </button>
         )}
       </div>
@@ -54,14 +63,21 @@ export default function ListState({
 
   if (!count) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-6">
-        <div className="h-11 w-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
-          <Inbox className="h-5 w-5" />
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-3xl bg-slate-50/70 border border-dashed border-slate-200 shadow-2xs">
+        <div className="h-12 w-12 rounded-2xl bg-white text-slate-400 flex items-center justify-center mb-3 shadow-xs">
+          <Inbox className="h-6 w-6 text-slate-400" />
         </div>
-        <div>
-          <div className="text-sm font-bold text-slate-700">{emptyTitle || t("Nothing here yet")}</div>
-          {emptyHint && <div className="text-xs text-slate-500 mt-0.5 max-w-sm">{emptyHint}</div>}
-        </div>
+        <div className="text-sm font-bold text-slate-800">{emptyTitle || t("Nothing here yet")}</div>
+        {emptyHint && <div className="text-xs text-slate-500 mt-1 max-w-sm">{emptyHint}</div>}
+        {(emptyActionText && (emptyActionTo || onEmptyAction)) && (
+          <button
+            onClick={onEmptyAction}
+            className="mt-4 px-4 py-2 rounded-xl bg-orange-500 text-white font-bold text-xs shadow-md shadow-orange-500/20 hover:bg-orange-600 active:scale-95 transition-all inline-flex items-center gap-1.5"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>{emptyActionText}</span>
+          </button>
+        )}
       </div>
     );
   }

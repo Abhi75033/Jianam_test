@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Loader2, Check, ArrowLeft, ShieldCheck, Heart, Sparkles, User, Calendar, MapPin, Globe, CreditCard, FileText, Lock } from "lucide-react";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { PhoneField } from "@/components/common/PhoneInput";
+import { cn } from "@/lib/utils";
 import { memberAuthApi } from "@/lib/memberApi";
 import { memberClient as api } from "@/lib/memberClient";
 import { extractErrorMessage } from "@/lib/api";

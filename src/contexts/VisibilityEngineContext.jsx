@@ -187,9 +187,63 @@ export function VisibilityEngineProvider({ children }) {
   const [travelLocation, setTravelLocation] = useState(null);
 
   // Real device GPS fix, supplied by useMemberLocation() at the app root.
+  // Real device GPS fix, supplied by useMemberLocation() at the app root.
   // Kept separate from travelLocation: this is the raw coordinate pair used
   // for distance math; travelLocation is the resolved place name shown in UI.
   const [deviceCoords, setDeviceCoords] = useState(null);
+
+  // Sync follow state and tiers from server on mount
+  useEffect(() => {
+    async function syncServerFollows() {
+      try {
+        const res = await memberClient.get("/members/me/follows");
+        const data = res?.data?.data || res?.data || {};
+        const orgs = data.organizations || [];
+        const monks = data.monks || [];
+
+        const newFollowedIds = [];
+        const newFollowedMeta = {};
+
+        orgs.forEach((item) => {
+          const org = item.organization;
+          if (!org) return;
+          const entityId = org.publicId || org.id;
+          newFollowedIds.push(entityId);
+          newFollowedMeta[entityId] = {
+            type: (org.type || "temple").toLowerCase(),
+            apiId: org.id,
+            name: org.name,
+            image: org.logoUrl || org.coverUrl,
+            category: org.type === "DHARAMSHALA" ? "dharamshala" : "temple",
+            tier: item.tier ? item.tier.toLowerCase() : "primary",
+          };
+        });
+
+        monks.forEach((item) => {
+          const monk = item.monk;
+          if (!monk) return;
+          const entityId = monk.publicId || monk.id;
+          newFollowedIds.push(entityId);
+          newFollowedMeta[entityId] = {
+            type: "monk",
+            apiId: monk.id,
+            name: monk.dikshaName,
+            image: monk.photoUrl,
+            category: "monk",
+            tier: item.tier ? item.tier.toLowerCase() : "primary",
+          };
+        });
+
+        if (newFollowedIds.length > 0) {
+          setFollowedIds(newFollowedIds);
+          setFollowedMeta((prev) => ({ ...prev, ...newFollowedMeta }));
+        }
+      } catch (err) {
+        // Unauthenticated or offline: fallback to local state
+      }
+    }
+    syncServerFollows();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("jinanam_user_community_prefs", JSON.stringify(userPreferences));
@@ -212,25 +266,11 @@ export function VisibilityEngineProvider({ children }) {
     });
   };
 
-  /**
-   * `entityId` is whatever key the caller already sorts/dedupes by
-   * (publicId in most member screens) — it drives local priority-sort
-   * state and is never sent to the API. `opts.apiId` is the entity's real
-   * backend id (the same id used to fetch its detail page), required to
-   * actually call the follow endpoint; `opts.type` picks which endpoint.
-   * `opts.name`/`opts.image`/`opts.category` are optional display metadata,
-   * captured into followedMeta so a "Following" list has something to show
-   * beyond a bare id — never sent to the API.
-   *
-   * Callers that omit `opts` keep the pre-existing local-only behavior —
-   * this covers screens (like the Feed, where a post's backing org id
-   * isn't reliably available) that can't yet supply a confirmed real id.
-   */
   const toggleFollow = async (entityId, opts = {}) => {
-    const { type, apiId, name, image, category } = opts;
+    const { type, apiId, name, image, category, tier } = opts;
     const wasFollowed = followedIds.includes(entityId);
     const endpoint = resolveFollowEndpoint(type);
-    const meta = { type, apiId, name, image, category };
+    const meta = { type, apiId, name, image, category, tier: tier || "primary" };
 
     if (!endpoint || !apiId) {
       setFollowedIds((prev) => (wasFollowed ? prev.filter((id) => id !== entityId) : [...prev, entityId]));
@@ -239,13 +279,6 @@ export function VisibilityEngineProvider({ children }) {
     }
 
     if (wasFollowed) {
-      if (!endpoint.supportsUnfollow) {
-        // No unfollow route exists for this entity type. Flipping local
-        // state to "not following" here would desync it from what the
-        // server still has on record — worse than just explaining why.
-        toast.info("Unfollowing isn't available for this yet.");
-        return;
-      }
       try {
         await memberClient.post(`${endpoint.prefix}/${apiId}/unfollow`);
         setFollowedIds((prev) => prev.filter((id) => id !== entityId));
@@ -257,7 +290,7 @@ export function VisibilityEngineProvider({ children }) {
     }
 
     try {
-      await memberClient.post(`${endpoint.prefix}/${apiId}/follow`);
+      await memberClient.post(`${endpoint.prefix}/${apiId}/follow`, { tier: (tier || "primary").toUpperCase() });
       setFollowedIds((prev) => [...prev, entityId]);
       setFollowedMeta((prev) => ({ ...prev, [entityId]: meta }));
     } catch {
@@ -269,13 +302,7 @@ export function VisibilityEngineProvider({ children }) {
     return followedIds.includes(entityId);
   };
 
-  /**
-   * Assigns a follow tier, enforcing the spec's per-category caps
-   * (TIER_CAPS) against however many *other* followed entities of the same
-   * category already hold that tier. Local-only — see the note on
-   * TIER_CAPS above for what that does and doesn't mean.
-   */
-  const setFollowTier = (entityId, tier) => {
+  const setFollowTier = async (entityId, tier) => {
     const meta = followedMeta[entityId];
     if (!meta?.category) {
       toast.error("Can't set a tier — this entity's type isn't known.");
@@ -294,6 +321,17 @@ export function VisibilityEngineProvider({ children }) {
       return;
     }
     setFollowedMeta((prev) => ({ ...prev, [entityId]: { ...prev[entityId], tier } }));
+
+    if (meta.type && meta.apiId) {
+      const endpoint = resolveFollowEndpoint(meta.type);
+      if (endpoint) {
+        try {
+          await memberClient.patch(`${endpoint.prefix}/${meta.apiId}/follow/tier`, { tier: tier.toUpperCase() });
+        } catch {
+          // Keep local fallback
+        }
+      }
+    }
   };
 
   const clearFollowTier = (entityId) => {

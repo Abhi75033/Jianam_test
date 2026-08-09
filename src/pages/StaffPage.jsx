@@ -1,3 +1,5 @@
+
+
 import { useEffect, useState, useRef } from "react";
 import { formatAadhaar, formatPan, isValidAadhaar, isValidPan } from "@/lib/idFormats";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -310,9 +312,15 @@ export default function StaffPage() {
     try {
       const payload = {
         organizationId: orgId,
+        // Top-level identity fields (required by POST /staff)
+        name: form.name,
+        mobile: form.mobile,
+        email: form.email || undefined,
         joiningDate: form.joiningDate ? new Date(form.joiningDate).toISOString() : undefined,
         departmentId: form.departmentId || undefined,
+        departmentSpecify: form.departmentId === "OTHER" ? form.departmentSpecify : undefined,
         designationId: form.designationId || undefined,
+        designationSpecify: form.designationId === "OTHER" ? form.designationSpecify : undefined,
         category: form.category,
         modulePermissions: (form.modulePermissions && form.modulePermissions.length > 0
           ? form.modulePermissions

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import {
   Tag, Search, MapPin, Gift, ExternalLink, MessageSquare,
-  Share2, Bookmark, Globe, Building2,
+  Share2, Bookmark, Globe, Building2, Phone, Sparkles, Check,
+  Clock, ArrowUpRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -11,17 +12,6 @@ import { memberClient } from "@/lib/memberClient";
 import { extractErrorMessage, STATIC_URL } from "@/lib/api";
 import { toast } from "sonner";
 
-/**
- * Maps an API offer onto the fields this page renders.
- *
- * The previous mapper invented fields (discount, couponCode, sponsor,
- * rating, distance) that don't exist anywhere in the real /offers schema —
- * confirmed by grepping every field the admin OffersPage.jsx actually reads
- * off an offer (title, description, companyName, companyLogoUrl, bannerUrl,
- * category.name, startAt/endAt, contact.phone, links.{whatsapp,website,maps},
- * publicId). Those cards were rendering blank price/coupon boxes and a
- * "Copy Coupon" button with nothing to copy on every real offer.
- */
 function mapOffer(o) {
   return {
     id: o.id,
@@ -43,7 +33,6 @@ function mapOffer(o) {
   };
 }
 
-/** Same active-window rule admin's OffersPage.jsx applies client-side. */
 function isActive(offer, now) {
   if (offer.deletedAt) return false;
   if (offer.startAt && new Date(offer.startAt) > now) return false;
@@ -94,7 +83,7 @@ export default function MemberOffersPage() {
     setSavingId(offer.id);
     try {
       await memberClient.post(`/offers/${offer.id}/${wasSaved ? "unsave" : "save"}`);
-      toast.success(wasSaved ? t("Offer removed from your Bookmarks list.") : t("Offer bookmarked! View under Saved Offers."));
+      toast.success(wasSaved ? t("Offer removed from saved list.") : t("Offer saved to bookmarks!"));
     } catch (err) {
       setSavedIds((prev) => {
         const next = new Set(prev);
@@ -109,8 +98,12 @@ export default function MemberOffersPage() {
 
   const onShare = (offer) => {
     const link = `https://jinanam.org/offers/${offer.publicId}`;
-    navigator.clipboard.writeText(link);
-    toast.success(t("Link copied to clipboard!"));
+    if (navigator.share) {
+      navigator.share({ title: offer.title, text: offer.description, url: link }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(link);
+      toast.success(t("Offer link copied to clipboard!"));
+    }
     memberClient.post(`/offers/${offer.id}/track/share`).catch(() => {});
   };
 
@@ -119,17 +112,19 @@ export default function MemberOffersPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 max-w-7xl mx-auto">
 
       {/* ── Top Header Banner ────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Gift className="h-6 w-6 text-orange-500" />
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <Gift className="h-4.5 w-4.5" />
+            </div>
             <span>{t("Community Offers & Deals")}</span>
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            {t("Verified deals from partner businesses for JiNANAM members.")}
+            {t("Exclusive verified discounts from community partners for JiNANAM members.")}
           </p>
         </div>
 
@@ -139,26 +134,24 @@ export default function MemberOffersPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("Search offers, businesses…")}
-            className="w-full pl-10 pr-4 py-2.5 text-xs rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all"
+            placeholder={t("Search deals, stores, products…")}
+            className="w-full pl-10 pr-4 py-2.5 text-xs rounded-2xl border border-slate-200 bg-slate-50/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all shadow-inner"
           />
         </div>
       </div>
 
       {/* ── Category Chips Filter ────────────────────────────────────────── */}
-      <div id="categories" className="scroll-mt-24" />
-      <div id="saved" className="scroll-mt-24" />
       {categories.length > 1 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           {categories.map((c) => (
             <button
               key={c}
               onClick={() => setSelectedCat(c)}
               className={cn(
-                "shrink-0 text-xs font-bold px-4 py-2 rounded-2xl border transition-all",
+                "shrink-0 text-xs font-bold px-4 py-2 rounded-2xl border transition-all active:scale-95 shadow-xs",
                 selectedCat === c
-                  ? "bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/20"
-                  : "bg-white border-slate-200/80 text-slate-600 hover:bg-slate-100"
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 border-transparent text-white shadow-emerald-600/20"
+                  : "bg-white border-slate-200/80 text-slate-700 hover:bg-slate-50"
               )}
             >
               {c === "all" ? t("All Offers") : c}
@@ -176,32 +169,47 @@ export default function MemberOffersPage() {
         emptyHint={savedOnly ? t("Tap the bookmark icon on any offer to save it here.") : t("Check back soon for new partner deals.")}
         onRetry={reload}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {filtered.map((offer) => (
             <div
               key={offer.id}
-              className="bg-white rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
+              className="bg-white rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-lg transition-all overflow-hidden flex flex-col justify-between group"
             >
-              <div className="h-32 bg-slate-100 relative">
+              {/* Banner / Image */}
+              <div className="h-36 bg-gradient-to-br from-slate-100 to-slate-200 relative overflow-hidden">
                 {offer.bannerSrc ? (
-                  <img src={offer.bannerSrc} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                  <img
+                    src={offer.bannerSrc}
+                    alt={offer.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-300">
-                    <Gift className="h-10 w-10" />
+                    <Gift className="h-12 w-12 text-emerald-400/40" />
                   </div>
                 )}
+                
+                {/* Category Pill on Banner */}
+                <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-emerald-800 text-[10px] font-extrabold shadow-xs">
+                  {offer.category}
+                </span>
+
+                {/* Bookmark Action */}
                 <button
                   onClick={() => toggleSave(offer)}
                   disabled={savingId === offer.id}
-                  className="absolute top-3 right-3 p-2 rounded-xl bg-white/90 backdrop-blur shadow-xs disabled:opacity-60"
+                  className="absolute top-3 right-3 p-2 rounded-xl bg-white/90 backdrop-blur-md shadow-xs hover:bg-white active:scale-95 transition-all"
+                  title={t("Save Offer")}
                 >
-                  <Bookmark className={cn("h-4 w-4", savedIds.has(offer.id) ? "fill-orange-500 text-orange-500" : "text-slate-500")} />
+                  <Bookmark className={cn("h-4 w-4", savedIds.has(offer.id) ? "fill-emerald-600 text-emerald-600" : "text-slate-600")} />
                 </button>
               </div>
 
+              {/* Content Body */}
               <div className="p-5 space-y-3 flex-1">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                  <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                     {offer.logoSrc ? (
                       <img src={offer.logoSrc} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
                     ) : (
@@ -209,16 +217,25 @@ export default function MemberOffersPage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[10px] font-black text-orange-600 uppercase tracking-wider">{offer.category}</div>
-                    <div className="text-[11px] font-bold text-slate-700 truncate">{offer.companyName}</div>
+                    <div className="text-xs font-bold text-slate-800 truncate">{offer.companyName || t("Community Partner")}</div>
                   </div>
                 </div>
 
-                <h3 className="text-sm font-bold text-slate-900 leading-snug">{offer.title}</h3>
-                {offer.description && <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{offer.description}</p>}
-                {offer.validity && <div className="text-[10px] text-slate-400 font-semibold">{offer.validity}</div>}
+                <h3 className="text-sm sm:text-base font-black text-slate-900 leading-snug group-hover:text-emerald-700 transition-colors">
+                  {offer.title}
+                </h3>
+                {offer.description && (
+                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{offer.description}</p>
+                )}
+                {offer.validity && (
+                  <div className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-amber-500" />
+                    <span>{offer.validity}</span>
+                  </div>
+                )}
               </div>
 
+              {/* Action Buttons Footer */}
               <div className="p-5 pt-0 flex items-center justify-between gap-2 border-t border-slate-100 mt-2 pt-3">
                 <div className="flex items-center gap-1.5">
                   {offer.whatsapp && (
@@ -226,9 +243,20 @@ export default function MemberOffersPage() {
                       href={`https://wa.me/${offer.whatsapp}`}
                       target="_blank" rel="noreferrer"
                       onClick={() => trackClick(offer)}
-                      className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                      className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                      title="WhatsApp"
                     >
-                      <MessageSquare className="h-3.5 w-3.5" />
+                      <MessageSquare className="h-4 w-4" />
+                    </a>
+                  )}
+                  {offer.phone && (
+                    <a
+                      href={`tel:${offer.phone}`}
+                      onClick={() => trackClick(offer)}
+                      className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                      title="Call"
+                    >
+                      <Phone className="h-4 w-4" />
                     </a>
                   )}
                   {offer.website && (
@@ -236,22 +264,30 @@ export default function MemberOffersPage() {
                       href={offer.website}
                       target="_blank" rel="noreferrer"
                       onClick={() => trackClick(offer)}
-                      className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                      title="Website"
                     >
-                      <Globe className="h-3.5 w-3.5" />
+                      <Globe className="h-4 w-4" />
                     </a>
                   )}
                   {offer.maps && (
-                    <a href={offer.maps} target="_blank" rel="noreferrer" className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200">
-                      <MapPin className="h-3.5 w-3.5" />
+                    <a
+                      href={offer.maps}
+                      target="_blank" rel="noreferrer"
+                      className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                      title="Location"
+                    >
+                      <MapPin className="h-4 w-4" />
                     </a>
                   )}
                 </div>
+                
                 <button
                   onClick={() => onShare(offer)}
-                  className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 active:scale-95 transition-all"
+                  title={t("Share Offer")}
                 >
-                  <Share2 className="h-3.5 w-3.5" />
+                  <Share2 className="h-4 w-4" />
                 </button>
               </div>
             </div>

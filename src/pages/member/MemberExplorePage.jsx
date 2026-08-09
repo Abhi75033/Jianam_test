@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import {
   Search, MapPin, Navigation, Star, ChevronRight,
   Building2, Users, Sparkles, Newspaper, CalendarCheck,
-  Heart, BookOpen, Map, Filter, X
+  Heart, BookOpen, Map, Filter, X, Gift, Utensils,
+  Hotel, Flame, Compass, ArrowUpRight
 } from "lucide-react";
-import { Link , useSearchParams, useOutletContext } from "react-router-dom";
+import { Link, useSearchParams, useOutletContext } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ListState from "@/components/member/ListState";
@@ -13,89 +14,87 @@ import { useVisibilityEngine } from "@/contexts/VisibilityEngineContext";
 import { formatDistance } from "@/lib/geo";
 import LocationPrompt from "@/components/member/LocationPrompt";
 
-/* ─── Demo data ──────────────────────────────────────────────────────────── */
 const CATEGORIES = [
-  { key: "temples",   label: "Temples",        emoji: "🛕" },
-  { key: "jaincentre",label: "Jain Centres",   emoji: "🏛️" },
-  { key: "dharamshala",label: "Dharamshalas",  emoji: "🏨" },
-  { key: "ms",        label: "MS",             emoji: "🙏" },
-  { key: "events",    label: "Events",         emoji: "🎉" },
-  { key: "tours",     label: "Tours",          emoji: "🗺️" },
-  { key: "community", label: "Community Pages",emoji: "👥" },
-  { key: "news",      label: "News",           emoji: "📰" },
-  { key: "offers",    label: "Offers",         emoji: "🏷️" },
-  { key: "bhojanshala",label: "Bhojanshala",  emoji: "🍱" },
+  { key: "temples",      label: "Temples",         icon: Building2, color: "from-amber-500 to-orange-500",   bg: "bg-amber-50 text-amber-600" },
+  { key: "jaincentre",   label: "Jain Centres",    icon: Compass,   color: "from-blue-500 to-indigo-600",     bg: "bg-blue-50 text-blue-600" },
+  { key: "dharamshala",  label: "Dharamshalas",    icon: Hotel,     color: "from-sky-500 to-cyan-600",        bg: "bg-sky-50 text-sky-600" },
+  { key: "ms",           label: "Maharaj Saheb",   icon: Sparkles,  color: "from-orange-500 to-amber-600",    bg: "bg-orange-50 text-orange-600" },
+  { key: "events",       label: "Events & Seva",   icon: Flame,     color: "from-rose-500 to-pink-600",       bg: "bg-rose-50 text-rose-600" },
+  { key: "tours",        label: "Tours & Yatras",  icon: Map,       color: "from-purple-500 to-indigo-600",   bg: "bg-purple-50 text-purple-600" },
+  { key: "community",    label: "Sangh Pages",     icon: Users,     color: "from-teal-500 to-emerald-600",    bg: "bg-teal-50 text-teal-600" },
+  { key: "news",         label: "Daily News",      icon: Newspaper, color: "from-slate-700 to-slate-900",     bg: "bg-slate-50 text-slate-700" },
+  { key: "offers",       label: "Offers & Deals",  icon: Gift,      color: "from-emerald-500 to-green-600",   bg: "bg-emerald-50 text-emerald-600" },
+  { key: "bhojanshala",  label: "Bhojanshalas",    icon: Utensils,  color: "from-amber-600 to-yellow-600",    bg: "bg-yellow-50 text-yellow-700" },
 ];
 
+function ResultCard({ item, isMs }) {
+  const { t } = useLanguage();
+  const linkTo = isMs ? `/member/ms/${item.id}` : `/member/temples/${item.id}`;
 
-
-/* ─── Result cards ──────────────────────────────────────────────────────── */
-function TempleResult({ item }) {
   return (
-    <Link to={`/member/temples/${item.id}`} className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3 hover:shadow-md transition-shadow">
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center text-2xl shrink-0">
-        🛕
+    <Link
+      to={linkTo}
+      className="flex items-center gap-3.5 sm:gap-4 bg-white rounded-3xl border border-slate-200/80 shadow-xs p-3.5 sm:p-4 hover:shadow-md hover:border-orange-300 active:scale-98 transition-all group"
+    >
+      <div className={cn(
+        "w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-lg sm:text-xl shrink-0 shadow-2xs font-bold border",
+        isMs
+          ? "bg-gradient-to-br from-orange-50 to-amber-100 text-orange-700 border-orange-200/60"
+          : "bg-gradient-to-br from-amber-50 to-orange-50 text-orange-600 border-amber-200/60"
+      )}>
+        {isMs ? <Sparkles className="h-6 w-6 text-orange-600" /> : <Building2 className="h-6 w-6 text-orange-600" />}
       </div>
+
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-bold text-slate-800 truncate">{item.name}</div>
-        <div className="flex items-center gap-1 mt-0.5">
-          <MapPin className="h-2.5 w-2.5 text-slate-400" />
-          <span className="text-[10px] text-slate-500">{item.city}</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 group-hover:text-orange-600 transition-colors truncate">
+            {item.name}
+          </h3>
+          {item.open != null && (
+            <span className={cn(
+              "text-[9px] font-extrabold px-2 py-0.5 rounded-full shrink-0",
+              item.open ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"
+            )}>
+              {item.open ? t("Open") : t("Closed")}
+            </span>
+          )}
         </div>
-        <div className="text-[9px] text-slate-400 mt-0.5 truncate">{item.community}</div>
-        <div className="flex items-center gap-2 mt-1">
-          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full", item.open ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600")}>
-            {item.open ? "Open" : "Closed"}
-          </span>
-          <span className="text-[9px] text-slate-400 flex items-center gap-0.5">
-            <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" /> {item.rating}
-          </span>
-          <span className="text-[9px] text-slate-400 flex items-center gap-0.5">
-            <Users className="h-2.5 w-2.5" /> {item.followers}
-          </span>
-          <span className="text-[9px] text-slate-400 flex items-center gap-0.5">
-            <Navigation className="h-2.5 w-2.5" /> {item.distance}
-          </span>
+
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium mt-0.5">
+          <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
+          <span className="truncate">{item.city || "India"}</span>
+          {item.community && <span className="truncate">• {item.community}</span>}
+        </div>
+
+        <div className="flex items-center gap-3 mt-1.5 text-[10px] text-slate-400 font-bold flex-wrap">
+          {item.rating && (
+            <span className="flex items-center gap-0.5 text-amber-600 font-bold">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              <span>{item.rating}</span>
+            </span>
+          )}
+          {item.followers && (
+            <span className="flex items-center gap-1 text-slate-500">
+              <Users className="h-3 w-3" />
+              <span>{item.followers} {t("followers")}</span>
+            </span>
+          )}
+          {item.distance && (
+            <span className="flex items-center gap-1 text-orange-600 font-extrabold bg-orange-50 px-2 py-0.5 rounded-md">
+              <Navigation className="h-2.5 w-2.5" />
+              <span>{item.distance}</span>
+            </span>
+          )}
         </div>
       </div>
-      <ChevronRight className="h-4 w-4 text-slate-300 shrink-0" />
+
+      <div className="w-8 h-8 rounded-xl bg-slate-50 group-hover:bg-orange-50 text-slate-400 group-hover:text-orange-600 flex items-center justify-center transition-colors shrink-0">
+        <ChevronRight className="h-4 w-4" />
+      </div>
     </Link>
   );
 }
 
-function MSResult({ item }) {
-  return (
-    <Link to={`/member/ms/${item.id}`} className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3 hover:shadow-md transition-shadow">
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-saffron-50 to-amber-100 border-2 border-amber-200 flex items-center justify-center text-2xl shrink-0">
-        🙏
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-xs font-bold text-slate-800 truncate">{item.name}</div>
-        <div className="flex items-center gap-1 mt-0.5">
-          <MapPin className="h-2.5 w-2.5 text-slate-400" />
-          <span className="text-[10px] text-slate-500">{item.city}</span>
-        </div>
-        <div className="flex items-center gap-2 mt-1">
-          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full",
-            item.status === "Staying" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700")}>
-            {item.status}
-          </span>
-          <span className="text-[9px] text-slate-400 flex items-center gap-0.5">
-            <Users className="h-2.5 w-2.5" /> {item.followers}
-          </span>
-        </div>
-      </div>
-      <ChevronRight className="h-4 w-4 text-slate-300 shrink-0" />
-    </Link>
-  );
-}
-
-/* ─── Main Component ──────────────────────────────────────────────────────── */
-/**
- * Each Explore category maps to its own endpoint. §4.18 search passes the term
- * through as `q`; categories with no directory endpoint yet resolve to null and
- * render the empty state rather than a broken request.
- */
 const CATEGORY_SOURCE = {
   temples:      { path: "/temples",        label: "temples" },
   jaincentre:   { path: "/jain-centers",   label: "Jain centres" },
@@ -108,15 +107,12 @@ const CATEGORY_SOURCE = {
   community:    { path: "/community-pages", label: "community pages" },
 };
 
-/** Normalises rows from very different endpoints into one card shape. */
 function mapResult(r, i) {
   return {
     id: r.id || r.publicId || i,
     name: r.name || r.fullName || r.title,
     city: r.city || r.location || r.currentLocation || "",
     community: [r.sect, r.subSect || r.gacchaName].filter(Boolean).join(" · "),
-    // Kept for the distance calc at render time (§4.3.4/§4.15.6); the API's
-    // own `distance` string, if present, is used until a GPS fix is available.
     distance: r.distance || "",
     latitude: r.latitude ?? r.lat ?? null,
     longitude: r.longitude ?? r.lng ?? null,
@@ -129,40 +125,30 @@ function mapResult(r, i) {
 export default function MemberExplorePage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
-  // The sidebar links to /member/explore?cat=jaincentre|dharamshala|bhojanshala
-  // and ?q=. Nothing read those params, so four sidebar tabs all rendered the
-  // same unfiltered directory.
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeCategory, setActiveCategory] = useState(searchParams.get("cat"));
+  const [activeCategory, setActiveCategory] = useState(searchParams.get("cat") || "temples");
 
   useEffect(() => {
-    setActiveCategory(searchParams.get("cat"));
+    const cat = searchParams.get("cat");
+    if (cat) setActiveCategory(cat);
     const q = searchParams.get("q");
     if (q) setSearch(q);
   }, [searchParams]);
 
-  /** Category taps update the URL so each tab stays distinct and shareable. */
   const chooseCategory = (key) => {
-    const next = activeCategory === key ? null : key;
-    setActiveCategory(next);
-    setSearchParams(next ? { cat: next } : {});
+    setActiveCategory(key);
+    setSearchParams(key ? { cat: key } : {});
   };
-  const [viewMode, setViewMode] = useState("list"); // list | map
-  const { status: locStatus, error: locError, request: requestLocation } = useOutletContext() || {};
 
-  const source = activeCategory ? CATEGORY_SOURCE[activeCategory] : null;
+  const { status: locStatus, error: locError, request: requestLocation } = useOutletContext() || {};
+  const source = activeCategory ? CATEGORY_SOURCE[activeCategory] : CATEGORY_SOURCE.temples;
+  
   const { items: rawResults, loading, error, reload } = useMemberList(source?.path, {
     params: search.trim() ? { q: search.trim() } : undefined,
     map: mapResult,
     enabled: Boolean(source),
   });
 
-  /*
-   * Overlay real GPS distance when a device fix is available, and sort by it —
-   * the directory is exactly where "nearby" needs to mean something. Falls
-   * back to whatever string the API sent (often empty) when there is no fix or
-   * the entity carries no coordinates.
-   */
   const { distanceTo, hasDeviceLocation } = useVisibilityEngine();
   const results = hasDeviceLocation
     ? [...rawResults]
@@ -174,134 +160,95 @@ export default function MemberExplorePage() {
     : rawResults;
 
   return (
-    <div className="space-y-4">
-      {/* ── Search bar ─────────────────────────────────────────────── */}
-      <div className="pt-1">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      
+      {/* ── Search & Location Hero Header ─────────────────────────────────── */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+              <Compass className="h-4.5 w-4.5" />
+            </div>
+            <span>{t("Universal Directory")}</span>
+          </h1>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            {t("Discover Temples, Jain Centres, Maharaj Saheb, Dharamshalas and Events near you.")}
+          </p>
+        </div>
+
+        {/* Search input with live clear button */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("Search temples, MS, events, cities, IDs…")}
-            className="w-full pl-10 pr-4 py-3 text-sm rounded-2xl border border-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+            placeholder={t("Search by name, city, area or Unique ID (e.g. Palitana, JFJT108)…")}
+            className="w-full pl-11 pr-10 py-3 text-xs sm:text-sm font-medium rounded-2xl border border-slate-200 bg-slate-50/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all shadow-inner"
           />
           {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X className="h-4 w-4 text-slate-400" />
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-slate-600"
+            >
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
-        {activeCategory && (
-          <div className="mt-2">
-            <LocationPrompt status={locStatus} error={locError} onRequest={requestLocation} />
-          </div>
-        )}
+
+        <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
+          <LocationPrompt status={locStatus} error={locError} onRequest={requestLocation} />
+          <span className="text-[11px] font-bold text-slate-400">
+            {results.length} {t("results found")}
+          </span>
+        </div>
       </div>
 
-      {/* ── Browse categories ───────────────────────────────────────── */}
-      {!search && (
-        <>
-          <section>
-            <h2 className="text-sm font-bold text-slate-800 mb-3">{t("Browse")}</h2>
-            <div className="grid grid-cols-5 gap-2">
-              {CATEGORIES.map(({ key, label, emoji }) => (
-                <button
-                  key={key}
-                  onClick={() => chooseCategory(key)}
-                  className={cn(
-                    "flex flex-col items-center gap-1 p-2 rounded-2xl border transition-all",
-                    activeCategory === key
-                      ? "bg-orange-500 border-orange-500 text-white shadow-md scale-105"
-                      : "bg-white border-slate-100 text-slate-600 shadow-sm hover:shadow-md hover:-translate-y-0.5"
-                  )}
-                >
-                  <span className="text-xl">{emoji}</span>
-                  <span className="text-[8px] font-bold leading-tight text-center">{t(label)}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-        </>
-      )}
-
-      {/* ── Results ─────────────────────────────────────────────────── */}
-      {(activeCategory || search) && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-slate-800">
-              {activeCategory
-                ? CATEGORIES.find((c) => c.key === activeCategory)?.label
-                : `Results for "${search}"`}
-            </h2>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setViewMode("list")}
-                className={cn("p-1.5 rounded-lg border transition-colors text-xs", viewMode === "list" ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-slate-200 text-slate-500")}
-              >
-                ☰
-              </button>
-              <button
-                onClick={() => setViewMode("map")}
-                className={cn("p-1.5 rounded-lg border transition-colors text-xs", viewMode === "map" ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-slate-200 text-slate-500")}
-              >
-                <Map className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {viewMode === "map" ? (
-            <div className="bg-slate-100 rounded-2xl h-64 flex flex-col items-center justify-center text-slate-500 border border-slate-200">
-              <Map className="h-10 w-10 mb-2 opacity-40" />
-              <p className="text-xs font-medium">{t("Map View")}</p>
-              <p className="text-[10px] text-slate-400 mt-1">{t("Google Maps integration — connect API key")}</p>
-            </div>
-          ) : (
-            <div className="space-y-2 pb-4">
-              {results.length === 0 ? (
-                <div className="text-center py-10">
-                  <Search className="h-10 w-10 mx-auto mb-2 text-slate-200" />
-                  <p className="text-sm font-medium text-slate-400">{t("No results yet")}</p>
-                  <p className="text-xs text-slate-300 mt-1">{t("Connect the backend to see live results")}</p>
-                </div>
-              ) : (
-                results.map((item) =>
-                  activeCategory === "ms"
-                    ? <MSResult key={item.id} item={item} />
-                    : <TempleResult key={item.id} item={item} />
-                )
+      {/* ── Category Grid & Mobile Slider ─────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2.5">
+        {CATEGORIES.map(({ key, label, icon: Icon, bg }) => {
+          const isActive = activeCategory === key;
+          return (
+            <button
+              key={key}
+              onClick={() => chooseCategory(key)}
+              className={cn(
+                "flex flex-col items-center justify-center p-3 rounded-2xl sm:rounded-3xl border transition-all active:scale-95 text-center group select-none",
+                isActive
+                  ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white border-transparent shadow-md shadow-orange-500/20"
+                  : "bg-white border-slate-200/80 text-slate-700 hover:bg-slate-50 shadow-2xs hover:shadow-xs"
               )}
-            </div>
-          )}
-        </section>
-      )}
+            >
+              <div className={cn(
+                "w-9 h-9 rounded-xl flex items-center justify-center mb-1.5 transition-transform group-hover:scale-105",
+                isActive ? "bg-white/20 text-white" : bg
+              )}>
+                <Icon className="h-4.5 w-4.5" />
+              </div>
+              <span className="text-[11px] font-extrabold leading-tight truncate max-w-full">
+                {t(label)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-      {/* ── Quick access links ──────────────────────────────────────── */}
-      {!search && !activeCategory && (
-        <section className="pb-4">
-          <h2 className="text-sm font-bold text-slate-800 mb-3">{t("Quick Access")}</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: "Nearby Temples", emoji: "🛕", to: "/member/explore", q: "temples" },
-              { label: "Available Dharamshalas", emoji: "🏨", to: "/member/explore", q: "dharamshala" },
-              { label: "Follow MS", emoji: "🙏", to: "/member/ms" },
-              { label: "Ongoing Tours", emoji: "🗺️", to: "/member/tours" },
-              { label: "Today's Events", emoji: "🎉", to: "/member/events" },
-              { label: "Offers Near Me", emoji: "🏷️", to: "/member/offers" },
-            ].map(({ label, emoji, to }) => (
-              <Link
-                key={label}
-                to={to}
-                className="flex items-center gap-2.5 bg-white rounded-2xl border border-slate-100 shadow-sm p-3 hover:shadow-md hover:-translate-y-0.5 transition-all"
-              >
-                <span className="text-xl">{emoji}</span>
-                <span className="text-xs font-semibold text-slate-700">{t(label)}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* ── Directory Search Results ──────────────────────────────────────── */}
+      <ListState
+        loading={loading}
+        error={error}
+        count={results.length}
+        onRetry={reload}
+        emptyTitle={t("No results match your search")}
+        emptyHint={t("Try searching for another keyword or selecting a different category above.")}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+          {results.map((item) => (
+            <ResultCard key={item.id} item={item} isMs={activeCategory === "ms"} />
+          ))}
+        </div>
+      </ListState>
+
     </div>
   );
 }

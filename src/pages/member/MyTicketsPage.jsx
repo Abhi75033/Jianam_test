@@ -2,21 +2,14 @@ import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/common/EmptyState";
-import { Ticket, Calendar, MapPin } from "lucide-react";
+import { Ticket, Calendar, MapPin, Download, Share2, CheckCircle2, QrCode } from "lucide-react";
 import { eventsApi } from "@/lib/memberApi";
 import { extractErrorMessage } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
+import ListState from "@/components/member/ListState";
+import { cn } from "@/lib/utils";
 
-/**
- * My Tickets — §B19.7 / §B19.8.
- * "For a multi-ticket booking, each attendee gets a unique Ticket ID and QR
- *  code, all linked to one master Booking ID."
- * The QR encodes a server-signed token; it exposes no personal information —
- * we render exactly what the API returns and never construct the payload here.
- */
 const STATUS_TONE = {
   TICKET_GENERATED: "bg-emerald-100 text-emerald-700",
   PAYMENT_SUCCESSFUL: "bg-emerald-100 text-emerald-700",
@@ -35,130 +28,121 @@ export default function MyTicketsPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadData = () => {
+    setLoading(true);
     eventsApi
       .myTickets()
-      .then((data) => { if (!cancelled) setRows(data); })
+      .then((data) => setRows(data || []))
       .catch((e) => {
-        if (cancelled) return;
         setRows([]);
         toast.error(extractErrorMessage(e));
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   return (
-    <div data-testid="member-tickets-page">
-      <h1 className="font-heading text-xl font-bold text-slate-900">{t("My Tickets")}</h1>
-      <p className="text-xs text-slate-500 mt-1">
-        {t("Show this QR at the venue for check-in.")}
-      </p>
+    <div className="space-y-6 max-w-4xl mx-auto" data-testid="member-tickets-page">
+      
+      {/* Top Header */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+            <Ticket className="h-4.5 w-4.5" />
+          </div>
+          <span>{t("My Event Tickets & Entry Passes")}</span>
+        </h1>
+        <p className="text-xs text-slate-500 font-medium mt-1">
+          {t("Present the QR code at the venue gate for instant check-in verification.")}
+        </p>
+      </div>
 
-      <div className="mt-4 space-y-4">
-        {loading &&
-          Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i} className="p-4 rounded-xl">
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-40 w-40 mt-3 mx-auto" />
-            </Card>
-          ))}
-
-        {!loading && rows.length === 0 && (
-          <EmptyState
-            icon={Ticket}
-            title={t("No tickets yet")}
-            description={t("Purchased tickets will appear here.")}
-          />
-        )}
-
-        {!loading &&
-          rows.map((tk) => {
+      {/* Tickets List */}
+      <ListState
+        loading={loading}
+        count={rows.length}
+        onRetry={loadData}
+        emptyTitle={t("No event tickets yet")}
+        emptyHint={t("RSVP for upcoming community events to generate your digital entry passes.")}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+          {rows.map((tk) => {
             const status = String(tk.status || "").toUpperCase();
             const scanned = status === "CHECKED_IN";
+            const ticketId = tk.uid || tk.ticket_id || tk.id;
+
             return (
-              <Card
-                key={tk.uid || tk.ticket_id}
-                className="overflow-hidden rounded-xl"
-                data-testid={`ticket-${tk.uid || tk.ticket_id}`}
+              <div
+                key={ticketId}
+                className="bg-white rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-lg transition-all overflow-hidden flex flex-col justify-between"
+                data-testid={`ticket-${ticketId}`}
               >
+                {/* Event Banner */}
                 {tk.event_banner_url && (
-                  <img src={tk.event_banner_url} alt={tk.event_name} className="h-28 w-full object-cover" />
+                  <div className="h-32 bg-slate-100 relative overflow-hidden">
+                    <img src={tk.event_banner_url} alt="" className="w-full h-full object-cover" />
+                  </div>
                 )}
-                <div className="p-4">
+
+                <div className="p-5 space-y-4 flex-1">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="font-heading font-bold text-sm text-slate-900 truncate">
-                        {tk.event_name || t("Event")}
+                    <div>
+                      <h2 className="text-sm sm:text-base font-black text-slate-900 leading-snug">
+                        {tk.event_name || t("Community Event")}
                       </h2>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{tk.organization_name}</p>
-                    </div>
-                    <Badge className={`text-[10px] border-0 shrink-0 ${STATUS_TONE[status] || "bg-slate-100 text-slate-600"}`}>
-                      {t(pretty(status))}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-2 space-y-1 text-[11px] text-slate-600">
-                    {tk.starts_at && (
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3 w-3 text-slate-400" />
-                        {new Date(tk.starts_at).toLocaleString()}
-                      </div>
-                    )}
-                    {tk.venue && (
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="h-3 w-3 text-slate-400" /> {tk.venue}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* QR — server-signed token only (§B19.8) */}
-                  {tk.qr_token && !scanned && (
-                    <div className="mt-4 flex flex-col items-center">
-                      <div className="bg-white p-3 rounded-xl border border-slate-200">
-                        <QRCodeSVG value={tk.qr_token} size={160} level="M" />
-                      </div>
-                      <p className="text-[10px] text-slate-500 mt-2">
-                        {t("Position the QR inside the frame. Detection is automatic.")}
-                      </p>
-                    </div>
-                  )}
-
-                  {scanned && (
-                    <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 p-3 text-center">
-                      <p className="text-xs font-semibold text-blue-800">{t("Checked In")}</p>
-                      {tk.checked_in_at && (
-                        <p className="text-[10px] text-blue-700 mt-0.5">
-                          {new Date(tk.checked_in_at).toLocaleString()}
-                        </p>
+                      {tk.organization_name && (
+                        <p className="text-xs text-slate-500 font-semibold mt-0.5">{tk.organization_name}</p>
                       )}
                     </div>
-                  )}
+                    <span className={cn("text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border shrink-0", STATUS_TONE[status] || "bg-slate-100 text-slate-600")}>
+                      {t(pretty(status))}
+                    </span>
+                  </div>
 
-                  {/* Ticket identifiers (§B19.7) */}
-                  <dl className="mt-4 grid grid-cols-2 gap-2 text-[11px] border-t pt-3">
-                    {[
-                      ["Ticket ID", tk.ticket_id],
-                      ["Booking ID", tk.booking_id],
-                      ["Category", tk.category],
-                      ["Seat", tk.seat_number],
-                    ]
-                      .filter(([, v]) => v)
-                      .map(([label, v]) => (
-                        <div key={label}>
-                          <dt className="text-slate-400 uppercase tracking-wider text-[9px] font-semibold">
-                            {t(label)}
-                          </dt>
-                          <dd className="font-mono font-semibold text-slate-800 truncate">{v}</dd>
-                        </div>
-                      ))}
-                  </dl>
+                  {/* Scannable Pass QR Code */}
+                  <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+                    <QRCodeSVG
+                      value={tk.qr_payload || `ticket://${ticketId}`}
+                      size={130}
+                      bgColor="#ffffff"
+                      fgColor="#0B132B"
+                      level="H"
+                    />
+                    <span className="font-mono text-[10px] font-black text-slate-500 tracking-wider">
+                      #{ticketId}
+                    </span>
+                  </div>
+
+                  {/* Details */}
+                  <div className="space-y-1.5 text-xs text-slate-500 font-medium">
+                    {tk.event_starts_at && (
+                      <div className="flex items-center gap-2 text-slate-700 font-bold">
+                        <Calendar className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                        <span>{new Date(tk.event_starts_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+                      </div>
+                    )}
+                    {tk.seat_number && (
+                      <div className="text-xs font-extrabold text-orange-600">
+                        {t("Seat / Zone")}: {tk.seat_number}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </Card>
+
+                {/* Footer status */}
+                <div className="p-4 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between text-xs text-slate-400 font-bold">
+                  <span>{scanned ? t("Checked In") : t("Ready for entry")}</span>
+                  {tk.attendee_name && <span>{tk.attendee_name}</span>}
+                </div>
+              </div>
             );
           })}
-      </div>
+        </div>
+      </ListState>
+
     </div>
   );
 }

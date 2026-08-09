@@ -1,14 +1,16 @@
 import { useState, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Share2, RefreshCw, Download, CheckCircle, Shield, Briefcase, Printer } from "lucide-react";
+import {
+  Share2, RefreshCw, Download, CheckCircle, Shield, Briefcase, Printer,
+  Sparkles, CheckCircle2, QrCode, ShieldCheck, Copy, Phone, User
+} from "lucide-react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
+import { initials, cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-/** Build a signed-style QR payload string for the member. */
 function buildQrPayload(memberId, staffId, ts) {
-  // Format: jinanam://verify?id=JFJM108&t=1234567890&nonce=XXXXXXXX
-  // The nonce gives scanners a value to validate freshness against the backend.
   const nonce = Math.random().toString(36).slice(2, 10).toUpperCase();
   const parts = [`jinanam://verify?id=${memberId}`, `t=${ts}`, `nonce=${nonce}`];
   if (staffId) parts.push(`staff=${staffId}`);
@@ -25,45 +27,45 @@ export default function MemberDigitalIdPage() {
     user?.fullName ||
     "JiNANAM Member";
 
-  const staffId = user?.staffId || (user?.primaryRoleKey === "STAFF" ? "JFST108" : null);
-  const memberId = user?.publicId || (user?.memberType === "NON_JAIN" ? "JFNJM108" : "JFJM108");
+  const staffId = user?.staffId || null;
+  const memberId = user?.publicId || null;
 
   const [ts, setTs] = useState(() => Date.now());
   const [refreshing, setRefreshing] = useState(false);
 
-  // Re-build the QR value whenever ts changes (Regenerate button)
-  const qrValue = buildQrPayload(memberId, staffId, ts);
+  const qrValue = memberId ? buildQrPayload(memberId, staffId, ts) : null;
 
   const onRefresh = () => {
+    if (!memberId) return;
     setRefreshing(true);
     setTimeout(() => {
       setTs(Date.now());
       setRefreshing(false);
-      toast.success(t("QR code regenerated"));
-    }, 800);
+      toast.success(t("QR code refreshed"));
+    }, 600);
   };
 
   const onShare = () => {
+    if (!memberId) return;
     if (navigator.share) {
       navigator
         .share({ title: `${displayName} — JiNANAM Digital ID`, text: `Member ID: ${memberId}` })
         .catch((err) => {
-          // AbortError = user dismissed the share sheet — not a real error
           if (err?.name !== "AbortError") {
             navigator.clipboard.writeText(`JiNANAM Member: ${displayName} (${memberId})`);
-            toast.success(t("Copied to clipboard"));
+            toast.success(t("Member ID copied to clipboard"));
           }
         });
     } else {
       navigator.clipboard.writeText(`JiNANAM Member: ${displayName} (${memberId})`);
-      toast.success(t("Copied to clipboard"));
+      toast.success(t("Member ID copied to clipboard"));
     }
   };
 
   const onDownload = useCallback(() => {
-    // Grab the SVG rendered by QRCodeSVG and convert to a high-res PNG via canvas
+    if (!memberId) return;
     const svg = qrRef.current?.querySelector("svg");
-    if (!svg) { toast.error("QR not ready"); return; }
+    if (!svg) { toast.error(t("QR not ready")); return; }
 
     const svgData = new XMLSerializer().serializeToString(svg);
     const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
@@ -72,7 +74,7 @@ export default function MemberDigitalIdPage() {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      const scale = 3; // 3× for high-res output
+      const scale = 3;
       canvas.width  = img.width  * scale;
       canvas.height = img.height * scale;
       const ctx = canvas.getContext("2d");
@@ -82,159 +84,175 @@ export default function MemberDigitalIdPage() {
       URL.revokeObjectURL(url);
 
       const link = document.createElement("a");
-      link.download = `JiNANAM_Pass_${memberId}.png`;
+      link.download = `JiNANAM_ID_${memberId}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
-      toast.success(t("Pass downloaded!"));
+      toast.success(t("Digital pass downloaded!"));
     };
     img.src = url;
   }, [memberId, t]);
 
   const onPrint = () => window.print();
 
+  if (!memberId) {
+    return (
+      <div className="space-y-6 max-w-lg mx-auto pt-6">
+        <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xs text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+            <Shield className="h-6 w-6" />
+          </div>
+          <h2 className="text-base font-black text-slate-800">{t("Digital ID Not Available")}</h2>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            {t("Your member ID isn't assigned to this session yet. Please sign in again or contact sangh administration.")}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-5 pt-2 pb-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-slate-800">{t("My Digital ID & Staff Pass")}</h1>
+    <div className="space-y-6 max-w-2xl mx-auto">
+      
+      {/* Top Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+              <QrCode className="h-4.5 w-4.5" />
+            </div>
+            <span>{t("Verified Digital ID & QR Pass")}</span>
+          </h1>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            {t("Official scannable identity card for temple entry, events, and dharamshala check-in.")}
+          </p>
+        </div>
+
         <button
           onClick={onPrint}
-          className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+          className="px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all shadow-2xs"
         >
           <Printer className="h-4 w-4" />
-          <span>Print ID Card</span>
+          <span>{t("Print Pass")}</span>
         </button>
       </div>
 
-      {/* ── Digital ID Card ────────────────────────────────────────── */}
-      <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-        <div className="bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-400 p-6 text-white">
-          <div className="flex items-start justify-between mb-5">
-            <div>
-              <div className="text-[10px] font-black uppercase tracking-widest opacity-80">JiNANAM</div>
-              <div className="text-[9px] opacity-70">Official Member &amp; Staff Pass</div>
-            </div>
-            <div className="flex items-center gap-1 bg-white/20 px-2.5 py-0.5 rounded-full backdrop-blur-md">
-              <CheckCircle className="h-3 w-3" />
-              <span className="text-[9px] font-bold">Verified Digital ID</span>
-            </div>
-          </div>
+      {/* ── Holographic Digital Membership Card ───────────────────────────── */}
+      <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/40 group">
+        <div className="bg-gradient-to-br from-[#06102E] via-[#0B132B] to-[#1E293B] p-6 sm:p-8 text-white relative">
+          
+          {/* Subtle Ambient Mesh Glow */}
+          <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
+          <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-amber-500/20 blur-3xl pointer-events-none" />
 
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-white/20 border-2 border-white/40 flex items-center justify-center text-3xl shadow-lg shrink-0">
-              {user?.photoUrl
-                ? <img src={user.photoUrl} alt="" className="w-full h-full rounded-2xl object-cover" />
-                : "🙏"}
+          <div className="relative z-10 space-y-6">
+            
+            {/* Card Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center text-white font-black text-lg shadow-md shadow-orange-500/30">
+                  J
+                </div>
+                <div>
+                  <div className="font-black text-sm tracking-tight text-white leading-tight">
+                    Ji<span className="text-orange-400">NANAM</span>
+                  </div>
+                  <div className="text-[8px] font-bold text-amber-300 tracking-widest uppercase">
+                    CONNECTING JAIN LIFE
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full backdrop-blur-md text-[10px] font-extrabold shadow-xs">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>{t("Verified Member Pass")}</span>
+              </div>
             </div>
-            <div>
-              <div className="text-xl font-black">{displayName}</div>
-              <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                <span className="font-mono text-xs bg-white/20 px-2.5 py-0.5 rounded-full inline-block font-bold">
-                  ID: {memberId}
-                </span>
-                {staffId && (
-                  <span className="font-mono text-xs bg-slate-900/40 text-amber-300 px-2.5 py-0.5 rounded-full inline-block font-bold">
-                    Staff: {staffId}
+
+            {/* Member Details & Avatar */}
+            <div className="flex items-center gap-4 sm:gap-5">
+              <Avatar className="h-18 w-18 sm:h-20 sm:w-20 ring-2 ring-amber-400/60 shadow-xl rounded-2xl shrink-0">
+                {user?.photoUrl && <AvatarImage src={user.photoUrl} alt={displayName} className="rounded-2xl object-cover" />}
+                <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-xl font-black rounded-2xl">
+                  {initials(displayName)}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl sm:text-2xl font-black text-white truncate tracking-tight">{displayName}</h2>
+                <div className="flex items-center gap-2 flex-wrap mt-1">
+                  <span className="font-mono text-xs bg-white/15 px-2.5 py-0.5 rounded-lg font-bold text-amber-200 border border-white/10">
+                    ID: {memberId}
                   </span>
+                  {staffId && (
+                    <span className="font-mono text-xs bg-purple-500/30 text-purple-200 px-2.5 py-0.5 rounded-lg font-bold border border-purple-400/30">
+                      Staff: {staffId}
+                    </span>
+                  )}
+                </div>
+                {user?.sect && (
+                  <div className="text-[11px] text-slate-300 mt-1 font-semibold">
+                    {user.sect} {user?.subCommunity ? `• ${user.subCommunity}` : ""}
+                  </div>
                 )}
               </div>
-              <div className="text-[10px] opacity-80 mt-1 font-bold">
-                {user?.community || "Shwetambar · Murtipujak"}
-              </div>
             </div>
-          </div>
 
-          {/* QR code area — real scannable QR via qrcode.react */}
-          <div className="mt-5 flex items-center justify-center">
-            <div className="bg-white rounded-2xl p-4 shadow-lg text-center" ref={qrRef}>
-              <div
-                style={{ transition: "opacity 0.3s, transform 0.3s" }}
-                className={refreshing ? "opacity-30 scale-95" : "opacity-100 scale-100"}
-              >
+            {/* Scannable High-Res QR Code Card */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col items-center justify-center text-slate-900 space-y-3">
+              <div ref={qrRef} className="p-2 bg-white rounded-2xl transition-all duration-300">
                 <QRCodeSVG
                   value={qrValue}
-                  size={140}
+                  size={160}
                   bgColor="#ffffff"
-                  fgColor="#1e293b"
+                  fgColor="#0B132B"
                   level="H"
                   includeMargin={false}
                 />
               </div>
-              <div className="text-[8px] text-slate-500 font-mono font-bold mt-2">{memberId}</div>
-              {staffId && (
-                <div className="mt-1 text-[9px] font-black text-slate-800 uppercase tracking-wider">
-                  Staff Entry / Attendance QR
-                </div>
-              )}
-            </div>
-          </div>
 
-          <div className="mt-4 text-center text-[9px] opacity-70 font-semibold">
-            🔒 {t("Signed token — scan for verification at Derasars, Dharamshalas & Check-in Desks")}
+              <div className="text-center space-y-0.5">
+                <div className="font-mono text-xs font-black text-slate-900 tracking-wider">{memberId}</div>
+                <p className="text-[10px] text-slate-400 font-bold">
+                  {t("Scan with JiNANAM Scanner at any Derasar, Dharamshala or Event check-in")}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Card Controls */}
+            <div className="grid grid-cols-3 gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={onDownload}
+                className="flex items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-xs font-bold border border-white/15 active:scale-95 transition-all"
+              >
+                <Download className="h-4 w-4 text-amber-300" />
+                <span>{t("Save Pass")}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onShare}
+                className="flex items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-xs font-bold border border-white/15 active:scale-95 transition-all"
+              >
+                <Share2 className="h-4 w-4 text-sky-300" />
+                <span>{t("Share")}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onRefresh}
+                disabled={refreshing}
+                className="flex items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-xs font-bold border border-white/15 active:scale-95 transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={cn("h-4 w-4 text-emerald-300", refreshing && "animate-spin")} />
+                <span>{t("Refresh")}</span>
+              </button>
+            </div>
+
           </div>
         </div>
       </div>
 
-      {/* Staff Role Details (if applicable) */}
-      {staffId && (
-        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-            <Briefcase className="h-4 w-4 text-orange-500" />
-            <span>Staff Employment Details</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span className="text-[10px] text-slate-400 font-medium">Staff ID:</span>
-              <div className="font-bold text-slate-800 font-mono">{staffId}</div>
-            </div>
-            <div>
-              <span className="text-[10px] text-slate-400 font-medium">Linked Member ID:</span>
-              <div className="font-bold text-slate-800 font-mono">{memberId}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Info box */}
-      <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex gap-3">
-        <Shield className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-        <div className="text-[11px] text-amber-800 leading-relaxed">
-          <strong>{t("Privacy & Security Protected")}</strong> — {t("This QR encodes a signed encrypted token. Verified scanners retrieve only role-permitted information.")}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="grid grid-cols-3 gap-3">
-        <button
-          onClick={onShare}
-          className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all"
-        >
-          <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
-            <Share2 className="h-5 w-5" />
-          </div>
-          <span className="text-[10px] font-bold text-slate-700">{t("Share ID")}</span>
-        </button>
-
-        <button
-          onClick={onRefresh}
-          disabled={refreshing}
-          className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all disabled:opacity-50"
-        >
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-            <RefreshCw className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`} />
-          </div>
-          <span className="text-[10px] font-bold text-slate-700">{t("Regenerate")}</span>
-        </button>
-
-        <button
-          onClick={onDownload}
-          className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all"
-        >
-          <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
-            <Download className="h-5 w-5" />
-          </div>
-          <span className="text-[10px] font-bold text-slate-700">{t("Download Pass")}</span>
-        </button>
-      </div>
     </div>
   );
 }
